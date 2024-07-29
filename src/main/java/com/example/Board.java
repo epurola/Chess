@@ -1,5 +1,7 @@
 package com.example;
 
+import java.util.List;
+
 public class Board {
     private Square[][] board;
 
@@ -32,6 +34,23 @@ public class Board {
 
     public void setBoard(Square[][] board) {
         this.board = board;
+    }
+    public Board copyBoard() {
+        Square[][] newSquares = new Square[8][8];
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Square originalSquare = board[row][col];
+                Square newSquare = new Square(originalSquare.getRow(), originalSquare.getCol()); // Create a new Square instance
+                Piece piece = originalSquare.getPiece();
+                if (piece != null) {
+                    newSquare.setPiece(piece.copy()); // Copy the piece
+                }
+                newSquares[row][col] = newSquare;
+            }
+        }
+        Board copy = new Board();
+        copy.board = newSquares;
+        return copy;
     }
 
     public void initialize() {
@@ -76,12 +95,14 @@ public class Board {
         setPiece(0, 1, new Knight(0, 1, false));
         setPiece(0, 6, new Knight(0, 6, false));
 
-        
-        
-       
-
-        
-
+    
         // Initialize other pieces similarlcol...
     }
+
+    public List<int[]> getPiece(int row, int col, boolean isWhite) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getPiece'");
+    }
+
+
 }

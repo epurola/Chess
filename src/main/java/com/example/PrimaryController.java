@@ -1,5 +1,6 @@
 package com.example;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javafx.fxml.FXML;
@@ -18,15 +19,15 @@ public class PrimaryController {
     private GridPane chessBoard;
     
     @FXML
-    private StackPane rootPane; // Make sure this is defined in your FXML
+    private StackPane rootPane; 
 
-    private Board board;
+    private Game board;
     private Piece selectedPiece;
     private ImageView draggedPiece;
 
     @FXML
     public void initialize() {
-        board = new Board();
+        board = new Game();
         drawBoard();
 
         // Set preferred size for the board
@@ -74,24 +75,27 @@ public class PrimaryController {
                         pieceView.setFitWidth(100);
                         chessBoard.add(pieceView, j, i);
 
+                        if (board.isWhiteTurn()) {
+                            // If it's white's turn, make black pieces transparent
+                            pieceView.setMouseTransparent(!piece.isWhite());
+                        } else {
+                            // If it's black's turn, make white pieces transparent
+                            pieceView.setMouseTransparent(piece.isWhite());
+                        }
+
                         pieceView.setOnMousePressed(event -> handlePieceDragStart(event, pieceView, piece));
                         pieceView.setOnMouseDragged(this::handlePieceDrag);
                         pieceView.setOnMouseReleased(this::handlePieceDrop);
                     }
                 }
-
-                square.setOnMouseClicked(this::handleSquareClick);
             }
-        }
-
-        if (selectedPiece != null) {
-            drawPossibleMoves(selectedPiece);
         }
     }
 
     private void handlePieceDragStart(MouseEvent event, ImageView pieceView, Piece piece) {
         selectedPiece = piece;
         draggedPiece = pieceView;
+        drawPossibleMoves(selectedPiece);
         pieceView.toFront();
     }
 
@@ -106,40 +110,59 @@ public class PrimaryController {
         if (draggedPiece != null) {
             int row = (int) (event.getSceneY() / 100);
             int col = (int) (event.getSceneX() / 100);
-
+            int originalRow = selectedPiece.getRow();
+            int originalCol = selectedPiece.getCol();
+    
             if (row >= 0 && row < 8 && col >= 0 && col < 8) {
                 // Check if the move is valid
-                List<int[]> possibleMoves = selectedPiece.getPossibleMoves(board);
+                List<int[]> possibleMoves = selectedPiece.getPossibleMoves(board.getBoard());
                 boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
-
+    
                 if (validMove) {
-                    board.setPiece(row, col, selectedPiece);
-                    board.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), null);
-                    selectedPiece.setPosition(row, col);
+                    // Get the piece that will be captured, if any
+                    Piece capturedPiece = board.getPiece(row, col);
+    
+                    // Temporarily make the move
+                    Piece pieceToMove = selectedPiece.copy(); // Ensure a copy of the piece is used
+                    board.setPiece(row, col, pieceToMove);
+                    board.setPiece(originalRow, originalCol, null);
+                    pieceToMove.setPosition(row, col);
+    
+                    // Check if the king is in check
+                    if (board.isInCheck(board.isWhiteTurn())) {
+                        // Revert the move if it puts the king in check
+                        board.setPiece(originalRow, originalCol, pieceToMove);
+                        board.setPiece(row, col, capturedPiece); // Restore the captured piece
+                        pieceToMove.setPosition(originalRow, originalCol); // Restore the piece's position
+                        System.out.println("Move puts king in check. Move reverted.");
+                    } else {
+                        // Valid move; switch turns if move is valid and does not put the king in check
+                        if (originalRow != row || originalCol != col) {
+                            board.setWhiteTurn(!board.isWhiteTurn());
+                        }
+                    }
                 }
-
+    
                 drawBoard(); // Redraw the board to update the piece's position
             }
-
-            draggedPiece = null;
             selectedPiece = null;
+            draggedPiece = null;
         }
     }
-
-    @FXML
-    private void handleSquareClick(MouseEvent event) {
-        // No need to handle square clicks separately now since dragging handles the moves
-    }
+    
+    
 
     private void drawPossibleMoves(Piece selectedPiece) {
-        List<int[]> possibleMoves = selectedPiece.getPossibleMoves(board);
+        List<int[]> possibleMoves = new ArrayList<>();
 
         // Clear existing move indicators
         chessBoard.getChildren().removeIf(node -> node instanceof Circle);
 
         double squareSize = 100; // Size of each square on the board
-        double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
-
+        double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square s
+    
+        possibleMoves=selectedPiece.getLegalMovesWithoutCheck(board);
+        
         for (int[] move : possibleMoves) {
             int row = move[0];
             int col = move[1];
@@ -159,7 +182,10 @@ public class PrimaryController {
             chessBoard.add(moveIndicatorContainer, col, row); // Add the container to the grid
         }
     }
+    
+    
 }
+
 
 
 

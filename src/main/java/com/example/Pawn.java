@@ -28,7 +28,6 @@ public class Pawn extends Piece {
             }
         }
 
-        // Diagonal captures
         // Right diagonal
         newRow = getRow() + direction;
         newCol = getCol() + 1;
@@ -48,6 +47,13 @@ public class Pawn extends Piece {
     private boolean isValidPosition(int row, int col) {
         return row >= 0 && row < 8 && col >= 0 && col < 8;
     }
+
+    @Override
+    public Piece copy() {
+        return new Pawn(getRow(), getCol(), isWhite());
+    }
+
+
 }
 
 

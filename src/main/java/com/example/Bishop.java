@@ -17,7 +17,7 @@ public class Bishop extends Piece {
         for (int[] direction : directions) {
             int newRow = getRow();
             int newCol = getCol();
-
+            
             while (true) {
                 newRow += direction[0];
                 newCol += direction[1];
@@ -45,6 +45,16 @@ public class Bishop extends Piece {
     private boolean isValidPosition(int row, int col) {
         return row >= 0 && row < 8 && col >= 0 && col < 8;
     }
+
+    @Override
+    public Piece copy() {
+        // Create a new Bishop object with the same properties
+        return new Bishop(getRow(), getCol(), isWhite());
+    }
+
+
+    
 }
+
 
 

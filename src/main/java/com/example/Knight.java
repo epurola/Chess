@@ -36,4 +36,11 @@ public class Knight extends Piece {
     private boolean isValidPosition(int row, int col) {
         return row >= 0 && row < 8 && col >= 0 && col < 8;
     }
+
+    @Override
+    public Piece copy() {
+        // Create a new King object with the same properties
+        return new Knight(getRow(), getCol(), isWhite());
+    }
+
 }

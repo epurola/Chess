@@ -45,4 +45,10 @@ public class Queen extends Piece {
     private boolean isValidPosition(int row, int col) {
         return row >= 0 && row < 8 && col >= 0 && col < 8;
     }
+
+    @Override
+    public Piece copy() {
+
+        return new Queen(getRow(), getCol(), isWhite());
+    }
 }
