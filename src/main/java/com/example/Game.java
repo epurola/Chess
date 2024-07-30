@@ -145,6 +145,53 @@ public class Game {
     
         return legalMoves;
     }
+
+    public boolean chechMate(Game game){
+
+       int[] kingPosition = game.findKing(whiteTurn);
+
+       int row= kingPosition[0];
+       int col = kingPosition[1];
+    
+       Piece king = board.getPiece(row, col);
+
+       // List to hold all legal moves for the current player's pieces
+       List<int[]> allLegalMoves = new ArrayList<>();
+
+       // Retrieve all pieces of the current player
+       List<Piece> pieces = game.getAllPieces(whiteTurn);
+
+        // Iterate over each piece and collect its legal moves
+      for (Piece piece : pieces) {
+         List<int[]> legalMovesForPiece = piece.getLegalMovesWithoutCheck(game);
+         allLegalMoves.addAll(legalMovesForPiece);
+        }
+       
+        if(isInCheck(whiteTurn) && allLegalMoves.isEmpty() )
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean checkDraw(Game game){
+        // List to hold all legal moves for the current player's pieces
+        List<int[]> allLegalMoves = new ArrayList<>();
+        // Retrieve all pieces of the current player
+        List<Piece> pieces = game.getAllPieces(whiteTurn);
+         // Iterate over each piece and collect its legal moves
+       for (Piece piece : pieces) {
+          List<int[]> legalMovesForPiece = piece.getLegalMovesWithoutCheck(game);
+          allLegalMoves.addAll(legalMovesForPiece);
+         }
+        
+         if(!isInCheck(whiteTurn) && allLegalMoves.isEmpty() )
+         {
+             return true;
+         }
+         return false;
+     }
     
     
     

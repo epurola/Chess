@@ -24,7 +24,8 @@ public class PrimaryController {
     private Game board;
     private Piece selectedPiece;
     private ImageView draggedPiece;
-
+    private double mouseOffsetX;
+    private double mouseOffsetY;
     @FXML
     public void initialize() {
         board = new Game();
@@ -101,19 +102,21 @@ public class PrimaryController {
 
     private void handlePieceDrag(MouseEvent event) {
         if (draggedPiece != null) {
-            draggedPiece.setTranslateX(event.getSceneX() - 50 - draggedPiece.getLayoutX());
-            draggedPiece.setTranslateY(event.getSceneY() - 50 - draggedPiece.getLayoutY());
+           
+            draggedPiece.setTranslateX(event.getSceneX() -50 - draggedPiece.getLayoutX()- chessBoard.localToScene(0,0).getX());
+            draggedPiece.setTranslateY(event.getSceneY() -50 - draggedPiece.getLayoutY()- chessBoard.localToScene(0,0).getY());
         }
     }
 
     private void handlePieceDrop(MouseEvent event) {
         if (draggedPiece != null) {
-            int row = (int) (event.getSceneY() / 100);
-            int col = (int) (event.getSceneX() / 100);
+            int row = (int) ((event.getSceneY() - chessBoard.localToScene(0,0).getY())/ 100);
+            int col = (int) ((event.getSceneX()  - chessBoard.localToScene(0,0).getX())/ 100);
             int originalRow = selectedPiece.getRow();
             int originalCol = selectedPiece.getCol();
+            
     
-            if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+            if (row >= 0 && row < 8 || col >= 0 && col < 8) {
                 // Check if the move is valid
                 List<int[]> possibleMoves = selectedPiece.getPossibleMoves(board.getBoard());
                 boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
@@ -185,6 +188,15 @@ public class PrimaryController {
     
     
 }
+
+
+
+
+
+
+
+
+
 
 
 

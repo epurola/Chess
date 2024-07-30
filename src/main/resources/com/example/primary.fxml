@@ -1,17 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.PrimaryController" fx:id="borderPane">
+<BorderPane fx:id="borderPane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.PrimaryController">
     <center>
-        <StackPane fx:id="rootPane">
-            <GridPane fx:id="chessBoard"/>
+        <StackPane fx:id="rootPane" maxHeight="800.0" maxWidth="800.0" minHeight="800.0" minWidth="800.0">
+            <GridPane fx:id="chessBoard" alignment="CENTER" gridLinesVisible="true" maxHeight="800.0" maxWidth="800.0" minHeight="800.0" minWidth="800.0" />
         </StackPane>
     </center>
+   <top>
+      <HBox BorderPane.alignment="CENTER" />
+   </top>
+   <left>
+      <VBox BorderPane.alignment="CENTER" />
+   </left>
+   <right>
+      <VBox BorderPane.alignment="CENTER" />
+   </right>
+   <bottom>
+      <HBox BorderPane.alignment="CENTER" />
+   </bottom>
 </BorderPane>
-
-
-
-

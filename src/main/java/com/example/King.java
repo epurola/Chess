@@ -5,6 +5,7 @@ import java.util.List;
 
 public class King extends Piece {
     boolean check;
+    boolean hasMoved;
 
     public King(int row, int col, boolean isWhite) {
         super(row, col, isWhite);
