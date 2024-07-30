@@ -46,7 +46,6 @@ public class Game {
     
             // Get the pieces involved in the last move
             Piece movedPiece = board.getPiece(lastMove.getToRow(), lastMove.getToCol());
-            System.out.println(movedPiece.getClass().getName());
             Piece capturedPiece = lastMove.getCapturedPiece();
             
     

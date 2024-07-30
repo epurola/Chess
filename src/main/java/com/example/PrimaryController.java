@@ -4,16 +4,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 
 public class PrimaryController {
 
@@ -22,6 +26,8 @@ public class PrimaryController {
     
     @FXML
     private StackPane rootPane;
+    @FXML
+    private BorderPane borderPane;
     
     private Label statusLabel;
 
@@ -30,13 +36,23 @@ public class PrimaryController {
     private ImageView draggedPiece;
     @FXML
     private Button button;
+    Color lightColor = Color.web("#E8EDF9"); // Custom light color (e.g., beige)
+    Color darkColor = Color.web("#B7C0D8"); 
   
     @FXML
     public void initialize() {
         game = new Game();
         drawBoard();
-
-
+        if (statusLabel == null) {
+            statusLabel = new Label();
+            statusLabel.setTextFill(Color.BLACK); 
+            statusLabel.setVisible(false);
+            rootPane.getChildren().add(statusLabel);
+            StackPane.setAlignment(statusLabel, javafx.geometry.Pos.CENTER);
+    
+            // Apply CSS class
+            statusLabel.getStyleClass().add("status-label");
+        }
 
         // Set preferred size for the board
         chessBoard.setPrefSize(800, 800);
@@ -47,6 +63,49 @@ public class PrimaryController {
         // Optionally: set the rootPane size to be 100% of the Scene
         rootPane.setPrefSize(800, 800);
     }
+    @FXML
+    private void handleFullScreen() {
+        Stage stage = (Stage) borderPane.getScene().getWindow();
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+        if (stage.isFullScreen()) {
+            stage.setFullScreen(false);
+        } else {
+            stage.setFullScreen(true);
+        }
+    }
+
+    @FXML
+    private void handleExit() {
+        Stage stage = (Stage) borderPane.getScene().getWindow();
+        stage.close();
+    }
+    @FXML
+    private void handleReset() {
+
+        if (game != null) {
+            // Example: Remove event handlers from pieces
+            chessBoard.getChildren().forEach(node -> {
+                if (node instanceof ImageView) {
+                    ImageView pieceView = (ImageView) node;
+                    pieceView.setOnMousePressed(null);
+                    pieceView.setOnMouseDragged(null);
+                    pieceView.setOnMouseReleased(null);
+                }
+            });
+        }
+        // Reset the game instance
+        game = new Game();
+        
+        // Clear the board and draw the new board
+        drawBoard();
+        
+        // Clear status messages
+        if (statusLabel != null) {
+            statusLabel.setText("");
+            statusLabel.setVisible(false);
+        }
+    }
 
     private void drawBoard() {
         chessBoard.getChildren().clear(); // Clear existing children to reset the board
@@ -55,9 +114,9 @@ public class PrimaryController {
             for (int j = 0; j < 8; j++) {
                 Rectangle square = new Rectangle(100, 100);
                 if ((i + j) % 2 == 0) {
-                    square.setFill(Color.BEIGE);
+                    square.setFill(lightColor);
                 } else {
-                    square.setFill(Color.DARKSEAGREEN);
+                    square.setFill(darkColor);
                 }
 
                 chessBoard.add(square, j, i); // Add the square to the grid
@@ -150,6 +209,7 @@ public class PrimaryController {
                         game.setPiece(originalRow, originalCol, pieceToMove);
                         game.setPiece(row, col, capturedPiece); // Restore the captured piece
                         pieceToMove.setPosition(originalRow, originalCol); // Restore the piece's position
+                        game.recordMove(originalRow, originalCol, row, col, capturedPiece);
                         System.out.println("Move puts king in check. Move reverted.");
                     } else {
                         // Valid move; switch turns if move is valid and does not put the king in check
@@ -162,11 +222,13 @@ public class PrimaryController {
                 {
                     System.out.println("Checkmate!");
                     statusLabel.setText("Checkmate!");
+                    statusLabel.setVisible(true);
                 }
                 if(game.checkDraw(game))
                 {
                     System.out.println("Draw!");
                     statusLabel.setText("Draw");
+                    statusLabel.setVisible(true);
                 }
     
                 drawBoard(); // Redraw the board to update the piece's position

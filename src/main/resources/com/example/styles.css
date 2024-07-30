@@ -1,0 +1,116 @@
+/* styles.css */
+
+/* Root style for the scene */
+.root {
+  -fx-font-family: 'Arial';
+  -fx-font-size: 14px;
+  -fx-background-color: #E5E5E5;
+
+
+}
+
+
+/* Style for the VBox layout */
+.VBox {
+  -fx-background-color: #E5E5E5;/* Changed to a softer color */
+  -fx-padding: 100 0;
+
+}
+.HBox{
+  -fx-fill-width: true;
+  -fx-fit-height: true;
+  -fx-background-color:#E5E5E5;
+}
+.title {
+  
+  -fx-background-color: #ECF0F1; /* Changed to a softer color */
+
+}
+
+/* Style for labels */
+.label {
+  -fx-text-fill: #152744; /* Text color */
+  -fx-font-size: 9px; /* Set the font size to a very small value */
+}
+.label1 {
+  -fx-text-fill: #76c7c0;
+  -fx-font-weight: bold;
+}
+.status-label {
+  -fx-font-size: 24px; /* Size of the text */
+  -fx-font-weight: bold; /* Bold text */
+  -fx-text-fill: #333333; /* Modern text color */
+  -fx-background-color: #f0f0f0; /* Light background color */
+  -fx-padding: 10px; /* Padding around the text */
+  -fx-border-radius: 5px; /* Rounded corners */
+  -fx-background-radius: 5px; /* Rounded corners for the background */
+}
+
+
+/* Style for buttons */
+.button {
+  -fx-background-color: #7B61FF;
+  -fx-text-fill: #152744;
+  -fx-text-align: left;
+}
+.button:hover {
+  -fx-background-color: #473991;
+  -fx-text-fill: #152744;
+  -fx-text-align: left;
+}
+
+.imageView {
+  -fx-preserve-ratio: true; 
+  -fx-alignment: CENTER; 
+  -fx-background-color:  #367591;
+}
+.custom-alert{
+  -fx-background-color: #152744;
+  -fx-text-fill: #76c7c0;
+}
+
+
+.stackPane {
+  -fx-background-color: #ffffff;
+  -fx-background-radius: 10; /* Assuming the StackPane will be 40px wide */
+  -fx-padding: 20;
+  -fx-border-color: #ffffff;
+  -fx-border-width: 2;
+
+  -fx-border-radius: 20;
+  -fx-overflow: hidden; 
+}
+.custom-progress-bar {
+  
+  -fx-background-color: transparent;
+  -fx-padding: 3px;
+  -fx-accent: linear-gradient(to right, #76c7c0, #4ca1af);
+}
+
+.custom-progress-bar .track {
+  -fx-background-color: #2C3E50;
+  -fx-background-radius: 5;
+}
+
+.custom-progress-bar .bar {
+  -fx-background-color: linear-gradient(to right, #76c7c0, #4ca1af);
+  -fx-background-radius: 5;
+}
+
+.custom-progress-bar .percentage {
+  -fx-text-fill: #ffffff;
+  -fx-font-weight: bold;
+}
+.min-btn{
+  -fx-background-color: transparent;
+}
+.min-btn:hover{
+  -fx-background-color:#7B61FF;
+}
+.close-btn{
+  -fx-background-color: transparent;
+}
+.close-btn:hover{
+  -fx-background-color: #c77676;
+}
+
