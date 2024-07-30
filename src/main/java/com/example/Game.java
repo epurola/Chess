@@ -2,19 +2,23 @@ package com.example;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class Game {
     private Board board;
     private boolean whiteTurn; // true if it's white's turn, false if black's turn
+    private Stack<Move> moveStack; // Stack to keep track of moves
 
     public Game() {
         board = new Board();
         whiteTurn = true; // White always starts first
+        moveStack = new Stack<>(); // Initialize the move stack
     }
 
     public Game(Board board) {
         this.board = board.copyBoard(); // Use deep copy constructor
         this.whiteTurn = true; // White always starts first
+        moveStack = new Stack<>(); // Initialize the move stack
     }
 
     public Board getBoard() {
@@ -35,6 +39,36 @@ public class Game {
 
     public void setWhiteTurn(boolean whiteTurn) {
         this.whiteTurn = whiteTurn;
+    }
+    public void undoLastMove() {
+        if (!moveStack.isEmpty()) {
+            Move lastMove = moveStack.pop();
+    
+            // Get the pieces involved in the last move
+            Piece movedPiece = board.getPiece(lastMove.getToRow(), lastMove.getToCol());
+            System.out.println(movedPiece.getClass().getName());
+            Piece capturedPiece = lastMove.getCapturedPiece();
+            
+    
+            // Move the moved piece back to its original position
+            board.setPiece(lastMove.getFromRow(), lastMove.getFromCol(), movedPiece);
+            movedPiece.setPosition(lastMove.getFromRow(), lastMove.getFromCol());
+    
+            // Restore the captured piece, if any
+            if (capturedPiece != null) {
+                board.setPiece(lastMove.getToRow(), lastMove.getToCol(), capturedPiece);
+            } else {
+                board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
+            }
+    
+            // Switch the turn back
+            setWhiteTurn(!isWhiteTurn());
+        }
+    }
+    
+
+    public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece) {
+        moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece));
     }
 
     public boolean isInCheck(boolean isWhite) {
@@ -146,7 +180,7 @@ public class Game {
         return legalMoves;
     }
 
-    public boolean chechMate(Game game){
+    public boolean checkMate(Game game){
 
        int[] kingPosition = game.findKing(whiteTurn);
 

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -19,17 +21,22 @@ public class PrimaryController {
     private GridPane chessBoard;
     
     @FXML
-    private StackPane rootPane; 
+    private StackPane rootPane;
+    
+    private Label statusLabel;
 
-    private Game board;
+    private Game game;
     private Piece selectedPiece;
     private ImageView draggedPiece;
-    private double mouseOffsetX;
-    private double mouseOffsetY;
+    @FXML
+    private Button button;
+  
     @FXML
     public void initialize() {
-        board = new Game();
+        game = new Game();
         drawBoard();
+
+
 
         // Set preferred size for the board
         chessBoard.setPrefSize(800, 800);
@@ -55,19 +62,19 @@ public class PrimaryController {
 
                 chessBoard.add(square, j, i); // Add the square to the grid
 
-                Piece piece = board.getPiece(i, j);
+                Piece piece = game.getPiece(i, j);
                 if (piece != null) {
                     String color = piece.isWhite() ? "white-" : "black-";
                     String imagePath = "/images/" + color + piece.getClass().getSimpleName().toLowerCase() + ".png";
-                    System.out.println("Attempting to load image: " + imagePath);
+                    //System.out.println("Attempting to load image: " + imagePath);
                     Image pieceImage = null;
                     try {
                         pieceImage = new Image(getClass().getResourceAsStream(imagePath));
                         if (pieceImage.isError()) {
-                            System.out.println("Error loading image: " + pieceImage.getException());
+                           // System.out.println("Error loading image: " + pieceImage.getException());
                         }
                     } catch (Exception e) {
-                        System.out.println("Exception loading image: " + e.getMessage());
+                        //System.out.println("Exception loading image: " + e.getMessage());
                     }
 
                     if (pieceImage != null) {
@@ -76,7 +83,7 @@ public class PrimaryController {
                         pieceView.setFitWidth(100);
                         chessBoard.add(pieceView, j, i);
 
-                        if (board.isWhiteTurn()) {
+                        if (game.isWhiteTurn()) {
                             // If it's white's turn, make black pieces transparent
                             pieceView.setMouseTransparent(!piece.isWhite());
                         } else {
@@ -91,6 +98,11 @@ public class PrimaryController {
                 }
             }
         }
+    }
+    @FXML
+    private void Undo(){
+        game.undoLastMove();
+        drawBoard();
     }
 
     private void handlePieceDragStart(MouseEvent event, ImageView pieceView, Piece piece) {
@@ -118,32 +130,43 @@ public class PrimaryController {
     
             if (row >= 0 && row < 8 || col >= 0 && col < 8) {
                 // Check if the move is valid
-                List<int[]> possibleMoves = selectedPiece.getPossibleMoves(board.getBoard());
+                List<int[]> possibleMoves = selectedPiece.getPossibleMoves(game.getBoard());
                 boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
     
                 if (validMove) {
                     // Get the piece that will be captured, if any
-                    Piece capturedPiece = board.getPiece(row, col);
+                    Piece capturedPiece = game.getPiece(row, col);
     
                     // Temporarily make the move
                     Piece pieceToMove = selectedPiece.copy(); // Ensure a copy of the piece is used
-                    board.setPiece(row, col, pieceToMove);
-                    board.setPiece(originalRow, originalCol, null);
+                    game.setPiece(row, col, pieceToMove);
+                    game.setPiece(originalRow, originalCol, null);
                     pieceToMove.setPosition(row, col);
+                    game.recordMove(originalRow, originalCol, row, col, capturedPiece);
     
                     // Check if the king is in check
-                    if (board.isInCheck(board.isWhiteTurn())) {
+                    if (game.isInCheck(game.isWhiteTurn())) {
                         // Revert the move if it puts the king in check
-                        board.setPiece(originalRow, originalCol, pieceToMove);
-                        board.setPiece(row, col, capturedPiece); // Restore the captured piece
+                        game.setPiece(originalRow, originalCol, pieceToMove);
+                        game.setPiece(row, col, capturedPiece); // Restore the captured piece
                         pieceToMove.setPosition(originalRow, originalCol); // Restore the piece's position
                         System.out.println("Move puts king in check. Move reverted.");
                     } else {
                         // Valid move; switch turns if move is valid and does not put the king in check
                         if (originalRow != row || originalCol != col) {
-                            board.setWhiteTurn(!board.isWhiteTurn());
+                            game.setWhiteTurn(!game.isWhiteTurn());
                         }
                     }
+                }
+                if(game.checkMate(game))
+                {
+                    System.out.println("Checkmate!");
+                    statusLabel.setText("Checkmate!");
+                }
+                if(game.checkDraw(game))
+                {
+                    System.out.println("Draw!");
+                    statusLabel.setText("Draw");
                 }
     
                 drawBoard(); // Redraw the board to update the piece's position
@@ -164,7 +187,7 @@ public class PrimaryController {
         double squareSize = 100; // Size of each square on the board
         double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square s
     
-        possibleMoves=selectedPiece.getLegalMovesWithoutCheck(board);
+        possibleMoves=selectedPiece.getLegalMovesWithoutCheck(game);
         
         for (int[] move : possibleMoves) {
             int row = move[0];
