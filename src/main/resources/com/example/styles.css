@@ -118,6 +118,37 @@
   
 }
 
+/* Style for the drop-down list */
+.combo-box .list-view {
+  -fx-pref-width: 150px; /* Set the width of the drop-down list */
+  -fx-pref-height: 114px; /* Set the height of the drop-down list */
+}
+
+/* Style for the list cells (items) */
+.combo-box .list-cell {
+  -fx-pref-height: 25px; /* Increase the height of each item */
+  -fx-font-size: 16px; /* Adjust font size for better readability */
+}
+.combo-box .list-view .scroll-pane {
+  -fx-hbar-policy: never; /* Hide horizontal scroll bar */
+  -fx-vbar-policy: never; /* Hide vertical scroll bar */
+}
+
+.combo-box .list-cell:hover {
+  -fx-background-color: #7B61FF; /* Background color for hovered item */
+  -fx-text-fill: white; /* Text color for hovered item */
+}
+
+.combo-box .arrow {
+  -fx-background-color: transparent; /* Ensure the arrow is transparent */
+  -fx-border-color: transparent;
+}
+/* Style for the selected item in the dropdown list */
+.combo-box .combo-box-popup .list-cell:filled:selected {
+  -fx-background-color: #7B61FF; /* Background color for selected item in dropdown list */
+  -fx-text-fill: white; /* Text color for selected item in dropdown list */
+}
+
 
 
 

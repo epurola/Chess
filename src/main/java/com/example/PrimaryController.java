@@ -3,25 +3,29 @@ package com.example;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import javafx.animation.FadeTransition;
 import javafx.animation.FillTransition;
 import javafx.animation.ParallelTransition;
-import javafx.animation.ScaleTransition;
+
 import javafx.animation.TranslateTransition;
-import javafx.scene.media.AudioClip;
-import java.io.File;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -43,6 +47,8 @@ public class PrimaryController {
     @FXML
     private StackPane rootPane;
     @FXML
+    private AnchorPane pane;
+    @FXML
     private BorderPane borderPane;
     private Label statusLabel;
     private Game game;
@@ -59,6 +65,16 @@ public class PrimaryController {
     @FXML
     HBox hbox1;
     private static SoundManager soundManager;
+     @FXML
+    private ComboBox<String> promotionComboBox;
+    private ObservableList<String> promotionChoise;
+    @FXML
+    private Button promoteButton;
+
+    private Pawn pawnToPromote;
+    private int promoteRow, promoteCol;
+    double sceneY;
+    double sceneX;
   
     @FXML
     public void initialize() {
@@ -76,18 +92,18 @@ public class PrimaryController {
             // Apply CSS class
             statusLabel.getStyleClass().add("status-label");
         }
+        promotionChoise = FXCollections.observableArrayList("♕ Queen", "♖ Rook","♘ Knight","♗ Bishop");
+       
+        promotionComboBox.setItems(promotionChoise);
+        promotionComboBox.setOnAction(event -> promotePawn(promoteRow,promoteCol));
         
-
         toggleSwitch toggleSwitch = new toggleSwitch();
     
         hbox1.getChildren().add(toggleSwitch);
         toggleSwitch.swichedOn().addListener((obs, oldState, newState) -> {
             drawPossibleMoves = !drawPossibleMoves;
         });
-
-        
-        
-        
+        pane.setOnMouseReleased(this::handleMouseRelease);
 
         // Set preferred size for the board
         chessBoard.setPrefSize(800, 800);
@@ -97,11 +113,15 @@ public class PrimaryController {
 
         // Optionally: set the rootPane size to be 100% of the Scene
         rootPane.setPrefSize(800, 800);
+
+    }
+    private void handleMouseRelease(MouseEvent event) {
+        sceneX = event.getSceneX(); 
+        sceneY = event.getSceneY(); 
     }
     @FXML
     private void handleFullScreen() {
         Stage stage = (Stage) borderPane.getScene().getWindow();
-        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
 
         if (stage.isFullScreen()) {
             stage.setFullScreen(false);
@@ -119,7 +139,6 @@ public class PrimaryController {
     private void handleReset() {
 
         if (game != null) {
-            // Example: Remove event handlers from pieces
             chessBoard.getChildren().forEach(node -> {
                 if (node instanceof ImageView) {
                     ImageView pieceView = (ImageView) node;
@@ -129,7 +148,6 @@ public class PrimaryController {
                 }
             });
         }
-        // Reset the game instance
         game = new Game();
         
         // Clear the board and draw the new board
@@ -249,6 +267,10 @@ public class PrimaryController {
                     game.setPiece(originalRow, originalCol, null);
                     pieceToMove.setPosition(row, col);
                     
+                    if (pieceToMove instanceof Pawn && (row == 0 || row == 7)) {
+                        pawnToPromote = (Pawn) pieceToMove;
+                        promotePawn(row, col);
+                    }
                     
                     game.recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove);
                     // Check if the king is in check
@@ -295,6 +317,64 @@ public class PrimaryController {
             draggedPiece = null;
         }
     }
+    private void promotePawn(int row, int col) {
+        // Ensure the ComboBox is visible and set up
+        showPromotionComboBox(row, col);
+        
+        promotionComboBox.getSelectionModel().clearSelection();
+        promotionComboBox.setOnAction(event -> {
+            String promotionChoice = promotionComboBox.getValue();
+           
+            
+            if (promotionChoice != null) {
+                Piece newPiece;
+                promoteRow = row;
+                promoteCol = col;
+    
+                switch (promotionChoice) {
+                    case "♖ Rook":
+                        newPiece = new Rook(promoteRow, promoteCol, pawnToPromote.isWhite());
+                        break;
+                    case "♗ Bishop":
+                        newPiece = new Bishop(promoteRow, promoteCol, pawnToPromote.isWhite());
+                        break;
+                    case "♘ Knight":
+                        newPiece = new Knight(promoteRow, promoteCol, pawnToPromote.isWhite());
+                        break;
+                    case "♕ Queen":
+                    default:
+                        newPiece = new Queen(promoteRow, promoteCol, pawnToPromote.isWhite());
+                }
+        
+                
+                game.setPiece(promoteRow, promoteCol, newPiece);
+                if(game.getPiece(row,col) instanceof Pawn)
+                {
+                    newPiece = new Queen(promoteRow, promoteCol, pawnToPromote.isWhite());
+                    game.setPiece(promoteRow, promoteCol, newPiece);
+                }
+                System.out.println("Pawn promoted to " + promotionChoice + ".");
+                pawnToPromote = null; // Reset pawnToPromote after promotion
+                drawBoard(); // Redraw the board to update the piece's position
+    
+                // Hide the ComboBox after promotion
+                promotionComboBox.setVisible(false);
+            }
+
+           
+        });
+    }
+    private void showPromotionComboBox(int row, int col) {
+   
+    // Set the position of the ComboBox relative to the cell
+    promotionComboBox.setLayoutX(sceneX);
+    promotionComboBox.setLayoutY(sceneY);
+    promotionComboBox.setVisible(true);
+    promotionComboBox.show();
+}
+    
+    
+
 
     private void displayConfetti(Pane pane) {
         double paneWidth = pane.getWidth();
