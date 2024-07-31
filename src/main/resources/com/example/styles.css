@@ -97,6 +97,27 @@
   
 }
 
+.button3 {
+  -fx-background-color: transparent; /* Transparent background to show only the text */
+  -fx-text-fill: #FFFFFF; /* White text color for contrast */
+  -fx-text-align: center; /* Center text */
+  -fx-font-size: 50px; /* Initial large font size */
+  -fx-font-weight: bold; /* Bold text for visibility */
+  -fx-padding: 1px 1px; /* Padding around text */
+
+  -fx-opacity: 0.9; /* Slight opacity */
+  -fx-max-width: 300px; /* Ensure button can grow, adjust as needed */
+  -fx-max-height: 130px; /* Ensure button can grow, adjust as needed */
+  -fx-transition: all 0.3s ease-in-out; /* Smooth transition for hover effects */
+}
+
+/* Hover effect */
+.button3:hover {
+  -fx-font-size: 65px; /* Larger font size on hover */
+  -fx-opacity: 1; /* Full opacity on hover */
+  
+}
+
 
 
 

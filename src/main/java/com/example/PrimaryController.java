@@ -24,6 +24,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -234,21 +235,24 @@ public class PrimaryController {
                 if (validMove) {
                     // Get the piece that will be captured, if any
                     Piece capturedPiece = game.getPiece(row, col);
-    
                     // Temporarily make the move
                     Piece pieceToMove = selectedPiece.copy(); // Ensure a copy of the piece is used
                     game.setPiece(row, col, pieceToMove);
                     game.setPiece(originalRow, originalCol, null);
                     pieceToMove.setPosition(row, col);
-                    game.recordMove(originalRow, originalCol, row, col, capturedPiece);
-    
+                    
+                    game.recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove);
                     // Check if the king is in check
                     if (game.isInCheck(game.isWhiteTurn())) {
                         // Revert the move if it puts the king in check
                         game.setPiece(originalRow, originalCol, pieceToMove);
-                        game.setPiece(row, col, capturedPiece); // Restore the captured piece
+                        game.setPiece(row, col, capturedPiece);// Restore the captured piece
                         pieceToMove.setPosition(originalRow, originalCol); // Restore the piece's position
-                        game.recordMove(originalRow, originalCol, row, col, capturedPiece);
+                        if(capturedPiece !=null)
+                        {
+                            capturedPiece.setPosition(row,col);
+                        }
+                        game.popMoveStack();
                         System.out.println("Move puts king in check. Move reverted.");
                     } else {
                         // Valid move; switch turns if move is valid and does not put the king in check
@@ -256,13 +260,17 @@ public class PrimaryController {
                             game.setWhiteTurn(!game.isWhiteTurn());
                         }
                     }
+                    
                 }
-                if(game.checkMate(game))
-                {
-                    System.out.println("Checkmate!");
-                    statusLabel.setText("Checkmate!");
-                    statusLabel.setVisible(true);
-                }
+                
+               if(game.checkMate(game))
+               {
+                System.out.println("Checkmate!");
+                statusLabel.setText("Checkmate!");
+                statusLabel.setVisible(true);
+                displayConfetti(rootPane);
+               }
+                   
                 if(game.checkDraw(game))
                 {
                     System.out.println("Draw!");
@@ -276,6 +284,18 @@ public class PrimaryController {
             draggedPiece = null;
         }
     }
+
+    private void displayConfetti(Pane pane) {
+        double paneWidth = pane.getWidth();
+        double paneHeight = pane.getHeight();
+    
+        for (int i = 0; i < 100; i++) { // Number of confetti pieces
+            Confetti confetti = new Confetti(Color.hsb(Math.random() * 360, 1.0, 1.0), paneWidth, paneHeight);
+            pane.getChildren().add(confetti);
+            confetti.animate();
+        }
+    }
+    
     
     
 

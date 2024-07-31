@@ -24,6 +24,9 @@ public class Game {
     public Board getBoard() {
         return this.board;
     }
+    public void popMoveStack() {
+         moveStack.pop();
+    }
 
     public Piece getPiece(int row, int col) {
         return board.getPiece(row, col);
@@ -43,31 +46,39 @@ public class Game {
     public void undoLastMove() {
         if (!moveStack.isEmpty()) {
             Move lastMove = moveStack.pop();
+            Piece movedPiece = lastMove.getMovedPiece();
+     
     
-            // Get the pieces involved in the last move
-            Piece movedPiece = board.getPiece(lastMove.getToRow(), lastMove.getToCol());
             Piece capturedPiece = lastMove.getCapturedPiece();
-            
     
             // Move the moved piece back to its original position
-            board.setPiece(lastMove.getFromRow(), lastMove.getFromCol(), movedPiece);
-            movedPiece.setPosition(lastMove.getFromRow(), lastMove.getFromCol());
+            if (movedPiece != null) {
+                board.setPiece(lastMove.getFromRow(), lastMove.getFromCol(), movedPiece);
+                movedPiece.setPosition(lastMove.getFromRow(), lastMove.getFromCol());
+            } else {
+                // If the moved piece is null, clear the destination cell
+                board.setPiece(lastMove.getFromRow(), lastMove.getFromCol(), null);
+            }
     
-            // Restore the captured piece, if any
+            // Restore the captured piece to its original position, if any
             if (capturedPiece != null) {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), capturedPiece);
+                capturedPiece.setPosition(lastMove.getToRow(), lastMove.getToCol());
             } else {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
             }
     
-            // Switch the turn back
-            setWhiteTurn(!isWhiteTurn());
+           
+                setWhiteTurn(!isWhiteTurn());
+            
+            
         }
     }
     
+    
 
-    public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece) {
-        moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece));
+    public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece) {
+        moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece));
     }
 
     public boolean isInCheck(boolean isWhite) {
