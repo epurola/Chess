@@ -9,7 +9,8 @@ import javafx.animation.FillTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.ScaleTransition;
 import javafx.animation.TranslateTransition;
-import javafx.beans.binding.Bindings;
+import javafx.scene.media.AudioClip;
+import java.io.File;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
@@ -43,10 +44,7 @@ public class PrimaryController {
     private StackPane rootPane;
     @FXML
     private BorderPane borderPane;
-   
-    
     private Label statusLabel;
-
     private Game game;
     private Piece selectedPiece;
     private ImageView draggedPiece;
@@ -60,10 +58,12 @@ public class PrimaryController {
         VBox vbox ; 
     @FXML
     HBox hbox1;
+    private static SoundManager soundManager;
   
     @FXML
     public void initialize() {
         game = new Game();
+        soundManager= new SoundManager();
         drawBoard();
         drawPossibleMoves = true;
         if (statusLabel == null) {
@@ -76,12 +76,11 @@ public class PrimaryController {
             // Apply CSS class
             statusLabel.getStyleClass().add("status-label");
         }
-        // Assuming you already have this
+        
 
         toggleSwitch toggleSwitch = new toggleSwitch();
     
         hbox1.getChildren().add(toggleSwitch);
-
         toggleSwitch.swichedOn().addListener((obs, oldState, newState) -> {
             drawPossibleMoves = !drawPossibleMoves;
         });
@@ -231,19 +230,30 @@ public class PrimaryController {
                 // Check if the move is valid
                 List<int[]> possibleMoves = selectedPiece.getPossibleMoves(game.getBoard());
                 boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
+                if(!validMove)
+                {
+                    soundManager.playNotifySound();
+                }
     
                 if (validMove) {
-                    // Get the piece that will be captured, if any
                     Piece capturedPiece = game.getPiece(row, col);
+                    if (capturedPiece != null) {
+                        soundManager.playCaptureSound(); // Play capture sound
+                    } else {
+                        soundManager.playMoveSound(); // Play move sound
+                    }
+        
                     // Temporarily make the move
                     Piece pieceToMove = selectedPiece.copy(); // Ensure a copy of the piece is used
                     game.setPiece(row, col, pieceToMove);
                     game.setPiece(originalRow, originalCol, null);
                     pieceToMove.setPosition(row, col);
                     
+                    
                     game.recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove);
                     // Check if the king is in check
                     if (game.isInCheck(game.isWhiteTurn())) {
+                        SoundManager.playNotifySound();
                         // Revert the move if it puts the king in check
                         game.setPiece(originalRow, originalCol, pieceToMove);
                         game.setPiece(row, col, capturedPiece);// Restore the captured piece
@@ -268,6 +278,7 @@ public class PrimaryController {
                 System.out.println("Checkmate!");
                 statusLabel.setText("Checkmate!");
                 statusLabel.setVisible(true);
+                soundManager.playWinSound();
                 displayConfetti(rootPane);
                }
                    
@@ -428,6 +439,7 @@ public class PrimaryController {
 
             setOnMouseClicked(event ->{
                 switchedOn.set(!switchedOn.get());
+                soundManager.playButtonSound();
             });
 
 

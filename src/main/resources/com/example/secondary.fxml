@@ -9,8 +9,8 @@
 <VBox fx:id="vbox" alignment="CENTER" prefHeight="394.0" prefWidth="720.0" spacing="20.0" styleClass="borderPane" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.SecondaryController">
     <children>
         <Label text="" />
-        <Button fx:id="secondaryButton" onAction="#switchToPrimary" prefHeight="60.0" prefWidth="123.0" styleClass="button1" stylesheets="@styles.css" text="PLAY" />
-        <Button mnemonicParsing="false" styleClass="button3" stylesheets="@styles.css" text="Exit" onAction="#handleExit">
+        <Button fx:id="button" onAction="#switchToPrimary" prefHeight="60.0" prefWidth="123.0" styleClass="button1" stylesheets="@styles.css" text="PLAY" />
+        <Button fx:id="button1" mnemonicParsing="false" styleClass="button3" stylesheets="@styles.css" text="Exit" onAction="#handleExit">
             <graphic>
                 <FontAwesomeIconView glyphName="SIGN_OUT" rotate="180.0" />
             </graphic>

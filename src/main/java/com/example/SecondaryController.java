@@ -2,14 +2,30 @@ package com.example;
 
 import java.io.IOException;
 import javafx.fxml.FXML;
-import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class SecondaryController {
 
     @FXML
-    private VBox vbox; // Ensure this matches the FXML id
+    private VBox vbox; 
+
+    @FXML
+    private Button button;
+    @FXML
+    private Button button1;
+
+    @FXML
+    private void initialize() {
+        // Set up the hover sound effect for both buttons
+        addHoverSoundEffect(button);
+        addHoverSoundEffect(button1);
+    }
+
+    private void addHoverSoundEffect(Button button) {
+        button.setOnMouseEntered(event -> SoundManager.playHoverSound());
+    }
 
     @FXML
     private void switchToPrimary() throws IOException {
@@ -23,3 +39,4 @@ public class SecondaryController {
         stage.close();
     }
 }
+
