@@ -68,13 +68,12 @@ public class Game {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
             }
     
-           
-                setWhiteTurn(!isWhiteTurn());
+            SoundManager.playMoveSound();
+            setWhiteTurn(!isWhiteTurn());
             
             
         }
     }
-    
     
 
     public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece) {

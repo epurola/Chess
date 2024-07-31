@@ -278,7 +278,7 @@ public class PrimaryController {
                 System.out.println("Checkmate!");
                 statusLabel.setText("Checkmate!");
                 statusLabel.setVisible(true);
-                soundManager.playWinSound();
+                SoundManager.playWinSound();
                 displayConfetti(rootPane);
                }
                    
