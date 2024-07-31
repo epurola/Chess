@@ -1,10 +1,21 @@
 package com.example;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.FillTransition;
+import javafx.animation.ParallelTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.TranslateTransition;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -12,12 +23,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class PrimaryController {
 
@@ -28,6 +42,7 @@ public class PrimaryController {
     private StackPane rootPane;
     @FXML
     private BorderPane borderPane;
+   
     
     private Label statusLabel;
 
@@ -38,11 +53,18 @@ public class PrimaryController {
     private Button button;
     Color lightColor = Color.web("#E8EDF9"); // Custom light color (e.g., beige)
     Color darkColor = Color.web("#B7C0D8"); 
+    Color moveHelpColor = Color.web("#7B61FF");
+    private boolean drawPossibleMoves;
+    @FXML
+        VBox vbox ; 
+    @FXML
+    HBox hbox1;
   
     @FXML
     public void initialize() {
         game = new Game();
         drawBoard();
+        drawPossibleMoves = true;
         if (statusLabel == null) {
             statusLabel = new Label();
             statusLabel.setTextFill(Color.BLACK); 
@@ -53,6 +75,19 @@ public class PrimaryController {
             // Apply CSS class
             statusLabel.getStyleClass().add("status-label");
         }
+        // Assuming you already have this
+
+        toggleSwitch toggleSwitch = new toggleSwitch();
+    
+        hbox1.getChildren().add(toggleSwitch);
+
+        toggleSwitch.swichedOn().addListener((obs, oldState, newState) -> {
+            drawPossibleMoves = !drawPossibleMoves;
+        });
+
+        
+        
+        
 
         // Set preferred size for the board
         chessBoard.setPrefSize(800, 800);
@@ -167,7 +202,11 @@ public class PrimaryController {
     private void handlePieceDragStart(MouseEvent event, ImageView pieceView, Piece piece) {
         selectedPiece = piece;
         draggedPiece = pieceView;
-        drawPossibleMoves(selectedPiece);
+        if(drawPossibleMoves)
+        {
+            drawPossibleMoves(selectedPiece);
+        }
+        
         pieceView.toFront();
     }
 
@@ -242,32 +281,136 @@ public class PrimaryController {
 
     private void drawPossibleMoves(Piece selectedPiece) {
         List<int[]> possibleMoves = new ArrayList<>();
-
-        // Clear existing move indicators
-        chessBoard.getChildren().removeIf(node -> node instanceof Circle);
-
-        double squareSize = 100; // Size of each square on the board
-        double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square s
     
-        possibleMoves=selectedPiece.getLegalMovesWithoutCheck(game);
+        // Clear existing move indicators
+        chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
+    
+        double squareSize = 100; // Size of each square on the board
+        double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
+        
+        possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
+       
         
         for (int[] move : possibleMoves) {
             int row = move[0];
             int col = move[1];
-
+    
+            // Check if the square is occupied
+            boolean isOccupied = game.getPiece(row, col) != null; // Use your board's method to check for occupation
+    
             // Create and configure the move indicator
             Circle moveIndicator = new Circle(indicatorSize / 2);
-            moveIndicator.setFill(Color.GRAY.deriveColor(0, 1, 1, 0.3)); // Set fill color with transparency (30% opacity)
-
+            if (isOccupied) {
+                moveIndicator.setFill(null); // No fill for occupied squares
+                moveIndicator.setStroke(moveHelpColor.deriveColor(0, 1, 1, 0.5)); // Set stroke color with transparency (50% opacity)
+                moveIndicator.setStrokeWidth(4); // Adjust the stroke width if needed
+                moveIndicator.setRadius(40);
+            } else {
+                moveIndicator.setFill(moveHelpColor.deriveColor(0, 1, 1, 0.5)); // Set fill color with transparency (50% opacity)
+            }
+    
             // Use a StackPane to center the Circle
             StackPane moveIndicatorContainer = new StackPane();
             moveIndicatorContainer.setPickOnBounds(false);
             moveIndicatorContainer.getChildren().add(moveIndicator);
             moveIndicatorContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
-
+    
             moveIndicatorContainer.setMouseTransparent(true);
-
+    
             chessBoard.add(moveIndicatorContainer, col, row); // Add the container to the grid
+        }
+    }
+    
+    @FXML
+    private void handleBackButton() {
+        try {
+            // Call the method to switch to the secondary screen with animation
+            setRootWithTransition("secondary");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setRootWithTransition(String fxml) throws IOException {
+        Parent newRoot = App.loadFXML(fxml);
+        Scene scene = borderPane.getScene();
+    
+        if (scene != null) {
+            Parent oldRoot = scene.getRoot();
+    
+            // Apply fade-out transition to the old root
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(300), oldRoot);
+            fadeOut.setFromValue(1.0);
+            fadeOut.setToValue(0.0);
+    
+            // Apply fade-in transition to the new root
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newRoot);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+    
+            // Chain the transitions
+            fadeOut.setOnFinished(event -> {
+                scene.setRoot(newRoot);
+                fadeIn.play();
+            });
+    
+            fadeOut.play();
+        } else {
+            // If the scene is not yet initialized, just set the root directly
+            scene.setRoot(newRoot);
+    
+            // Apply fade-in transition to the initial scene
+            newRoot.setOpacity(0.0);
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newRoot);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+        }
+    }
+
+
+    private static class toggleSwitch extends Parent{
+        private BooleanProperty switchedOn = new SimpleBooleanProperty(false);
+        private TranslateTransition transition = new TranslateTransition(Duration.seconds(0.25));
+        private FillTransition FillBackground = new FillTransition(Duration.seconds(0.25));
+        Color moveHelpColor = Color.web("#7B61FF");
+
+        private ParallelTransition animation = new ParallelTransition(transition,FillBackground);
+
+        public BooleanProperty swichedOn(){
+            return switchedOn;
+        }
+        public toggleSwitch(){
+            Rectangle background = new Rectangle(50,25);
+            background.setArcHeight(25);
+            background.setArcWidth(25);
+            background.setFill(Color.WHITE);
+            background.setStroke(Color.LIGHTGRAY);
+
+            Circle toggle = new Circle(12.5);
+            toggle.setCenterX(12.5);
+            toggle.setCenterY(12.5);
+            toggle.setFill(Color.WHITE);
+            toggle.setStroke(Color.LIGHTGRAY);
+
+            transition.setNode(toggle);
+            FillBackground.setShape(background);
+
+            getChildren().addAll(background,toggle);
+            switchedOn.addListener((obs,oldState, newState) ->{
+                boolean isOn = newState.booleanValue();
+                transition.setToX(isOn ? 50 -25 : 0);
+                FillBackground.setFromValue(isOn ? Color.WHITE : moveHelpColor);
+                FillBackground.setToValue(isOn ? moveHelpColor : Color.WHITE);
+                animation.play();
+
+            });
+
+            setOnMouseClicked(event ->{
+                switchedOn.set(!switchedOn.get());
+            });
+
+
         }
     }
     

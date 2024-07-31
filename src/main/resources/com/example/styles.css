@@ -5,21 +5,27 @@
   -fx-font-family: 'Arial';
   -fx-font-size: 14px;
   -fx-background-color: #E5E5E5;
-
-
 }
+.borderPane
+{
+  -fx-background-image: url("Bg6.jpg"); /* Use classpath-relative path */
+  -fx-background-size: cover;
+}
+
 
 
 /* Style for the VBox layout */
 .VBox {
   -fx-background-color: #E5E5E5;/* Changed to a softer color */
   -fx-padding: 100 0;
+  
 
 }
 .HBox{
   -fx-fill-width: true;
   -fx-fit-height: true;
   -fx-background-color:#E5E5E5;
+
 }
 .title {
   
@@ -33,8 +39,8 @@
   -fx-font-size: 9px; /* Set the font size to a very small value */
 }
 .label1 {
-  -fx-text-fill: #76c7c0;
-  -fx-font-weight: bold;
+  -fx-font-size: 16px;
+  -fx-text-fill: #000000;
 }
 .status-label {
   -fx-font-size: 24px; /* Size of the text */
@@ -47,22 +53,55 @@
 }
 
 
+
+
+
 /* Style for buttons */
-.button {
+.button2 {
   -fx-background-color: #7B61FF;
-  -fx-text-fill: #152744;
+  -fx-text-fill: #ffffff;
   -fx-text-align: left;
+  -fx-transition: all 0.3s ease-in-out;
 }
-.button:hover {
-  -fx-background-color: #473991;
-  -fx-text-fill: #152744;
-  -fx-text-align: left;
+.button2:hover {
+  -fx-background-color: #5644b1; /* Change background color on hover */
+  -fx-font-size: 16px; /* Larger font size on hover */
+  -fx-opacity: 1; /* Full opacity on hover */
+  -fx-scale-x: 1.03; /* Slightly grow horizontally */
+  -fx-scale-y: 1.03; /* Slightly grow vertically */
+}
+.button2:hover .icon {
+  -fx-font-size: 30px; /* Larger icon size on hover */
 }
 
-.imageView {
-  -fx-preserve-ratio: true; 
-  -fx-alignment: CENTER; 
-  -fx-background-color:  #367591;
+
+
+.button1 {
+  -fx-background-color: transparent; /* Transparent background to show only the text */
+  -fx-text-fill: #FFFFFF; /* White text color for contrast */
+  -fx-text-align: center; /* Center text */
+  -fx-font-size: 80px; /* Initial large font size */
+  -fx-font-weight: bold; /* Bold text for visibility */
+  -fx-padding: 1px 1px; /* Padding around text */
+
+  -fx-opacity: 0.9; /* Slight opacity */
+  -fx-max-width: 300px; /* Ensure button can grow, adjust as needed */
+  -fx-max-height: 130px; /* Ensure button can grow, adjust as needed */
+  -fx-transition: all 0.3s ease-in-out; /* Smooth transition for hover effects */
+}
+
+/* Hover effect */
+.button1:hover {
+  -fx-font-size: 90px; /* Larger font size on hover */
+  -fx-opacity: 1; /* Full opacity on hover */
+  
+}
+
+
+
+
+.imageView:hover {
+  -fx-background-color: #454e5dfb;
 }
 .custom-alert{
   -fx-background-color: #152744;

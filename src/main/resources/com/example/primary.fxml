@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="borderPane" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.PrimaryController">
+<BorderPane fx:id="borderPane" styleClass="root" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.PrimaryController">
     <center>
         <StackPane fx:id="rootPane" maxHeight="815.0" maxWidth="815.0" minHeight="815.0" minWidth="815.0" styleClass="stackPane" stylesheets="@styles.css" BorderPane.alignment="CENTER">
          <Label layoutX="10.0" layoutY="100.0" prefHeight="16.0" prefWidth="25.0" stylesheets="@styles.css" text="8">
@@ -22,7 +22,7 @@
                <Font name="Arial" size="6.0" />
             </font>
          </Label>
-            <GridPane fx:id="chessBoard" alignment="CENTER" gridLinesVisible="true">
+            <GridPane fx:id="chessBoard" alignment="CENTER" gridLinesVisible="true" stylesheets="@styles.css">
                 <StackPane.margin>
                     <Insets />
                 </StackPane.margin>
@@ -150,49 +150,80 @@
         <HBox prefHeight="44.0" prefWidth="1072.0" styleClass="HBox" stylesheets="@styles.css" BorderPane.alignment="CENTER" />
     </top>
     <left>
-        <VBox alignment="TOP_CENTER" prefHeight="815.0" prefWidth="317.0" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
-            <Button fx:id="undoButton" onAction="#Undo" prefHeight="38.0" prefWidth="154.0" stylesheets="@styles.css" text="Undo">
+        <VBox fx:id="vbox" alignment="TOP_CENTER" prefHeight="815.0" prefWidth="317.0" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
+            <Button fx:id="undoButton" onAction="#Undo" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Undo">
                 <graphic>
-                    <FontAwesomeIconView glyphName="UNDO" />
+                    <FontAwesomeIconView fill="WHITE" glyphName="UNDO" wrappingWidth="32.0" />
                 </graphic>
                 <VBox.margin>
                     <Insets left="15.0" right="15.0" />
                 </VBox.margin>
+            <padding>
+               <Insets right="30.0" />
+            </padding>
             </Button>
             <!-- Add additional buttons here -->
-            <Button fx:id="resetButton" onAction="#handleReset" prefHeight="38.0" prefWidth="154.0" stylesheets="@styles.css" text="Reset">
+            <Button fx:id="resetButton" onAction="#handleReset" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Reset">
                 <graphic>
-                    <FontAwesomeIconView glyphName="REFRESH" />
+                    <FontAwesomeIconView fill="WHITE" glyphName="REFRESH" wrappingWidth="32.0" />
                 </graphic>
                 <VBox.margin>
                     <Insets left="15.0" right="15.0" top="15.0" />
                 </VBox.margin>
+            <padding>
+               <Insets right="30.0" />
+            </padding>
             </Button>
             <!-- Full Screen Button -->
-            <Button fx:id="fullScreenButton" onAction="#handleFullScreen" prefHeight="38.0" prefWidth="154.0" text="Full Screen">
+            <Button fx:id="fullScreenButton" onAction="#handleFullScreen" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Full Screen">
                 <graphic>
-                    <FontAwesomeIconView glyphName="EXPAND" />
+                    <FontAwesomeIconView fill="WHITE" glyphName="EXPAND" wrappingWidth="17.0" />
                 </graphic>
             <VBox.margin>
                <Insets left="15.0" right="15.0" top="15.0" />
             </VBox.margin>
+            <padding>
+               <Insets right="15.0" />
+            </padding>
             </Button>
             <!-- Exit Button -->
-            <Button fx:id="exitButton" onAction="#handleExit" prefHeight="38.0" prefWidth="154.0" text="Exit">
+            <Button fx:id="exitButton" onAction="#handleExit" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Exit">
                 <graphic>
-                    <FontAwesomeIconView glyphName="SIGN_OUT" />
+                    <FontAwesomeIconView fill="WHITE" glyphName="SIGN_OUT" wrappingWidth="39.5" />
                 </graphic>
             <VBox.margin>
                <Insets left="15.0" right="15.0" top="15.0" />
             </VBox.margin>
+            <padding>
+               <Insets right="40.0" />
+            </padding>
             </Button>
+         <Button fx:id="exitButton1" layoutX="92.0" layoutY="269.0" onAction="#handleBackButton" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Back">
+            <graphic>
+               <FontAwesomeIconView fill="WHITE" glyphName="ARROW_LEFT" wrappingWidth="34.5" />
+            </graphic>
+            <padding>
+               <Insets right="40.0" />
+            </padding>
+            <VBox.margin>
+               <Insets bottom="15.0" top="15.0" />
+            </VBox.margin>
+         </Button>
+         <HBox fx:id="hbox1" alignment="CENTER" prefHeight="38.0" prefWidth="154.0">
+            <children>
+               <Label styleClass="label1" text="Guide Off">
+                  <HBox.margin>
+                     <Insets right="15.0" />
+                  </HBox.margin></Label>
+            </children>
+         </HBox>
          <BorderPane.margin>
             <Insets />
          </BorderPane.margin>
         </VBox>
     </left>
     <right>
-        <VBox prefHeight="815.0" prefWidth="125.0" BorderPane.alignment="CENTER" />
+        <VBox prefHeight="815.0" prefWidth="125.0" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER" />
     </right>
     <bottom>
         <HBox styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
