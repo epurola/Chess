@@ -27,6 +27,23 @@ public class Game {
     public void popMoveStack() {
          moveStack.pop();
     }
+    public Move getLastMove() {
+        if (moveStack.isEmpty()) {
+            return null; // Or handle this case appropriately
+        }
+        return moveStack.peek();
+   }
+   public Move getSecondMove() {
+    if (moveStack.size() < 2) {
+        return null; // Or handle this case appropriately
+    }
+
+    Move topMove = moveStack.pop();
+    Move secondMove = moveStack.peek();
+    moveStack.push(topMove);
+
+    return secondMove;
+}
 
     public Piece getPiece(int row, int col) {
         return board.getPiece(row, col);
@@ -43,17 +60,68 @@ public class Game {
     public void setWhiteTurn(boolean whiteTurn) {
         this.whiteTurn = whiteTurn;
     }
+   
+    public boolean getTookEnPassant(boolean tookEnPassant)
+    {
+        return tookEnPassant;
+    }
+
+    public boolean isEnPassant(int row, int col) {
+        // Check if the move stack is empty
+        if (moveStack.isEmpty()) {
+            return false;
+        }
+    
+        // Get the last move
+        Move lastMove = getLastMove();
+        int startRow = lastMove.getFromRow();
+        int startCol = lastMove.getFromCol();
+        int newRow = lastMove.getToRow();
+        int newCol = lastMove.getToCol();
+    
+        // Ensure the piece moved is a pawn
+        Piece movedPiece = getPiece(newRow, newCol);
+        if (!(movedPiece instanceof Pawn)) {
+            return false;
+        }
+
+    
+        // Check if the move was a two-square pawn advance
+        if (Math.abs(startRow - newRow) == 2 && startCol == newCol ) {
+            
+            // Determine the direction of the pawn
+            if(col == 0 )
+            {
+                if ( getPiece(row, col + 1) instanceof Pawn) {
+                    return true;
+                }
+            }
+            if(col ==7 )
+            {
+                if ( getPiece(row, col - 1) instanceof Pawn) {
+                    return true;
+                }
+            }
+            if (getPiece(row, col + 1) instanceof Pawn || getPiece(row, (col- 1)) instanceof Pawn) {
+                return true;
+            }
+            
+        }
+   
+        return false;
+    }
+
     public void undoLastMove() {
         if (!moveStack.isEmpty()) {
             Move lastMove = moveStack.pop();
             Piece movedPiece = lastMove.getMovedPiece();
-     
     
             Piece capturedPiece = lastMove.getCapturedPiece();
     
             // Move the moved piece back to its original position
             if (movedPiece != null) {
                 board.setPiece(lastMove.getFromRow(), lastMove.getFromCol(), movedPiece);
+                board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
                 movedPiece.setPosition(lastMove.getFromRow(), lastMove.getFromCol());
             } else {
                 // If the moved piece is null, clear the destination cell
@@ -61,11 +129,13 @@ public class Game {
             }
     
             // Restore the captured piece to its original position, if any
+            //In case enpassant the eating piece position is not updated so it gets drawn in undo two times
             if (capturedPiece != null) {
-                board.setPiece(lastMove.getToRow(), lastMove.getToCol(), capturedPiece);
-                capturedPiece.setPosition(lastMove.getToRow(), lastMove.getToCol());
+                board.setPiece(lastMove.getCapturePieceRow(), lastMove.getCapturePieceCol(), capturedPiece);
+                capturedPiece.setPosition(lastMove.getCapturePieceRow(), lastMove.getCapturePieceCol());
             } else {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
+                System.out.println("NULLLLLLLLLLLL");
             }
     
             SoundManager.playMoveSound();
@@ -76,8 +146,8 @@ public class Game {
     }
     
 
-    public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece) {
-        moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece));
+    public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece, int capturePieceRow, int capturePieceCol) {
+        moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece, capturePieceRow, capturePieceCol));
     }
 
     public boolean isInCheck(boolean isWhite) {

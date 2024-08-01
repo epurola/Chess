@@ -70,8 +70,7 @@ public List<int[]> getLegalMovesWithoutCheck(Game game) {
 
         // Save the current state of the board
         Piece originalPieceAtTarget = board.getPiece(targetRow, targetCol);
-        Piece pieceToMove = copy(); // Create a copy of the bishop
-        
+        Piece pieceToMove = copy(); 
         // Create a copy of the board to simulate the move
         Board boardCopy = board.copyBoard();
         boardCopy.setPiece(targetRow, targetCol, pieceToMove);
@@ -89,7 +88,7 @@ public List<int[]> getLegalMovesWithoutCheck(Game game) {
         boardCopy.setPiece(getRow(), getCol(), pieceToMove);
         boardCopy.setPiece(targetRow, targetCol, originalPieceAtTarget);
     }
-
+    
     return legalMoves;
 }
 
@@ -106,6 +105,7 @@ public List<int[]> getLegalMovesWithoutCheck(Game game) {
         }
         return null; // King not found
     }
+
 }
 
 

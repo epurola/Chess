@@ -238,51 +238,84 @@ public class PrimaryController {
 
     private void handlePieceDrop(MouseEvent event) {
         if (draggedPiece != null) {
-            int row = (int) ((event.getSceneY() - chessBoard.localToScene(0,0).getY())/ 100);
-            int col = (int) ((event.getSceneX()  - chessBoard.localToScene(0,0).getX())/ 100);
+            int row = (int) ((event.getSceneY() - chessBoard.localToScene(0,0).getY()) / 100);
+            int col = (int) ((event.getSceneX() - chessBoard.localToScene(0,0).getX()) / 100);
             int originalRow = selectedPiece.getRow();
             int originalCol = selectedPiece.getCol();
-            
+            List<int[]> possibleMoves = new ArrayList<>();
+            Piece capturedPiece = null;
     
-            if (row >= 0 && row < 8 || col >= 0 && col < 8) {
+            if (row >= 0 && row < 8 && col >= 0 && col < 8) {
                 // Check if the move is valid
-                List<int[]> possibleMoves = selectedPiece.getPossibleMoves(game.getBoard());
+                if (selectedPiece instanceof Pawn) {
+                    if (game.isEnPassant(originalRow, originalCol) && col != originalCol) {
+                        possibleMoves = ((Pawn) selectedPiece).getPossibleMoveswithEnPassant(game.getBoard(), game);
+                        /* When there alredy is a pawn on that row it becomes captured piece and when user makes enpassant true
+                        need a way to get the last move coordinates to put to the captured piece*/ 
+                      
+                        capturedPiece = game.getPiece(game.getLastMove().getToRow() , game.getLastMove().getToCol()); 
+
+                        
+                      
+                        if(capturedPiece == null)
+                        {
+                            capturedPiece = game.getPiece(originalRow , originalCol + 1 ); 
+                        }
+                        if(capturedPiece != null && capturedPiece.isWhite() == selectedPiece.isWhite())
+                        {
+                            capturedPiece = null;
+                        }
+                    } else {
+                        possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
+                        capturedPiece = game.getPiece(row, col);
+                    }
+                } else {
+                    possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
+                    capturedPiece = game.getPiece(row, col);
+                }
+    
                 boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
-                if(!validMove)
-                {
+    
+                if (!validMove) {
                     soundManager.playNotifySound();
                 }
     
                 if (validMove) {
-                    Piece capturedPiece = game.getPiece(row, col);
                     if (capturedPiece != null) {
                         soundManager.playCaptureSound(); // Play capture sound
                     } else {
                         soundManager.playMoveSound(); // Play move sound
                     }
-        
+    
                     // Temporarily make the move
-                    Piece pieceToMove = selectedPiece.copy(); // Ensure a copy of the piece is used
+                    Piece pieceToMove = selectedPiece.copy();
+    
+                    // Handle en passant
+                    if (capturedPiece != null) {
+                        game.setPiece(capturedPiece.getRow(), capturedPiece.getCol(), null); // Remove the captured pawn from the board
+                    }
+    
                     game.setPiece(row, col, pieceToMove);
                     game.setPiece(originalRow, originalCol, null);
                     pieceToMove.setPosition(row, col);
-                    
+    
                     if (pieceToMove instanceof Pawn && (row == 0 || row == 7)) {
                         pawnToPromote = (Pawn) pieceToMove;
                         promotePawn(row, col);
                     }
-                    
-                    game.recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove);
+                    game.recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove,
+                    capturedPiece != null ? capturedPiece.getRow() : 1, 
+                    capturedPiece != null ? capturedPiece.getCol() : 1);
+    
                     // Check if the king is in check
                     if (game.isInCheck(game.isWhiteTurn())) {
-                        SoundManager.playNotifySound();
+                        soundManager.playNotifySound();
                         // Revert the move if it puts the king in check
                         game.setPiece(originalRow, originalCol, pieceToMove);
-                        game.setPiece(row, col, capturedPiece);// Restore the captured piece
+                        game.setPiece(row, col, capturedPiece); // Restore the captured piece
                         pieceToMove.setPosition(originalRow, originalCol); // Restore the piece's position
-                        if(capturedPiece !=null)
-                        {
-                            capturedPiece.setPosition(row,col);
+                        if (capturedPiece != null) {
+                            capturedPiece.setPosition(row, col);
                         }
                         game.popMoveStack();
                         System.out.println("Move puts king in check. Move reverted.");
@@ -292,20 +325,17 @@ public class PrimaryController {
                             game.setWhiteTurn(!game.isWhiteTurn());
                         }
                     }
-                    
                 }
-                
-               if(game.checkMate(game))
-               {
-                System.out.println("Checkmate!");
-                statusLabel.setText("Checkmate!");
-                statusLabel.setVisible(true);
-                SoundManager.playWinSound();
-                displayConfetti(rootPane);
-               }
-                   
-                if(game.checkDraw(game))
-                {
+    
+                if (game.checkMate(game)) {
+                    System.out.println("Checkmate!");
+                    statusLabel.setText("Checkmate!");
+                    statusLabel.setVisible(true);
+                    soundManager.playWinSound();
+                    displayConfetti(rootPane);
+                }
+    
+                if (game.checkDraw(game)) {
                     System.out.println("Draw!");
                     statusLabel.setText("Draw");
                     statusLabel.setVisible(true);
@@ -313,10 +343,12 @@ public class PrimaryController {
     
                 drawBoard(); // Redraw the board to update the piece's position
             }
+    
             selectedPiece = null;
             draggedPiece = null;
         }
     }
+    
     private void promotePawn(int row, int col) {
         // Ensure the ComboBox is visible and set up
         showPromotionComboBox(row, col);
@@ -398,10 +430,15 @@ public class PrimaryController {
     
         double squareSize = 100; // Size of each square on the board
         double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
-        
-        possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
-       
-        
+      
+        if (selectedPiece instanceof Pawn) {
+            // Cast to Pawn and get possible moves including en passant
+            possibleMoves = ((Pawn) selectedPiece).getPossibleMoveswithEnPassant(game.getBoard(), game);
+        } else {
+            // For other pieces, use the standard method
+            possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
+        }
+    
         for (int[] move : possibleMoves) {
             int row = move[0];
             int col = move[1];
