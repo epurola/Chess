@@ -27,6 +27,12 @@
   -fx-background-color:#E5E5E5;
 
 }
+.hBox{
+  -fx-fill-width: true;
+  -fx-fit-height: true;
+  -fx-background-color:#a31b1b;
+
+}
 .title {
   
   -fx-background-color: #ECF0F1; /* Changed to a softer color */
@@ -117,10 +123,16 @@
   -fx-opacity: 1; /* Full opacity on hover */
   
 }
+.combo-box {
+  -fx-background-color:  #ffffff;
+  -fx-text-fill: #ffffff;
+  -fx-pref-width: 150px; /* Set the width of the drop-down list */
+  -fx-pref-height: 5px;
+}
 
 /* Style for the drop-down list */
 .combo-box .list-view {
-  -fx-pref-width: 150px; /* Set the width of the drop-down list */
+  -fx-pref-width: 188px; /* Set the width of the drop-down list */
   -fx-pref-height: 114px; /* Set the height of the drop-down list */
 }
 
@@ -140,7 +152,7 @@
 }
 
 .combo-box .arrow {
-  -fx-background-color: transparent; /* Ensure the arrow is transparent */
+  -fx-background-color: #7B61FF; /* Ensure the arrow is transparent */
   -fx-border-color: transparent;
 }
 /* Style for the selected item in the dropdown list */

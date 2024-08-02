@@ -130,7 +130,6 @@ public class Pawn extends Piece {
     
             // Create a new Game instance with the copied board
             Game copyGame = new Game(boardCopy);
-    
             // Check if the move results in a check on the player's own king
             if (!copyGame.isInCheck(isWhite())) {
                 legalMoves.add(move);

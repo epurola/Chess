@@ -1,27 +1,25 @@
 package com.example;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+
 import javafx.animation.FadeTransition;
 import javafx.animation.FillTransition;
 import javafx.animation.ParallelTransition;
-
 import javafx.animation.TranslateTransition;
-
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-
-import javafx.geometry.Rectangle2D;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -35,7 +33,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -43,7 +40,6 @@ public class PrimaryController {
 
     @FXML
     private GridPane chessBoard;
-    
     @FXML
     private StackPane rootPane;
     @FXML
@@ -56,46 +52,57 @@ public class PrimaryController {
     private ImageView draggedPiece;
     @FXML
     private Button button;
-    Color lightColor = Color.web("#E8EDF9"); // Custom light color (e.g., beige)
+    Color lightColor = Color.web("#E8EDF9"); 
     Color darkColor = Color.web("#B7C0D8"); 
     Color moveHelpColor = Color.web("#7B61FF");
     private boolean drawPossibleMoves;
     @FXML
-        VBox vbox ; 
+    VBox vbox ; 
     @FXML
     HBox hbox1;
+    @FXML
+    private Button exitButton;
+    @FXML
+    private Button undoButton;
+    @FXML
+    private Button fullScreenButton;
+    @FXML
+    private Button resetButton;
+    @FXML
+    private Button exitButton1;
     private static SoundManager soundManager;
-     @FXML
+    @FXML
     private ComboBox<String> promotionComboBox;
     private ObservableList<String> promotionChoise;
     @FXML
-    private Button promoteButton;
-
     private Pawn pawnToPromote;
     private int promoteRow, promoteCol;
     double sceneY;
     double sceneX;
+    String promotionChoice;
   
     @FXML
     public void initialize() {
         game = new Game();
         soundManager= new SoundManager();
         drawBoard();
+        
+
         drawPossibleMoves = true;
+
         if (statusLabel == null) {
             statusLabel = new Label();
             statusLabel.setTextFill(Color.BLACK); 
             statusLabel.setVisible(false);
             rootPane.getChildren().add(statusLabel);
             StackPane.setAlignment(statusLabel, javafx.geometry.Pos.CENTER);
-    
-            // Apply CSS class
             statusLabel.getStyleClass().add("status-label");
         }
-        promotionChoise = FXCollections.observableArrayList("♕ Queen", "♖ Rook","♘ Knight","♗ Bishop");
-       
+
+      
         promotionComboBox.setItems(promotionChoise);
         promotionComboBox.setOnAction(event -> promotePawn(promoteRow,promoteCol));
+        promotionComboBox.setVisible(false);
         
         toggleSwitch toggleSwitch = new toggleSwitch();
     
@@ -103,7 +110,8 @@ public class PrimaryController {
         toggleSwitch.swichedOn().addListener((obs, oldState, newState) -> {
             drawPossibleMoves = !drawPossibleMoves;
         });
-        pane.setOnMouseReleased(this::handleMouseRelease);
+        
+        
 
         // Set preferred size for the board
         chessBoard.setPrefSize(800, 800);
@@ -115,10 +123,7 @@ public class PrimaryController {
         rootPane.setPrefSize(800, 800);
 
     }
-    private void handleMouseRelease(MouseEvent event) {
-        sceneX = event.getSceneX(); 
-        sceneY = event.getSceneY(); 
-    }
+   
     @FXML
     private void handleFullScreen() {
         Stage stage = (Stage) borderPane.getScene().getWindow();
@@ -149,10 +154,8 @@ public class PrimaryController {
             });
         }
         game = new Game();
-        
         // Clear the board and draw the new board
         drawBoard();
-        
         // Clear status messages
         if (statusLabel != null) {
             statusLabel.setText("");
@@ -171,9 +174,7 @@ public class PrimaryController {
                 } else {
                     square.setFill(darkColor);
                 }
-
                 chessBoard.add(square, j, i); // Add the square to the grid
-
                 Piece piece = game.getPiece(i, j);
                 if (piece != null) {
                     String color = piece.isWhite() ? "white-" : "black-";
@@ -250,17 +251,9 @@ public class PrimaryController {
                 if (selectedPiece instanceof Pawn) {
                     if (game.isEnPassant(originalRow, originalCol) && col != originalCol) {
                         possibleMoves = ((Pawn) selectedPiece).getPossibleMoveswithEnPassant(game.getBoard(), game);
-                        /* When there alredy is a pawn on that row it becomes captured piece and when user makes enpassant true
-                        need a way to get the last move coordinates to put to the captured piece*/ 
-                      
+                        
                         capturedPiece = game.getPiece(game.getLastMove().getToRow() , game.getLastMove().getToCol()); 
 
-                        
-                      
-                        if(capturedPiece == null)
-                        {
-                            capturedPiece = game.getPiece(originalRow , originalCol + 1 ); 
-                        }
                         if(capturedPiece != null && capturedPiece.isWhite() == selectedPiece.isWhite())
                         {
                             capturedPiece = null;
@@ -303,6 +296,11 @@ public class PrimaryController {
                         pawnToPromote = (Pawn) pieceToMove;
                         promotePawn(row, col);
                     }
+                    if(pieceToMove instanceof King)
+                    {
+                        game.updateKingPositions();
+                    }
+                   
                     game.recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove,
                     capturedPiece != null ? capturedPiece.getRow() : 1, 
                     capturedPiece != null ? capturedPiece.getCol() : 1);
@@ -340,8 +338,8 @@ public class PrimaryController {
                     statusLabel.setText("Draw");
                     statusLabel.setVisible(true);
                 }
-    
-                drawBoard(); // Redraw the board to update the piece's position
+                    drawBoard(); // Redraw the board only if the move is valid
+               
             }
     
             selectedPiece = null;
@@ -350,63 +348,106 @@ public class PrimaryController {
     }
     
     private void promotePawn(int row, int col) {
-        // Ensure the ComboBox is visible and set up
-        showPromotionComboBox(row, col);
         
-        promotionComboBox.getSelectionModel().clearSelection();
-        promotionComboBox.setOnAction(event -> {
-            String promotionChoice = promotionComboBox.getValue();
-           
-            
-            if (promotionChoice != null) {
-                Piece newPiece;
-                promoteRow = row;
-                promoteCol = col;
+        List<String> promotionImagePaths = List.of(
+            "/images/white-rook.png",
+            "/images/white-bishop.png",
+            "/images/white-knight.png",
+            "/images/white-queen.png"
+        );
     
-                switch (promotionChoice) {
-                    case "♖ Rook":
-                        newPiece = new Rook(promoteRow, promoteCol, pawnToPromote.isWhite());
-                        break;
-                    case "♗ Bishop":
-                        newPiece = new Bishop(promoteRow, promoteCol, pawnToPromote.isWhite());
-                        break;
-                    case "♘ Knight":
-                        newPiece = new Knight(promoteRow, promoteCol, pawnToPromote.isWhite());
-                        break;
-                    case "♕ Queen":
-                    default:
-                        newPiece = new Queen(promoteRow, promoteCol, pawnToPromote.isWhite());
-                }
+    
+        if (selectedPiece.isWhite()) {
+            promotionImagePaths = List.of(
+                "/images/white-rook.png",
+                "/images/white-bishop.png",
+                "/images/white-knight.png",
+                "/images/white-queen.png"
+            );
+        } else {
+            promotionImagePaths = List.of(
+                "/images/black-rook.png",
+                "/images/black-bishop.png",
+                "/images/black-knight.png",
+                "/images/black-queen.png"
+            );
+        }
         
-                
-                game.setPiece(promoteRow, promoteCol, newPiece);
-                if(game.getPiece(row,col) instanceof Pawn)
-                {
+
+
+        
+        // Instantiate the ChoiseMenu with the promotion options and a callback
+        ChoiseMenu promotionMenu = new ChoiseMenu("Choose Promotion", promotionImagePaths, choice -> {
+            // Handle the user's choice
+            Piece newPiece;
+            promoteRow = row;
+            promoteCol = col;
+    
+            switch (choice) {
+                case "/images/white-rook.png":
+                    newPiece = new Rook(promoteRow, promoteCol, pawnToPromote.isWhite());
+                    break;
+                case "/images/white-bishop.png":
+                    newPiece = new Bishop(promoteRow, promoteCol, pawnToPromote.isWhite());
+                    break;
+                case "/images/white-knight.png":
+                    newPiece = new Knight(promoteRow, promoteCol, pawnToPromote.isWhite());
+                    break;
+                case "/images/white-queen.png":
+                  newPiece = new Queen(promoteRow, promoteCol, pawnToPromote.isWhite());
+                    break;
+                case "/images/black-rook.png":
+                    newPiece = new Rook(promoteRow, promoteCol, pawnToPromote.isWhite());
+                    break;
+                case "/images/black-bishop.png":
+                    newPiece = new Bishop(promoteRow, promoteCol, pawnToPromote.isWhite());
+                    break;
+                case "/images/black-knight.png":
+                    newPiece = new Knight(promoteRow, promoteCol, pawnToPromote.isWhite());
+                    break;
+                case "/images/black-queen.png":
                     newPiece = new Queen(promoteRow, promoteCol, pawnToPromote.isWhite());
-                    game.setPiece(promoteRow, promoteCol, newPiece);
-                }
-                System.out.println("Pawn promoted to " + promotionChoice + ".");
-                pawnToPromote = null; // Reset pawnToPromote after promotion
-                drawBoard(); // Redraw the board to update the piece's position
-    
-                // Hide the ComboBox after promotion
-                promotionComboBox.setVisible(false);
+                    break;
+                default:
+                    newPiece = new Queen(promoteRow, promoteCol, pawnToPromote.isWhite());
             }
-
-           
+            soundManager.playButtonSound();
+            game.setPiece(promoteRow, promoteCol, newPiece);
+            System.out.println("Pawn promoted to " + choice + ".");
+            pawnToPromote = null; // Reset pawnToPromote after promotion
+            drawBoard(); // Redraw the board to update the piece's position
+            exitButton.setMouseTransparent(false); 
+            exitButton1.setMouseTransparent(false);
+            fullScreenButton.setMouseTransparent(false);
+            resetButton.setMouseTransparent(false);
+            undoButton.setMouseTransparent(false);
+            
         });
+    
+        promotionMenu.setLayoutX(calculateXForRow(row));
+        promotionMenu.setLayoutY(calculateYForCol(col));
+        rootPane.getChildren().add(promotionMenu);
+        exitButton.setMouseTransparent(true); 
+        exitButton1.setMouseTransparent(true);
+        fullScreenButton.setMouseTransparent(true);
+        resetButton.setMouseTransparent(true);
+        undoButton.setMouseTransparent(true);
+        
+        
     }
-    private void showPromotionComboBox(int row, int col) {
    
-    // Set the position of the ComboBox relative to the cell
-    promotionComboBox.setLayoutX(sceneX);
-    promotionComboBox.setLayoutY(sceneY);
-    promotionComboBox.setVisible(true);
-    promotionComboBox.show();
-}
-    
-    
 
+    // Helper methods to calculate positions
+    private double calculateXForRow(int row) {
+        // Implement your logic to convert the row to X position
+        return row  ; // Placeholder
+    }
+    
+    private double calculateYForCol(int col) {
+        // Implement your logic to convert the column to Y position
+        return col ; // Placeholder
+    }
+    
 
     private void displayConfetti(Pane pane) {
         double paneWidth = pane.getWidth();
@@ -419,9 +460,6 @@ public class PrimaryController {
         }
     }
     
-    
-    
-
     private void drawPossibleMoves(Piece selectedPiece) {
         List<int[]> possibleMoves = new ArrayList<>();
     
@@ -562,7 +600,97 @@ public class PrimaryController {
 
         }
     }
+    public class ChoiseMenu extends Parent {
+        private BooleanProperty visible = new SimpleBooleanProperty(false);
+        private Consumer<String> onChoiceSelected; // Callback for when a choice is selected
+        private Color purple = Color.web("#7B61FF");
     
+        @SuppressWarnings("exports")
+        public BooleanProperty VisibleProperty() {
+            return visible;
+        }
+    
+        public boolean IsVisible() {
+            return visible.get();
+        }
+    
+        public void SetVisible(boolean visible) {
+            this.visible.set(visible);
+        }
+    
+        // Constructor with a callback for choice selection
+        public ChoiseMenu(String header, List<String> imagePaths, Consumer<String> onChoiceSelected) {
+            this.onChoiceSelected = onChoiceSelected; // Set the callback
+    
+            // Create the background rectangle
+            Rectangle background = new Rectangle(400, 100);
+            background.setArcHeight(15);
+            background.setArcWidth(15);
+            background.setFill(Color.WHITE);
+            background.setStroke(Color.LIGHTGRAY);
+    
+            // Create an HBox to hold the images
+            HBox itemsContainer = new HBox(); // Spacing between images
+            itemsContainer.setPrefWidth(background.getWidth());
+            itemsContainer.setPrefHeight(background.getHeight());
+
+    
+            // Add images to the HBox
+            for (String imagePath : imagePaths) {
+                // Load the image using the imagePath from the list
+                Image image = new Image(getClass().getResourceAsStream(imagePath));
+    
+                // Create an ImageView for the loaded image
+                ImageView imageView = new ImageView(image);
+                imageView.setFitHeight(100); 
+                imageView.setFitWidth(100);
+                
+                
+                // Create a DropShadow effect
+                
+    
+                // Set up event handlers
+                imageView.setOnMouseClicked(e -> handleChoice(imagePath)); // Handle choice when image is clicked
+                imageView.setOnMouseEntered(e -> {
+                    imageView.setStyle("-fx-border-color: #7B61FF; -fx-border-width: 3;");
+                    imageView.setOpacity(0.5); // Change cursor to hand on hover
+                });
+    
+                imageView.setOnMouseExited(e -> {
+                    imageView.setEffect(null); // Remove shadow effect
+                    imageView.setStyle("-fx-border-color: transparent; -fx-border-width: 3;");
+                    imageView.setOpacity(1); // Revert cursor on exit
+                });
+    
+                // Add the ImageView to the HBox
+                itemsContainer.getChildren().add(imageView);
+            }
+    
+            // Add background and items container to the parent
+            getChildren().addAll(background, itemsContainer);
+    
+            // Set initial visibility
+            updateVisibility();
+    
+            // Add listener to the visibility property
+            visible.addListener((obs, oldState, newState) -> updateVisibility());
+        }
+    
+        // Method to handle the choice selection
+        private void handleChoice(String imagePath) {
+            if (onChoiceSelected != null) {
+                onChoiceSelected.accept(imagePath); // Invoke the callback with the selected image path
+            }
+            setVisible(false); // Hide the menu after a choice is made
+        }
+    
+        // Method to update visibility based on the visibility property
+        private void updateVisibility() {
+            setManaged(isVisible()); // Ensure layout is managed based on visibility
+            setVisible(isVisible()); // Update actual visibility
+            // You can also use other visibility management logic if needed
+        }
+    }
     
 }
 

@@ -8,17 +8,61 @@ public class Game {
     private Board board;
     private boolean whiteTurn; // true if it's white's turn, false if black's turn
     private Stack<Move> moveStack; // Stack to keep track of moves
+    private int[] whiteKingPosition; // Variable to store the position of the white king
+    private int[] blackKingPosition;
+  
 
     public Game() {
         board = new Board();
         whiteTurn = true; // White always starts first
         moveStack = new Stack<>(); // Initialize the move stack
+        whiteKingPosition = new int[2];
+        blackKingPosition = new int[2];
+        updateKingPositions();
     }
 
     public Game(Board board) {
         this.board = board.copyBoard(); // Use deep copy constructor
         this.whiteTurn = true; // White always starts first
         moveStack = new Stack<>(); // Initialize the move stack
+        whiteKingPosition = new int[2];
+        blackKingPosition = new int[2];
+        updateKingPositions();
+    }
+    public int[] getWhiteKingPosition() {
+        return whiteKingPosition;
+    }
+
+    // Setter for white king position
+    public void setWhiteKingPosition(int row, int col) {
+        this.whiteKingPosition[0] = row;
+        this.whiteKingPosition[1] = col;
+    }
+
+    // Getter for black king position
+    public int[] getBlackKingPosition() {
+        return blackKingPosition;
+    }
+
+    // Setter for black king position
+    public void setBlackKingPosition(int row, int col) {
+        this.blackKingPosition[0] = row;
+        this.blackKingPosition[1] = col;
+    }
+    public void updateKingPositions() {
+        // Update white king position
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPiece(row, col);
+                if (piece instanceof King) {
+                    if (piece.isWhite()) {
+                        setWhiteKingPosition(row, col);
+                    } else {
+                        setBlackKingPosition(row, col);
+                    }
+                }
+            }
+        }
     }
 
     public Board getBoard() {
@@ -135,7 +179,7 @@ public class Game {
                 capturedPiece.setPosition(lastMove.getCapturePieceRow(), lastMove.getCapturePieceCol());
             } else {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
-                System.out.println("NULLLLLLLLLLLL");
+                
             }
     
             SoundManager.playMoveSound();
@@ -153,7 +197,7 @@ public class Game {
     public boolean isInCheck(boolean isWhite) {
         boolean isInCheck = false;
 
-        int[] kingPosition = findKing(isWhite);
+        int[] kingPosition = isWhite ? getWhiteKingPosition() : getBlackKingPosition();
         if (kingPosition == null) {
             return false; // King not found
         }
@@ -183,17 +227,7 @@ public class Game {
         return isInCheck;
     }
 
-    public int[] findKing(boolean isWhite) {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece piece = board.getPiece(row, col);
-                if (piece != null && piece.isWhite() == isWhite && piece instanceof King) {
-                    return new int[]{row, col};
-                }
-            }
-        }
-        return null; // King not found
-    }
+    
     public List<Piece> getAllPieces(boolean isWhite) {
         List<Piece> pieces = new ArrayList<>();
         for (int r = 0; r < 8; r++) {
@@ -212,7 +246,7 @@ public class Game {
         List<int[]> legalMoves = new ArrayList<>();
     
         // Find the king's position
-        int[] kingPosition = findKing(isWhite);
+        int[] kingPosition = isWhite ? getWhiteKingPosition() : getBlackKingPosition();
         if (kingPosition == null) {
             return legalMoves; // King not found
         }
@@ -261,7 +295,7 @@ public class Game {
 
     public boolean checkMate(Game game){
 
-       int[] kingPosition = game.findKing(whiteTurn);
+       int[] kingPosition = game.isWhiteTurn() ? getWhiteKingPosition() : getBlackKingPosition();
 
        int row= kingPosition[0];
        int col = kingPosition[1];
