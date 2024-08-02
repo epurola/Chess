@@ -105,14 +105,13 @@ public class Game {
         this.whiteTurn = whiteTurn;
     }
    
-    public boolean getTookEnPassant(boolean tookEnPassant)
-    {
-        return tookEnPassant;
-    }
 
     public boolean isEnPassant(int row, int col) {
         // Check if the move stack is empty
         if (moveStack.isEmpty()) {
+            return false;
+        }
+        if (!(row == 3 || row == 4)) {
             return false;
         }
     

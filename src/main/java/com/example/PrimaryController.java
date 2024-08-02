@@ -13,6 +13,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -33,6 +34,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -88,7 +90,7 @@ public class PrimaryController {
         drawBoard();
         
 
-        drawPossibleMoves = true;
+        drawPossibleMoves = false;
 
         if (statusLabel == null) {
             statusLabel = new Label();
@@ -104,10 +106,10 @@ public class PrimaryController {
         promotionComboBox.setOnAction(event -> promotePawn(promoteRow,promoteCol));
         promotionComboBox.setVisible(false);
         
-        toggleSwitch toggleSwitch = new toggleSwitch();
+        ToggleSwitch toggleSwitch = new ToggleSwitch();
     
         hbox1.getChildren().add(toggleSwitch);
-        toggleSwitch.swichedOn().addListener((obs, oldState, newState) -> {
+        toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> {
             drawPossibleMoves = !drawPossibleMoves;
         });
         
@@ -555,51 +557,70 @@ public class PrimaryController {
     }
 
 
-    private static class toggleSwitch extends Parent{
+    private static class ToggleSwitch extends Parent {
         private BooleanProperty switchedOn = new SimpleBooleanProperty(false);
         private TranslateTransition transition = new TranslateTransition(Duration.seconds(0.25));
-        private FillTransition FillBackground = new FillTransition(Duration.seconds(0.25));
+        private FillTransition fillBackground = new FillTransition(Duration.seconds(0.25));
+        private TranslateTransition moveText = new TranslateTransition(Duration.seconds(0.25));
         Color moveHelpColor = Color.web("#7B61FF");
-
-        private ParallelTransition animation = new ParallelTransition(transition,FillBackground);
-
-        public BooleanProperty swichedOn(){
+    
+        private ParallelTransition animation = new ParallelTransition(transition, fillBackground, moveText);
+    
+        public BooleanProperty switchedOn() {
             return switchedOn;
         }
-        public toggleSwitch(){
-            Rectangle background = new Rectangle(50,25);
+    
+        public ToggleSwitch() {
+            Rectangle background = new Rectangle(50, 25);
             background.setArcHeight(25);
             background.setArcWidth(25);
             background.setFill(Color.WHITE);
             background.setStroke(Color.LIGHTGRAY);
-
+    
             Circle toggle = new Circle(12.5);
-            toggle.setCenterX(12.5);
-            toggle.setCenterY(12.5);
             toggle.setFill(Color.WHITE);
             toggle.setStroke(Color.LIGHTGRAY);
-
+    
+            Text text = new Text("Off");
+            text.setFill(Color.BLACK);
+            text.setStyle("-fx-font-size: 12;");
+            text.setTranslateX(-12);
+    
+            StackPane stackPane = new StackPane();
+            stackPane.getChildren().addAll(background, toggle, text);
+            StackPane.setAlignment(toggle, Pos.CENTER_LEFT);  // Align toggle to left
+            StackPane.setAlignment(text, Pos.CENTER);         // Center text in the StackPane
+    
+            // Set the size of the StackPane to match the background
+            stackPane.setPrefSize(50, 25);
             transition.setNode(toggle);
-            FillBackground.setShape(background);
-
-            getChildren().addAll(background,toggle);
-            switchedOn.addListener((obs,oldState, newState) ->{
+            fillBackground.setShape(background);
+            moveText.setNode(text);
+    
+            getChildren().add(stackPane);
+            switchedOn.addListener((obs, oldState, newState) -> {
                 boolean isOn = newState.booleanValue();
-                transition.setToX(isOn ? 50 -25 : 0);
-                FillBackground.setFromValue(isOn ? Color.WHITE : moveHelpColor);
-                FillBackground.setToValue(isOn ? moveHelpColor : Color.WHITE);
+                double toggleTargetX = isOn ? 50 - toggle.getRadius() * 2 : 0;
+                double target = isOn ? 12.5 : -12.5;
+                transition.setToX(toggleTargetX);
+                fillBackground.setFromValue(isOn ? Color.WHITE : moveHelpColor);
+                fillBackground.setToValue(isOn ? moveHelpColor : Color.WHITE);
+                moveText.setToX(target);
+                text.setText(isOn ? "On" : "Off");
+                text.setFill (isOn ?moveHelpColor :Color.BLACK );
+                
+
                 animation.play();
-
             });
-
-            setOnMouseClicked(event ->{
+    
+            setOnMouseClicked(event -> {
                 switchedOn.set(!switchedOn.get());
                 soundManager.playButtonSound();
             });
-
-
         }
     }
+    
+    
     public class ChoiseMenu extends Parent {
         private BooleanProperty visible = new SimpleBooleanProperty(false);
         private Consumer<String> onChoiceSelected; // Callback for when a choice is selected
@@ -623,7 +644,7 @@ public class PrimaryController {
             this.onChoiceSelected = onChoiceSelected; // Set the callback
     
             // Create the background rectangle
-            Rectangle background = new Rectangle(400, 100);
+            Rectangle background = new Rectangle(520, 120);
             background.setArcHeight(15);
             background.setArcWidth(15);
             background.setFill(Color.WHITE);
@@ -633,6 +654,8 @@ public class PrimaryController {
             HBox itemsContainer = new HBox(); // Spacing between images
             itemsContainer.setPrefWidth(background.getWidth());
             itemsContainer.setPrefHeight(background.getHeight());
+            itemsContainer.setSpacing(35);
+            itemsContainer.setAlignment(Pos.CENTER);
 
     
             // Add images to the HBox
@@ -645,21 +668,22 @@ public class PrimaryController {
                 imageView.setFitHeight(100); 
                 imageView.setFitWidth(100);
                 
-                
-                // Create a DropShadow effect
-                
     
                 // Set up event handlers
                 imageView.setOnMouseClicked(e -> handleChoice(imagePath)); // Handle choice when image is clicked
                 imageView.setOnMouseEntered(e -> {
                     imageView.setStyle("-fx-border-color: #7B61FF; -fx-border-width: 3;");
-                    imageView.setOpacity(0.5); // Change cursor to hand on hover
+                    imageView.setOpacity(0.9); // Change cursor to hand on hover
+                    imageView.setFitHeight(110);
+                    imageView.setFitWidth(110);
                 });
     
                 imageView.setOnMouseExited(e -> {
                     imageView.setEffect(null); // Remove shadow effect
                     imageView.setStyle("-fx-border-color: transparent; -fx-border-width: 3;");
                     imageView.setOpacity(1); // Revert cursor on exit
+                    imageView.setFitHeight(100);
+                    imageView.setFitWidth(100);
                 });
     
                 // Add the ImageView to the HBox
