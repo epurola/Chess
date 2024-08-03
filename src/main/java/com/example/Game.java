@@ -29,6 +29,63 @@ public class Game {
         blackKingPosition = new int[2];
         updateKingPositions();
     }
+    public Game(String[][] board2, String currentTurn) {
+        this.board = parseBoardState(board2);
+        this.whiteTurn = currentTurn.equalsIgnoreCase("white");
+        moveStack = new Stack<>(); // Initialize the move stack
+        whiteKingPosition = new int[2];
+        blackKingPosition = new int[2];
+        updateKingPositions();
+    }
+    //Board constructor initialises pieces in starting position....
+    private Board parseBoardState(String[][] board2) {
+        Board newBoard = new Board();
+    
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                String pieceIdentifier = board2[row][col];
+                // Create a Piece object from the identifier or null if empty
+                Piece piece = createPieceFromIdentifier(pieceIdentifier, row, col);
+                // Set the piece on the board
+                newBoard.setPiece(row, col, piece);
+            }
+        }
+    
+        return newBoard;
+    }
+    
+
+    private Piece createPieceFromIdentifier(String identifier, int row, int col) {
+        if (identifier == null || identifier.startsWith("e-")) {
+            return null; // No piece at this position
+        }
+    
+        // The identifier should be in the format like "w-r" or "b-p"
+        boolean isWhite = identifier.startsWith("w-");
+        String pieceType = identifier.substring(2);
+    
+        switch (pieceType) {
+            case "r":
+                return new Rook(row, col, isWhite);
+            case "n":
+                return new Knight(row, col, isWhite);
+            case "b":
+                return new Bishop(row, col, isWhite);
+            case "q":
+                return new Queen(row, col, isWhite);
+            case "k":
+                return new King(row, col, isWhite);
+            case "p":
+                return new Pawn(row, col, isWhite);
+            case "e":
+                return null;
+            default:
+                System.err.println("Unknown piece identifier: " + identifier);
+                return null; // Unknown piece type
+        }
+    }
+    
+
     public int[] getWhiteKingPosition() {
         return whiteKingPosition;
     }
@@ -104,7 +161,152 @@ public class Game {
     public void setWhiteTurn(boolean whiteTurn) {
         this.whiteTurn = whiteTurn;
     }
+    public boolean makeMove(int fromRow, int fromCol, int toRow, int toCol) {
+        int row = toRow;
+        int col = toCol;
+        Piece selectedPiece = getPiece(fromRow,fromCol);
+        int originalRow = selectedPiece.getRow();
+        int originalCol = selectedPiece.getCol();
+        List<int[]> possibleMoves = new ArrayList<>();
+        Piece capturedPiece = null;
+
+        if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+            // Check if the move is valid
+            if (selectedPiece instanceof Pawn) {
+                if (isEnPassant(originalRow, originalCol) && col != originalCol) {
+                    possibleMoves = ((Pawn) selectedPiece).getPossibleMoveswithEnPassant(getBoard(), this);
+                    
+                    capturedPiece = getPiece(getLastMove().getToRow() , getLastMove().getToCol()); 
+
+                    if(capturedPiece != null && capturedPiece.isWhite() == selectedPiece.isWhite())
+                    {
+                        capturedPiece = null;
+                    }
+                } else {
+                    possibleMoves = selectedPiece.getLegalMovesWithoutCheck(this);
+                    capturedPiece = getPiece(row, col);
+                }
+            } else {
+                possibleMoves = selectedPiece.getLegalMovesWithoutCheck(this);
+                capturedPiece = getPiece(row, col);
+            }
+
+            boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
+
+            if (!validMove) {
+                SoundManager.playNotifySound();
+                return false;
+            }
+
+            if (validMove) {
+                if (capturedPiece != null) {
+                    SoundManager.playCaptureSound(); // Play capture sound
+                } else {
+                    SoundManager.playMoveSound(); // Play move sound
+                }
+
+                // Temporarily make the move
+                Piece pieceToMove = selectedPiece.copy();
+
+                // Handle en passant
+                if (capturedPiece != null) {
+                    setPiece(capturedPiece.getRow(), capturedPiece.getCol(), null); // Remove the captured pawn from the board
+                }
+
+                setPiece(row, col, pieceToMove);
+                setPiece(originalRow, originalCol, null);
+                pieceToMove.setPosition(row, col);
+
+               
+                if(pieceToMove instanceof King)
+                {
+                    updateKingPositions();
+                }
+               
+                recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove,
+                capturedPiece != null ? capturedPiece.getRow() : 1, 
+                capturedPiece != null ? capturedPiece.getCol() : 1);
+
+                // Check if the king is in check
+                if (isInCheck(isWhiteTurn())) {
+                    SoundManager.playNotifySound();
+                    // Revert the move if it puts the king in check
+                    setPiece(originalRow, originalCol, pieceToMove);
+                    setPiece(row, col, capturedPiece); // Restore the captured piece
+                    pieceToMove.setPosition(originalRow, originalCol); // Restore the piece's position
+                    if (capturedPiece != null) {
+                        capturedPiece.setPosition(row, col);
+                    }
+                    popMoveStack();
+                    System.out.println("Move puts king in check. Move reverted.");
+                } else {
+                    // Valid move; switch turns if move is valid and does not put the king in check
+                    if (originalRow != row || originalCol != col) {
+                        setWhiteTurn(!isWhiteTurn());
+                    }
+                }
+            }
+
+            if (checkMate(this)) {
+                return true;
+            }
+
+            if (checkDraw(this)) {
+                System.out.println("Draw!");
+                return true;
+            }
+               // Redraw the board only if the move is valid
+           
+        }
+
+        return true;
+
+    
+}
+       
+
+
    
+
+public void promotePawn(int toRow, int toCol, String pieceName) {
+    // Ensure the provided pieceName is valid
+    if (!List.of("queen", "rook", "bishop", "knight").contains(pieceName.toLowerCase())) {
+        throw new IllegalArgumentException("Invalid piece name for promotion: " + pieceName);
+    }
+
+    // Get the piece currently at the specified location
+    Piece pieceAtPosition = getPiece(toRow, toCol);
+
+    // Check if the piece is a pawn
+    if (pieceAtPosition instanceof Pawn) {
+        // Create the new piece based on the promotion choice
+        Piece newPiece = createPiece(pieceName, toRow, toCol);
+
+        // Replace the pawn with the new piece on the board
+        setPiece(toRow, toCol, newPiece);
+    } else {
+        throw new IllegalArgumentException("There is no pawn at the specified position: " + toRow + ", " + toCol);
+    }
+}
+
+    private Piece createPiece(String pieceType, int row, int col) {
+        switch (pieceType.toLowerCase()) {
+            case "queen":
+                return new Queen(row, col, isWhiteTurn());
+            case "rook":
+                return new Rook(row, col, isWhiteTurn());
+            case "bishop":
+                return new Bishop(row, col, isWhiteTurn());
+            case "knight":
+                return new Knight(row, col, isWhiteTurn());
+            case "pawn":
+                return new Pawn(row, col, isWhiteTurn());
+            case "king":
+                return new King(row, col, isWhiteTurn());
+            default:
+                throw new IllegalArgumentException("Unknown piece type: " + pieceType);
+        }
+    }
 
     public boolean isEnPassant(int row, int col) {
         // Check if the move stack is empty
