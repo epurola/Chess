@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
 public class ChessSocketClient extends WebSocketClient {
 
     private MessageCallBack messageCallback;
-    private BiConsumer<String[][], String> boardStateCallback; 
+    private BiConsumer<String[][], String> boardStateCallback;
 
     public ChessSocketClient(URI serverUri) {
         super(serverUri);
@@ -34,14 +34,17 @@ public class ChessSocketClient extends WebSocketClient {
     @Override
     public void onMessage(String message) {
         System.out.println("Received message: " + message);
-        if (message.startsWith("BOARD_STATE")) {
+
+        if (message.startsWith("COLOR:")) {
+            String color = message.substring("COLOR:".length()).trim();
+            if (messageCallback != null) {
+                messageCallback.onPlayerColorReceived(color);
+            }
+        } else if (message.startsWith("BOARD_STATE")) {
             processBoardStateMessage(message);
-            System.out.println("Prosessing board state.");
-        } else {
-            processMoveMessage(message);
-            System.out.println("Prosessing Message.");
-        }
+        } 
     }
+
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
@@ -79,30 +82,6 @@ public class ChessSocketClient extends WebSocketClient {
         send(requestMessage);
     }
 
-    private void processMoveMessage(String message) {
-        String[] parts = message.split(",");
-        if (parts.length == 6) {  // Ensure message format is correct
-            try {
-                int fromRow = Integer.parseInt(parts[0]);
-                int fromCol = Integer.parseInt(parts[1]);
-                int toRow = Integer.parseInt(parts[2]);
-                int toCol = Integer.parseInt(parts[3]);
-                String movedPiece = parts[4];
-                String capturedPiece = parts[5];
-    
-                System.out.printf("Move received: From (%d,%d) To (%d,%d) Moved Piece: %s Captured Piece: %s%n",
-                    fromRow, fromCol, toRow, toCol, movedPiece, capturedPiece);
-    
-                if (messageCallback != null) {
-                    messageCallback.onMoveReceived(fromRow, fromCol, toRow, toCol, movedPiece, capturedPiece);
-                }
-            } catch (NumberFormatException e) {
-                System.err.println("Error parsing move message: " + e.getMessage());
-            }
-        } else {
-            System.err.println("Invalid message format: " + message);
-        }
-    }
 
     private void processBoardStateMessage(String message) {
         final String PREFIX = "BOARD_STATE,";
@@ -111,18 +90,23 @@ public class ChessSocketClient extends WebSocketClient {
             // Remove the prefix
             String boardStateString = message.substring(PREFIX.length());
     
-            String[][] board = parseBoardState(boardStateString);
-                    
-                    // Trigger the callback with the parsed board and current turn
-         if (boardStateCallback != null) {
-            String currentTurn = "w";
-             boardStateCallback.accept(board, currentTurn);
+            // Extract the current turn from the message
+            String[] parts = boardStateString.split(",", 2);
+            String currentTurn = parts[0];  // "w" or "b"
+            String boardData = parts.length > 1 ? parts[1] : "";  // Remaining board data
     
+            // Parse the board state
+            String[][] board = parseBoardState(boardData);
+    
+            // Convert currentTurn to a human-readable format
+            String turnString = "w".equals(currentTurn) ? "white" : "black";
+    
+            // Trigger the callback with the parsed board and current turn
+            if (boardStateCallback != null) {
+                boardStateCallback.accept(board, turnString);
+            }
+        }
     }
-}
-    }
-    
-    
 
     private String[][] parseBoardState(String boardStateString) {
         // Initialize an empty board with "x" for empty squares
@@ -161,11 +145,6 @@ public class ChessSocketClient extends WebSocketClient {
     
         return board;
     }
-    
-    
-
-    
-    
 
     public static void main(String[] args) {
         try {
@@ -173,9 +152,6 @@ public class ChessSocketClient extends WebSocketClient {
             ChessSocketClient client = new ChessSocketClient(serverUri);
             client.connectBlocking();
 
-            // Example move
-            Move move = new Move(1, 0, 2, 0, null, null, -1, -1);
-            client.sendMove(move);
         } catch (URISyntaxException | InterruptedException e) {
             e.printStackTrace();
         }

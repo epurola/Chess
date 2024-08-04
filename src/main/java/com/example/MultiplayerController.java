@@ -19,7 +19,6 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
-import javafx.collections.ObservableList;
 
 import java.io.IOException;
 import java.net.URI;
@@ -36,11 +35,12 @@ import com.example.WebSocket.ChessSocketClient;
         private Piece selectedPiece;
         private ImageView draggedPiece;
         private Pawn pawnToPromote;
-        private ObservableList<String> promotionChoice;
         private Label statusLabel;
         private boolean drawPossibleMoves;
         private ToggleSwitch toggleSwitch;
         private Game game;
+        private String currentTurn;
+        private String playerColor;
 
         Color lightColor = Color.web("#E8EDF9"); 
         Color darkColor = Color.web("#B7C0D8"); 
@@ -56,6 +56,7 @@ import com.example.WebSocket.ChessSocketClient;
         @FXML private Button resetButton;
         @FXML private Button undoButton;
         @FXML private HBox hbox1;
+        
     
         @FXML
         public void initialize() throws InterruptedException, URISyntaxException {
@@ -64,7 +65,7 @@ import com.example.WebSocket.ChessSocketClient;
     
             URI serverUri = new URI("ws://localhost:8887");
             socketClient = new ChessSocketClient(serverUri);
-            
+            socketClient.setMessageCallback(this);
             socketClient.setBoardStateCallback(this::onBoardStateReceived);
            
             socketClient.connectBlocking();
@@ -92,28 +93,29 @@ import com.example.WebSocket.ChessSocketClient;
             StackPane.setAlignment(chessBoard, javafx.geometry.Pos.CENTER);
             rootPane.setPrefSize(800, 800);
         }
+        @Override
+        public void onPlayerColorReceived(String color) {
+            Platform.runLater(() -> {
+                this.playerColor = color;
+            });
+        }
 
         @Override
         public void onMoveReceived(int fromRow, int fromCol, int toRow, int toCol, String capturedPiece, String movedPiece) {
             Platform.runLater(() -> {
-                // Update the board with the received move
                 drawBoard(); 
-    
-                if (capturedPiece != null) {
-                    // Handle captured piece if necessary
-                    // For example, you might need to remove it from the board or perform some other action
-                }
                 soundManager.playMoveSound();
             });
         }
         @Override
-    public void onBoardStateReceived(String[][] board, String currentTurn) {
-        Platform.runLater(() -> {
-            // Update the board state in your game object
-            game = new Game(board, currentTurn); // Adjust constructor as needed
-            drawBoard();
-        });
-    }
+        public void onBoardStateReceived(String[][] board, String currentTurn) {
+            Platform.runLater(() -> {
+                game = new Game(board, currentTurn);
+                this.currentTurn = currentTurn; // Track current turn
+                drawBoard();
+            });
+        }
+        
         @FXML
         private void handleFullScreen() {
             Stage stage = (Stage) borderPane.getScene().getWindow();
@@ -156,7 +158,12 @@ import com.example.WebSocket.ChessSocketClient;
         }
     
         private void drawBoard() {
+            if (playerColor == null) {
+                System.out.println("Player color is not set yet.");
+                return; // Exit if player color is not available
+            }
             chessBoard.getChildren().clear();
+           
             for (int i = 0; i < 8; i++) {
                 for (int j = 0; j < 8; j++) {
                     Rectangle square = new Rectangle(100, 100);
@@ -168,8 +175,13 @@ import com.example.WebSocket.ChessSocketClient;
                         ImageView pieceView = new ImageView(pieceImage);
                         pieceView.setFitHeight(100);
                         pieceView.setFitWidth(100);
+        
+                        // Set mouse transparency based on the player color
+                        boolean isPlayerPiece = (playerColor.equals("white") && piece.isWhite()) ||
+                                         (playerColor.equals("black") && !piece.isWhite());
+                        pieceView.setMouseTransparent(!isPlayerPiece);
+        
                         chessBoard.add(pieceView, j, i);
-                        pieceView.setMouseTransparent(!game.isWhiteTurn() == piece.isWhite());
                         pieceView.setOnMousePressed(event -> handlePieceDragStart(event, pieceView, piece));
                         pieceView.setOnMouseDragged(this::handlePieceDrag);
                         pieceView.setOnMouseReleased(this::handlePieceDrop);
@@ -177,6 +189,7 @@ import com.example.WebSocket.ChessSocketClient;
                 }
             }
         }
+        
     
         private Image getPieceImage(Piece piece) {
             String color = piece.isWhite() ? "white-" : "black-";
@@ -210,9 +223,18 @@ import com.example.WebSocket.ChessSocketClient;
                 int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / 100);
                 int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / 100);
                 boolean validMove = game.makeMove(selectedPiece.getRow(), selectedPiece.getCol(), row, col);
+                Piece capturedPiece = game.getPiece(row, col);
+                int pawnStartCol = selectedPiece.getCol();
             
                 if (validMove) {
-                    drawBoard();
+                    game.recordMove(selectedPiece.getRow(), selectedPiece.getCol(), row, col, capturedPiece, selectedPiece, row, col);
+
+                    if(capturedPiece != null || selectedPiece instanceof Pawn && game.getLastMove().getToCol() != pawnStartCol );
+                    {
+                       
+                        
+                    }
+
                     if (socketClient != null && socketClient.isOpen()) {
                         Move move = game.getLastMove();
                         socketClient.sendMove(move);
@@ -221,6 +243,8 @@ import com.example.WebSocket.ChessSocketClient;
                 } else {
                     soundManager.playNotifySound();
                 }
+                socketClient.requestBoardState();
+                drawBoard();
                 selectedPiece = null;
                 draggedPiece = null;
             }
@@ -395,8 +419,6 @@ import com.example.WebSocket.ChessSocketClient;
         
                 chessBoard.add(moveIndicatorContainer, col, row); // Add the container to the grid
             }
-        }
-
-       
+        } 
     }
     

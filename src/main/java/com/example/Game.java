@@ -173,7 +173,7 @@ public class Game {
         if (row >= 0 && row < 8 && col >= 0 && col < 8) {
             // Check if the move is valid
             if (selectedPiece instanceof Pawn) {
-                if (isEnPassant(originalRow, originalCol) && col != originalCol) {
+                if (isEnPassant(originalRow, originalCol) ) {
                     possibleMoves = ((Pawn) selectedPiece).getPossibleMoveswithEnPassant(getBoard(), this);
                     
                     capturedPiece = getPiece(getLastMove().getToRow() , getLastMove().getToCol()); 
@@ -193,18 +193,8 @@ public class Game {
 
             boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
 
-            if (!validMove) {
-                SoundManager.playNotifySound();
-                return false;
-            }
-
             if (validMove) {
-                if (capturedPiece != null) {
-                    SoundManager.playCaptureSound(); // Play capture sound
-                } else {
-                    SoundManager.playMoveSound(); // Play move sound
-                }
-
+                System.out.println("Mov was valid");
                 // Temporarily make the move
                 Piece pieceToMove = selectedPiece.copy();
 
@@ -226,6 +216,9 @@ public class Game {
                 recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove,
                 capturedPiece != null ? capturedPiece.getRow() : 1, 
                 capturedPiece != null ? capturedPiece.getCol() : 1);
+                  if (!validMove) {
+                return false;
+            }
 
                 // Check if the king is in check
                 if (isInCheck(isWhiteTurn())) {
@@ -237,10 +230,9 @@ public class Game {
                     if (capturedPiece != null) {
                         capturedPiece.setPosition(row, col);
                     }
-                    popMoveStack();
+                   // popMoveStack();
                     System.out.println("Move puts king in check. Move reverted.");
                 } else {
-                    // Valid move; switch turns if move is valid and does not put the king in check
                     if (originalRow != row || originalCol != col) {
                         setWhiteTurn(!isWhiteTurn());
                     }
@@ -263,10 +255,7 @@ public class Game {
 
     
 }
-       
-
-
-   
+         
 
 public void promotePawn(int toRow, int toCol, String pieceName) {
     // Ensure the provided pieceName is valid
@@ -309,11 +298,13 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
     }
 
     public boolean isEnPassant(int row, int col) {
-        // Check if the move stack is empty
+        System.out.println("Trying to see if enpassant");
         if (moveStack.isEmpty()) {
+            System.out.println("Stack is empty");
             return false;
         }
         if (!(row == 3 || row == 4)) {
+            System.out.println("Wrong row");
             return false;
         }
     
@@ -329,8 +320,7 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
         if (!(movedPiece instanceof Pawn)) {
             return false;
         }
-
-    
+        System.out.println("Moved piece was pawn");
         // Check if the move was a two-square pawn advance
         if (Math.abs(startRow - newRow) == 2 && startCol == newCol ) {
             
@@ -393,6 +383,7 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
 
     public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece, int capturePieceRow, int capturePieceCol) {
         moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece, capturePieceRow, capturePieceCol));
+        System.out.println("MOVE WAS ADDED");
     }
 
     public boolean isInCheck(boolean isWhite) {

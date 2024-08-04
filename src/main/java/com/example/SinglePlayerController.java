@@ -30,7 +30,6 @@ import java.util.List;
         private Piece selectedPiece;
         private ImageView draggedPiece;
         private Pawn pawnToPromote;
-        private ObservableList<String> promotionChoice;
         private Label statusLabel;
         private boolean drawPossibleMoves;
         private ToggleSwitch toggleSwitch;
@@ -187,6 +186,10 @@ import java.util.List;
                     soundManager.playNotifySound();
                 }
                 drawBoard();
+                if(game.checkMate(game))
+                {
+                     displayConfetti(chessBoard);
+                }
                 selectedPiece = null;
                 draggedPiece = null;
             }

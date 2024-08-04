@@ -15,12 +15,15 @@ public class SecondaryController {
     private Button button;
     @FXML
     private Button button1;
+    @FXML
+    Button button2;
 
     @FXML
     private void initialize() {
         // Set up the hover sound effect for both buttons
         addHoverSoundEffect(button);
         addHoverSoundEffect(button1);
+        addHoverSoundEffect(button2);
     }
 
     private void addHoverSoundEffect(Button button) {
@@ -30,6 +33,10 @@ public class SecondaryController {
     @FXML
     private void switchToPrimary() throws IOException {
         App.setRoot("primary");
+    }
+    @FXML
+    private void switchToOnline() throws IOException {
+        App.setRoot("online");
     }
 
     @FXML

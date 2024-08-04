@@ -10,7 +10,8 @@
     <children>
         <Label text="" />
         <Button fx:id="button" onAction="#switchToPrimary" prefHeight="60.0" prefWidth="123.0" styleClass="button1" stylesheets="@styles.css" text="PLAY" />
-        <Button fx:id="button1" mnemonicParsing="false" styleClass="button3" stylesheets="@styles.css" text="Exit" onAction="#handleExit">
+      <Button fx:id="button2" layoutX="220.0" layoutY="136.0" onAction="#switchToOnline" prefHeight="60.0" prefWidth="123.0" styleClass="button3" stylesheets="@styles.css" text="Online" />
+        <Button fx:id="button1" mnemonicParsing="false" onAction="#handleExit" styleClass="button3" stylesheets="@styles.css" text="Exit">
             <graphic>
                 <FontAwesomeIconView glyphName="SIGN_OUT" rotate="180.0" />
             </graphic>
@@ -26,4 +27,3 @@
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
     </padding>
 </VBox>
-
