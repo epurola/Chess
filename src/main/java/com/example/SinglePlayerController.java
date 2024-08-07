@@ -168,27 +168,43 @@ import java.util.List;
                 draggedPiece.setTranslateY(event.getSceneY() - 50 - draggedPiece.getLayoutY() - chessBoard.localToScene(0, 0).getY());
             }
         }
-    
+    //Captured piece null in enpassant
         private void handlePieceDrop(MouseEvent event) {
             if (draggedPiece != null) {
                 int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / 100);
                 int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / 100);
+                int pawnStartCol = selectedPiece.getCol();
+                if (row >= 0 && row < 8 && col >= 0 && col < 8) 
+                {
+                Piece capturedPiece = game.getPiece(row, col);
                 boolean validMove = game.makeMove(selectedPiece.getRow(), selectedPiece.getCol(), row, col);
-                
-            
+                if (!validMove)
+                {
+                  soundManager.playNotifySound();
+                }
+               
                 if (validMove) {
                     if (selectedPiece instanceof Pawn && (row == 0 || row == 7)) {
                         pawnToPromote = (Pawn) selectedPiece;
                         promotePawn(row, col);
                     }
+                    if(capturedPiece != null || pawnStartCol != col )
+                    {
+                        soundManager.playCaptureSound();
+                    }else{
+                        soundManager.playMoveSound();
                     }
-                } else {
+                    }
+        
+                } else{
                     soundManager.playNotifySound();
                 }
+            }
                 drawBoard();
                 if(game.checkMate(game))
                 {
                      displayConfetti(chessBoard);
+                     soundManager.playWinSound();
                 }
                 selectedPiece = null;
                 draggedPiece = null;

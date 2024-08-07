@@ -194,7 +194,6 @@ public class Game {
             boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
 
             if (validMove) {
-                System.out.println("Mov was valid");
                 // Temporarily make the move
                 Piece pieceToMove = selectedPiece.copy();
 
@@ -202,6 +201,7 @@ public class Game {
                 if (capturedPiece != null) {
                     setPiece(capturedPiece.getRow(), capturedPiece.getCol(), null); // Remove the captured pawn from the board
                 }
+               
 
                 setPiece(row, col, pieceToMove);
                 setPiece(originalRow, originalCol, null);
@@ -222,7 +222,7 @@ public class Game {
 
                 // Check if the king is in check
                 if (isInCheck(isWhiteTurn())) {
-                    SoundManager.playNotifySound();
+                   
                     // Revert the move if it puts the king in check
                     setPiece(originalRow, originalCol, pieceToMove);
                     setPiece(row, col, capturedPiece); // Restore the captured piece
@@ -230,28 +230,27 @@ public class Game {
                     if (capturedPiece != null) {
                         capturedPiece.setPosition(row, col);
                     }
-                   // popMoveStack();
+                    popMoveStack();
                     System.out.println("Move puts king in check. Move reverted.");
                 } else {
                     if (originalRow != row || originalCol != col) {
                         setWhiteTurn(!isWhiteTurn());
                     }
                 }
-            }
-
-            if (checkMate(this)) {
+                if (checkMate(this)) {
+                    return true;
+                }
+    
+                if (checkDraw(this)) {
+                    System.out.println("Draw!");
+                    return true;
+                }
                 return true;
             }
-
-            if (checkDraw(this)) {
-                System.out.println("Draw!");
-                return true;
-            }
-               // Redraw the board only if the move is valid
            
         }
 
-        return true;
+        return false;
 
     
 }
@@ -372,8 +371,6 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
                 
             }
-    
-            SoundManager.playMoveSound();
             setWhiteTurn(!isWhiteTurn());
             
             

@@ -8,6 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -225,14 +226,21 @@ import com.example.WebSocket.ChessSocketClient;
                 boolean validMove = game.makeMove(selectedPiece.getRow(), selectedPiece.getCol(), row, col);
                 Piece capturedPiece = game.getPiece(row, col);
                 int pawnStartCol = selectedPiece.getCol();
+
+                if(!validMove)
+                {
+                    soundManager.playNotifySound();
+                }
             
                 if (validMove) {
                     game.recordMove(selectedPiece.getRow(), selectedPiece.getCol(), row, col, capturedPiece, selectedPiece, row, col);
 
-                    if(capturedPiece != null || selectedPiece instanceof Pawn && game.getLastMove().getToCol() != pawnStartCol );
+                    if(capturedPiece != null )
                     {
-                       
-                        
+                       soundManager.playCaptureSound();
+                    }
+                    else{
+                        soundManager.playMoveSound();
                     }
 
                     if (socketClient != null && socketClient.isOpen()) {
@@ -248,7 +256,22 @@ import com.example.WebSocket.ChessSocketClient;
                 selectedPiece = null;
                 draggedPiece = null;
             }
+            if(game.checkMate(game))
+            {
+               displayConfetti(chessBoard);
+            }
         }
+         private void displayConfetti(Pane pane) {
+            double paneWidth = pane.getWidth();
+            double paneHeight = pane.getHeight();
+        
+            for (int i = 0; i < 100; i++) { // Number of confetti pieces
+                Confetti confetti = new Confetti(Color.hsb(Math.random() * 360, 1.0, 1.0), paneWidth, paneHeight);
+                pane.getChildren().add(confetti);
+                confetti.animate();
+            }
+        }
+
     
         private void promotePawn(int row, int col) {
         
