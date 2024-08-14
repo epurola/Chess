@@ -23,6 +23,7 @@ public class ToggleSwitch extends Parent {
 
     private ParallelTransition animation = new ParallelTransition(transition, fillBackground, moveText);
 
+    @SuppressWarnings("exports")
     public BooleanProperty switchedOn() {
         return switchedOn;
     }

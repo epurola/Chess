@@ -1,7 +1,5 @@
 package com.example;
 
-import java.util.List;
-
 public class Board {
     private long whitePawns, blackPawns;
     private long whiteRooks, blackRooks;
@@ -13,11 +11,6 @@ public class Board {
     public Board() {
         initialize();
     }
-
-    private long getBitBoard(int row, int col) {
-        return 1L << (row * 8 + col);
-    }
-
     public void setPiece(int row, int col, Piece newPiece) {
         long bitMask = 1L << (row * 8 + col);
     
@@ -111,9 +104,6 @@ public class Board {
         }
     }
     
-    private void clearBit(long bitboard, int row, int col) {
-        bitboard &= ~getBitBoard(row, col);
-    }
     public long getWhitePieces() {
         return whitePawns | whiteRooks | whiteKnights | whiteBishops | whiteQueens | whiteKings;
     }

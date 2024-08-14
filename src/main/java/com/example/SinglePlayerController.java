@@ -19,7 +19,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.animation.FadeTransition;
-import javafx.collections.ObservableList;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -168,12 +167,12 @@ import java.util.List;
                 draggedPiece.setTranslateY(event.getSceneY() - 50 - draggedPiece.getLayoutY() - chessBoard.localToScene(0, 0).getY());
             }
         }
-    //Captured piece null in enpassant
+  
+        @SuppressWarnings("static-access")
         private void handlePieceDrop(MouseEvent event) {
             if (draggedPiece != null) {
                 int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / 100);
                 int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / 100);
-                int pawnStartCol = selectedPiece.getCol();
                 if (row >= 0 && row < 8 && col >= 0 && col < 8) 
                 {
                 Piece capturedPiece = game.getPiece(row, col);
@@ -188,9 +187,10 @@ import java.util.List;
                         pawnToPromote = (Pawn) selectedPiece;
                         promotePawn(row, col);
                     }
-                    if(capturedPiece != null || pawnStartCol != col )
+                    if(capturedPiece != null )
                     {
                         soundManager.playCaptureSound();
+
                     }else{
                         soundManager.playMoveSound();
                     }
@@ -342,14 +342,8 @@ import java.util.List;
             double squareSize = 100; // Size of each square on the board
             double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
           
-            if (selectedPiece instanceof Pawn) {
-                // Cast to Pawn and get possible moves including en passant
-                possibleMoves = ((Pawn) selectedPiece).getPossibleMoveswithEnPassant(game.getBoard(), game);
-            } else {
-                // For other pieces, use the standard method
-                possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
-            }
-        
+            possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
+            
             for (int[] move : possibleMoves) {
                 int row = move[0];
                 int col = move[1];

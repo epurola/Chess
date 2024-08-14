@@ -408,7 +408,7 @@ import com.example.WebSocket.ChessSocketClient;
           
             if (selectedPiece instanceof Pawn) {
                 // Cast to Pawn and get possible moves including en passant
-                possibleMoves = ((Pawn) selectedPiece).getPossibleMoveswithEnPassant(game.getBoard(), game);
+                possibleMoves = ((Pawn) selectedPiece).getPossibleMoves( game);
             } else {
                 // For other pieces, use the standard method
                 possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);

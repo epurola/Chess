@@ -55,14 +55,6 @@ public List<int[]> getLegalMovesWithoutCheck(Game game) {
     List<int[]> legalMoves = new ArrayList<>();
     boolean isWhite = isWhite(); // Determine the color
 
-    // Find the king's position
-    int[] kingPosition = findKing(board, isWhite);
-    if (kingPosition == null) {
-        return legalMoves; // King not found
-    }
-
-    int kingRow = kingPosition[0];
-    int kingCol = kingPosition[1];
 
     for (int[] move : possibleMoves) {
         int targetRow = move[0];
@@ -92,21 +84,4 @@ public List<int[]> getLegalMovesWithoutCheck(Game game) {
     return legalMoves;
 }
 
-
-    private int[] findKing(Board board, boolean isWhite) {
-        // Iterate over the board to find the king's position
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                Piece piece = board.getPiece(r, c);
-                if (piece instanceof King && piece.isWhite() == isWhite) {
-                    return new int[] { r, c };
-                }
-            }
-        }
-        return null; // King not found
-    }
-
 }
-
-
-

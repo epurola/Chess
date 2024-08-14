@@ -13,21 +13,22 @@ public class Rook extends Piece {
     public List<int[]> getPossibleMoves(Game game) {
         List<int[]> allMoves = new ArrayList<>();
         int[][] directions = {{1, 0}, {-1, 0}, {0, -1}, {0, 1}};
-
+    
+        // Normal king moves
         for (int[] direction : directions) {
             int newRow = getRow();
             int newCol = getCol();
-
+    
             while (true) {
                 newRow += direction[0];
                 newCol += direction[1];
-
+    
                 if (!isValidPosition(newRow, newCol)) {
                     break;
                 }
-
+    
                 Piece piece = game.getPiece(newRow, newCol);
-
+    
                 if (piece == null) {
                     allMoves.add(new int[]{newRow, newCol});
                 } else {
@@ -38,7 +39,10 @@ public class Rook extends Piece {
                 }
             }
         }
+    
 
+
+    
         return allMoves;
     }
 

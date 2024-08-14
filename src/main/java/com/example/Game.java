@@ -10,6 +10,11 @@ public class Game {
     private Stack<Move> moveStack; // Stack to keep track of moves
     private int[] whiteKingPosition; // Variable to store the position of the white king
     private int[] blackKingPosition;
+   private boolean whiteCanCastleKingSide ;
+   private boolean whiteCanCastleQueenSide ;
+   private boolean blackCanCastleKingSide ;
+   private boolean blackCanCastleQueenSide ;
+  
   
 
     public Game() {
@@ -18,6 +23,10 @@ public class Game {
         moveStack = new Stack<>(); // Initialize the move stack
         whiteKingPosition = new int[2];
         blackKingPosition = new int[2];
+        whiteCanCastleKingSide = true ;
+        whiteCanCastleQueenSide  = true;
+        blackCanCastleKingSide = true;
+        blackCanCastleQueenSide = true;
         updateKingPositions();
     }
 
@@ -133,6 +142,7 @@ public class Game {
     public Board getBoard() {
         return this.board;
     }
+  
     public void popMoveStack() {
          moveStack.pop();
     }
@@ -158,6 +168,38 @@ public class Game {
     public void setWhiteTurn(boolean whiteTurn) {
         this.whiteTurn = whiteTurn;
     }
+    public boolean canCastle(boolean isWhite, boolean kingSide) {
+        return isWhite ? (kingSide ? whiteCanCastleKingSide : whiteCanCastleQueenSide) 
+                       : (kingSide ? blackCanCastleKingSide : blackCanCastleQueenSide);
+    }
+    public void updateCastlingRightsAfterMove(Piece piece) {
+        if (piece instanceof King) {
+            if (piece.isWhite()) {
+                whiteCanCastleKingSide = false;
+                whiteCanCastleQueenSide = false;
+            } else {
+                blackCanCastleKingSide = false;
+                blackCanCastleQueenSide = false;
+            }
+        } else if (piece instanceof Rook) {
+            Rook rook = (Rook) piece;
+            if (rook.isWhite()) {
+                if (rook.getCol() == 0) { // Queen-side rook
+                    whiteCanCastleQueenSide = false;
+                } else if (rook.getCol() == 7) { // King-side rook
+                    whiteCanCastleKingSide = false;
+                }
+            } else {
+                if (rook.getCol() == 0) { // Queen-side rook
+                    blackCanCastleQueenSide = false;
+                } else if (rook.getCol() == 7) { // King-side rook
+                    blackCanCastleKingSide = false;
+                }
+            }
+        }
+    }
+
+   
     public boolean makeMove(int fromRow, int fromCol, int toRow, int toCol) {
         int row = toRow;
         int col = toCol;
@@ -168,24 +210,16 @@ public class Game {
         Piece capturedPiece = null;
 
         if (row >= 0 && row < 8 && col >= 0 && col < 8) {
-            // Check if the move is valid
-            if (selectedPiece instanceof Pawn) {
-                if (isEnPassant(originalRow, originalCol) ) {
-                    possibleMoves = ((Pawn) selectedPiece).getPossibleMoveswithEnPassant(getBoard(), this);
-                    
-                    capturedPiece = getPiece(getLastMove().getToRow() , getLastMove().getToCol()); 
-
-                    if(capturedPiece != null && capturedPiece.isWhite() == selectedPiece.isWhite())
-                    {
-                        capturedPiece = null;
-                    }
-                } else {
-                    possibleMoves = selectedPiece.getLegalMovesWithoutCheck(this);
-                    capturedPiece = getPiece(row, col);
+           
+            possibleMoves = selectedPiece.getLegalMovesWithoutCheck(this);
+            capturedPiece = getPiece(row, col);
+            if (selectedPiece instanceof Pawn && isEnPassant(originalRow, originalCol) )
+            {
+                capturedPiece = getPiece(originalRow, toCol);
+                if(capturedPiece.isWhite() == isWhiteTurn())
+                {
+                    capturedPiece = null;
                 }
-            } else {
-                possibleMoves = selectedPiece.getLegalMovesWithoutCheck(this);
-                capturedPiece = getPiece(row, col);
             }
 
             boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
@@ -193,18 +227,25 @@ public class Game {
             if (validMove) {
                 // Temporarily make the move
                 Piece pieceToMove = selectedPiece.copy();
-
+                if(pieceToMove instanceof Rook || pieceToMove instanceof King)
+                {
+                 updateCastlingRightsAfterMove(selectedPiece);
+                }
                 // Handle en passant
                 if (capturedPiece != null) {
                     setPiece(capturedPiece.getRow(), capturedPiece.getCol(), null); // Remove the captured pawn from the board
                 }
+                 // Castling check
+               if (pieceToMove instanceof King && Math.abs(fromCol - toCol) == 2) {
+                 // King-side or Queen-side castling
+                 performCastling((King) pieceToMove, toRow, toCol);
+               }
                
 
                 setPiece(row, col, pieceToMove);
                 setPiece(originalRow, originalCol, null);
                 pieceToMove.setPosition(row, col);
 
-               
                 if(pieceToMove instanceof King)
                 {
                     updateKingPositions();
@@ -250,6 +291,29 @@ public class Game {
         return false;
 
     
+}
+private void performCastling(King king, int kingRow, int kingCol) {
+    boolean kingSide = (kingCol == 6);
+    int rookCol = kingCol < 4 ? 0 : 7; // Determine if king-side or queen-side
+    int newRookCol = kingCol < 4 ? 3 : 5; // New rook position after castling
+    int rookRow = kingRow;
+    int newKingCol = kingSide ? 6 : 2;
+    
+    Piece rook = getPiece(rookRow, rookCol);
+    if (rook instanceof Rook) {
+        // Move the rook to its new position
+        setPiece(rookRow, newRookCol, rook);
+        setPiece(rookRow, rookCol, null);
+        rook.setPosition(rookRow, newRookCol);
+        
+        // Move the king to its new position
+        setPiece(kingRow, kingCol, king);
+        king.setPosition(kingRow, newKingCol);
+        
+        // Update castling rights
+        updateCastlingRightsAfterMove(king);
+        updateCastlingRightsAfterMove(rook);
+    }
 }
          
 
@@ -367,20 +431,47 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
                 
             }
+           
+            if (!whiteCanCastleKingSide && !isWhiteTurn()) {
+                // White King-side castling
+                board.setPiece(7, 7, new Rook(7, 7, true)); // Place Rook back to its original position (a1)
+                board.setPiece(7, 5, null); // Remove Rook from the castling position (f1)
+                whiteCanCastleKingSide = true;
+            }
+            
+            if (!whiteCanCastleQueenSide && !isWhiteTurn()) {
+                // White Queen-side castling
+                board.setPiece(7, 0, new Rook(7, 0, true)); // Place Rook back to its original position (h1)
+                board.setPiece(7, 3, null); // Remove Rook from the castling position (d1)
+                whiteCanCastleQueenSide = true;
+            }
+            
+            if (!blackCanCastleKingSide && isWhiteTurn()) {
+                // Black King-side castling
+                board.setPiece(0, 7, new Rook(0, 7, false)); // Place Rook back to its original position (h8)
+                board.setPiece(0, 5, null); // Remove Rook from the castling position (f8)
+                blackCanCastleKingSide = true;
+            }
+            
+            if (!blackCanCastleQueenSide && isWhiteTurn() ) {
+                // Black Queen-side castling
+                board.setPiece(0, 0, new Rook(0, 0, false)); // Place Rook back to its original position (a8)
+                board.setPiece(0, 3, null); // Remove Rook from the castling position (d8)
+                blackCanCastleQueenSide = true;
+            }
+            
+            
             setWhiteTurn(!isWhiteTurn());
-            
-            
         }
+        
     }
+ 
     
 
     public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece, int capturePieceRow, int capturePieceCol) {
         moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece, capturePieceRow, capturePieceCol));
         System.out.println("MOVE WAS ADDED");
     }
-//Bro this is super slow. fix it!!!!!
-// Conver to using the bitboard
-// Also update pieces with a attack map
 public boolean isInCheck(boolean isWhite) {
     boolean isInCheck = false;
 
@@ -427,14 +518,6 @@ public boolean isInCheck(boolean isWhite) {
     }
     
     public boolean checkMate(Game game){
-
-       int[] kingPosition = game.isWhiteTurn() ? getWhiteKingPosition() : getBlackKingPosition();
-
-       int row= kingPosition[0];
-       int col = kingPosition[1];
-    
-       Piece king = board.getPiece(row, col);
-
        // List to hold all legal moves for the current player's pieces
        List<int[]> allLegalMoves = new ArrayList<>();
 
@@ -472,10 +555,6 @@ public boolean isInCheck(boolean isWhite) {
          }
          return false;
      }
-    
-    
-    
-    
 
     public Game copyGame() {
         // Create a new Game object with a deep copy of the board

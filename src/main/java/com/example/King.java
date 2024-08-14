@@ -34,6 +34,28 @@ public class King extends Piece {
                 }
             }
         }
+            // Castling logic
+    if (this instanceof King) {
+        // Check for king-side castling
+        if (game.canCastle(isWhite(), true)) { // King-side castling
+            int[] kingPosition = isWhite() ? game.getWhiteKingPosition() : game.getBlackKingPosition();
+            int row = kingPosition[0];
+            int col = isWhite() ? 6 : 6; // King-side column for white and black
+            if (isValidPosition(row, col) && game.getPiece(row, col) == null) {
+                allMoves.add(new int[]{row, col}); // Move to the king-side castling position (e.g., g1 or g8)
+            }
+        }
+
+        // Check for queen-side castling
+        if (game.canCastle(isWhite(), false)) { // Queen-side castling
+            int[] kingPosition = isWhite() ? game.getWhiteKingPosition() : game.getBlackKingPosition();
+            int row = kingPosition[0];
+            int col = isWhite() ? 2 : 2; // Queen-side column for white and black
+            if (isValidPosition(row, col) && game.getPiece(row, col) == null) {
+                allMoves.add(new int[]{row, col}); // Move to the queen-side castling position (e.g., c1 or c8)
+            }
+        }
+    }
 
         return allMoves;
     }
