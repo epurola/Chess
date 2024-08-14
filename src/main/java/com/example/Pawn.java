@@ -8,20 +8,20 @@ public class Pawn extends Piece {
         super(row, col, isWhite);
     }
 @Override
-    public List<int[]> getPossibleMoves(Board board) {
+    public List<int[]> getPossibleMoves(Game game) {
         List<int[]> moves = new ArrayList<>();
         int direction = isWhite() ? -1 : 1; // Determine pawn direction based on color
 
         // One step forward
         int newRow = getRow() + direction;
         int newCol = getCol();
-        if (isValidPosition(newRow, newCol) && board.getPiece(newRow, newCol) == null) {
+        if (isValidPosition(newRow, newCol) && game.getPiece(newRow, newCol) == null) {
             moves.add(new int[]{newRow, newCol});
 
             // Two steps forward for the first move
             if ((isWhite() && getRow() == 6) || (!isWhite() && getRow() == 1)) {
                 newRow += direction;
-                if (isValidPosition(newRow, newCol) && board.getPiece(newRow, newCol) == null) {
+                if (isValidPosition(newRow, newCol) && game.getPiece(newRow, newCol) == null) {
                     moves.add(new int[]{newRow, newCol});
                 }
             }
@@ -30,15 +30,15 @@ public class Pawn extends Piece {
         // Right diagonal
         newRow = getRow() + direction;
         newCol = getCol() + 1;
-        if (isValidPosition(newRow, newCol) && board.getPiece(newRow, newCol) != null 
-                && board.getPiece(newRow, newCol).isWhite() != isWhite()) {
+        if (isValidPosition(newRow, newCol) && game.getPiece(newRow, newCol) != null 
+                && game.getPiece(newRow, newCol).isWhite() != isWhite()) {
             moves.add(new int[]{newRow, newCol});
         }
 
         // Left diagonal
         newCol = getCol() - 1;
-        if (isValidPosition(newRow, newCol) && board.getPiece(newRow, newCol) != null 
-                && board.getPiece(newRow, newCol).isWhite() != isWhite()) {
+        if (isValidPosition(newRow, newCol) && game.getPiece(newRow, newCol) != null 
+                && game.getPiece(newRow, newCol).isWhite() != isWhite()) {
             moves.add(new int[]{newRow, newCol});
         }
 
@@ -142,6 +142,7 @@ public class Pawn extends Piece {
     
         return legalMoves;
     }
+    
     
     
 
