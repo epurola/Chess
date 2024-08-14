@@ -205,6 +205,13 @@ import java.util.List;
                 {
                      displayConfetti(chessBoard);
                      soundManager.playWinSound();
+                     statusLabel.setText("Victory");
+                     statusLabel.setVisible(true);
+                }
+                if(game.checkDraw(game))
+                {
+                    statusLabel.setText("Draw");
+                    statusLabel.setVisible(true);
                 }
                 selectedPiece = null;
                 draggedPiece = null;

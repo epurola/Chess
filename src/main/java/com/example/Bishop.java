@@ -13,12 +13,6 @@ public class Bishop extends Piece {
 
     public List<int[]> getPossibleMoves(Game game) {
         List<int[]> possibleMoves = new ArrayList<>();
-        long bishopBitboard = game.isWhiteTurn() ? game.getBoard().getWhiteBishops() : game.getBoard().getBlackBishops(); // Get the bitboard of bishops
-        long ownBitboard = game.isWhiteTurn() ? game.getBoard().getWhitePieces() : game.getBoard().getBlackPieces(); // Get the bitboard of own pieces
-        long bishopMask = 1L << (getRow() * 8 + getCol()); // Bitmask for the current bishop's position
-        long attackMask = 0L;
-    
-        // Calculate the attack positions by checking each direction
         int[][] directions = {{1, 1}, {-1, -1}, {1, -1}, {-1, 1}};
     
         for (int[] direction : directions) {
@@ -33,31 +27,21 @@ public class Bishop extends Piece {
                     break;
                 }
     
-                long mask = 1L << (row * 8 + col);
-    
-                // Stop if another piece is found in the way
-                if ((ownBitboard & mask) != 0) {
-                    // If the piece is of the same color, stop the attack in this direction
+                Piece piece = game.getPiece(row,col);
+                if(piece == null)
+                {
+                    possibleMoves.add(new int[]{row,col});
+                }
+                else
+                {
+                    if(piece.isWhite() != this.isWhite()){
+                        possibleMoves.add(new int[]{row,col});
+                    }
                     break;
                 }
-    
-                if ((bishopBitboard & mask) != 0) {
-                    attackMask |= mask;
-                    break;
-                }
-    
-                attackMask |= mask;
             }
-        }
     
-        // Convert attackMask to a list of coordinates
-        for (int i = 0; i < 64; i++) {
-            if ((attackMask & (1L << i)) != 0) {
-                int row = i / 8;
-                int col = i % 8;
-                possibleMoves.add(new int[]{row, col});
             }
-        }
     
         return possibleMoves;
     }

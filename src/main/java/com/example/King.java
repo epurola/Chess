@@ -35,7 +35,7 @@ public class King extends Piece {
             }
         }
             // Castling logic
-    if (this instanceof King) {
+  
         // Check for king-side castling
         if (game.canCastle(isWhite(), true)) { // King-side castling
             int[] kingPosition = isWhite() ? game.getWhiteKingPosition() : game.getBlackKingPosition();
@@ -55,7 +55,7 @@ public class King extends Piece {
                 allMoves.add(new int[]{row, col}); // Move to the queen-side castling position (e.g., c1 or c8)
             }
         }
-    }
+    
 
         return allMoves;
     }
