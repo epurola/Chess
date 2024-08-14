@@ -10,7 +10,7 @@ public class Knight extends Piece {
     }
 
     @Override
-    public List<int[]> getPossibleMoves(Board board) {
+    public List<int[]> getPossibleMoves(Game game) {
         List<int[]> allMoves = new ArrayList<>();
         int[][] moves = {
             {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
@@ -22,7 +22,7 @@ public class Knight extends Piece {
             int newCol = getCol() + move[1];
 
             if (isValidPosition(newRow, newCol)) {
-                Piece piece = board.getPiece(newRow, newCol);
+                Piece piece = game.getPiece(newRow, newCol);
 
                 if (piece == null || piece.isWhite() != this.isWhite()) {
                     allMoves.add(new int[]{newRow, newCol});

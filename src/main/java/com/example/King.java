@@ -13,7 +13,7 @@ public class King extends Piece {
     }
 
     @Override
-    public List<int[]> getPossibleMoves(Board board) {
+    public List<int[]> getPossibleMoves(Game game) {
         List<int[]> allMoves = new ArrayList<>();
         int[][] directions = {
             {1, 0}, {-1, 0}, // vertical
@@ -27,7 +27,7 @@ public class King extends Piece {
             int newCol = getCol() + direction[1];
 
             if (isValidPosition(newRow, newCol)) {
-                Piece piece = board.getPiece(newRow, newCol);
+                Piece piece = game.getPiece(newRow, newCol);
 
                 if (piece == null || piece.isWhite() != this.isWhite()) {
                     allMoves.add(new int[]{newRow, newCol});

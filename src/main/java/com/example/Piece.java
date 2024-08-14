@@ -46,12 +46,12 @@ public abstract class Piece {
         this.col = col;
     }
 
-    public abstract List<int[]> getPossibleMoves(Board board);
+    public abstract List<int[]> getPossibleMoves(Game game);
 
     
 public List<int[]> getLegalMovesWithoutCheck(Game game) {
     Board board = game.getBoard();
-    List<int[]> possibleMoves = getPossibleMoves(board);
+    List<int[]> possibleMoves = getPossibleMoves(game);
     List<int[]> legalMoves = new ArrayList<>();
     boolean isWhite = isWhite(); // Determine the color
 

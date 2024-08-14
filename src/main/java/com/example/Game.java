@@ -47,7 +47,7 @@ public class Game {
                 // Create a Piece object from the identifier or null if empty
                 Piece piece = createPieceFromIdentifier(pieceIdentifier, row, col);
                 // Set the piece on the board
-                newBoard.setPiece(row, col, piece);
+              //  newBoard.setPiece(row, col, piece);
             }
         }
     
@@ -107,20 +107,28 @@ public class Game {
         this.blackKingPosition[1] = col;
     }
     public void updateKingPositions() {
-        // Update white king position
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece piece = board.getPiece(row, col);
-                if (piece instanceof King) {
-                    if (piece.isWhite()) {
-                        setWhiteKingPosition(row, col);
-                    } else {
-                        setBlackKingPosition(row, col);
-                    }
-                }
+        // Check white kings
+        long whiteKingBitboard = board.getWhiteKings();
+        for (int i = 0; i < 64; i++) {
+            if ((whiteKingBitboard & (1L << i)) != 0) {
+                int row = i / 8;
+                int col = i % 8;
+                setWhiteKingPosition(row, col);
+                break; 
+            }
+        }
+        // Check black kings
+        long blackKingBitboard = board.getBlackKings();
+        for (int i = 0; i < 64; i++) {
+            if ((blackKingBitboard & (1L << i)) != 0) {
+                int row = i / 8;
+                int col = i % 8;
+                setBlackKingPosition(row, col);
+                break; 
             }
         }
     }
+    
 
     public Board getBoard() {
         return this.board;
@@ -134,18 +142,7 @@ public class Game {
         }
         return moveStack.peek();
    }
-   public Move getSecondMove() {
-    if (moveStack.size() < 2) {
-        return null; // Or handle this case appropriately
-    }
-
-    Move topMove = moveStack.pop();
-    Move secondMove = moveStack.peek();
-    moveStack.push(topMove);
-
-    return secondMove;
-}
-
+  
     public Piece getPiece(int row, int col) {
         return board.getPiece(row, col);
     }
@@ -319,7 +316,6 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
         if (!(movedPiece instanceof Pawn)) {
             return false;
         }
-        System.out.println("Moved piece was pawn");
         // Check if the move was a two-square pawn advance
         if (Math.abs(startRow - newRow) == 2 && startCol == newCol ) {
             
@@ -382,41 +378,41 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
         moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece, capturePieceRow, capturePieceCol));
         System.out.println("MOVE WAS ADDED");
     }
+//Bro this is super slow. fix it!!!!!
+// Conver to using the bitboard
+// Also update pieces with a attack map
+public boolean isInCheck(boolean isWhite) {
+    boolean isInCheck = false;
 
-    public boolean isInCheck(boolean isWhite) {
-        boolean isInCheck = false;
-
-        int[] kingPosition = isWhite ? getWhiteKingPosition() : getBlackKingPosition();
-        if (kingPosition == null) {
-            return false; // King not found
-        }
-
-        int kingRow = kingPosition[0];
-        int kingCol = kingPosition[1];
-        List<int[]> possibleMoves;
-
-        // Check all opponent's pieces
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                Piece piece = board.getPiece(r, c);
-                if (piece != null && piece.isWhite() != isWhite) {
-                    possibleMoves = piece.getPossibleMoves(board);
-                    for (int[] move : possibleMoves) {
-                        if (move[0] == kingRow && move[1] == kingCol) {
-                            isInCheck = true;
-                            break;
-                        }
-                    }
-                    if (isInCheck) break;
-                }
-            }
-            if (isInCheck) break;
-        }
-
-        return isInCheck;
+    int[] kingPosition = isWhite ? getWhiteKingPosition() : getBlackKingPosition();
+    if (kingPosition == null) {
+        return false; // King not found
     }
 
-    
+    int kingRow = kingPosition[0];
+    int kingCol = kingPosition[1];
+    List<int[]> possibleMoves;
+
+    // Check all opponent's pieces
+    for (int r = 0; r < 8; r++) {
+        for (int c = 0; c < 8; c++) {
+            Piece piece = board.getPiece(r, c);
+            if (piece != null && piece.isWhite() != isWhite) {
+                possibleMoves = piece.getPossibleMoves(this);
+                for (int[] move : possibleMoves) {
+                    if (move[0] == kingRow && move[1] == kingCol) {
+                        isInCheck = true;
+                        break;
+                    }
+                }
+                if (isInCheck) break;
+            }
+        }
+        if (isInCheck) break;
+    }
+
+    return isInCheck;
+}
     public List<Piece> getAllPieces(boolean isWhite) {
         List<Piece> pieces = new ArrayList<>();
         for (int r = 0; r < 8; r++) {
@@ -430,58 +426,6 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
         return pieces;
     }
     
-
-    public List<int[]> getLegalMovesToResolveCheck(boolean isWhite) {
-        List<int[]> legalMoves = new ArrayList<>();
-    
-        // Find the king's position
-        int[] kingPosition = isWhite ? getWhiteKingPosition() : getBlackKingPosition();
-        if (kingPosition == null) {
-            return legalMoves; // King not found
-        }
-    
-        int kingRow = kingPosition[0];
-        int kingCol = kingPosition[1];
-    
-        // Iterate over all pieces for the player whose turn it is
-        List<Piece> pieces = getAllPieces(isWhite);
-    
-        for (Piece piece : pieces) {
-            int pieceRow = piece.getRow();
-            int pieceCol = piece.getCol();
-    
-            // Get all possible moves for this piece
-            List<int[]> possibleMoves = piece.getPossibleMoves(board);
-    
-            for (int[] move : possibleMoves) {
-                int targetRow = move[0];
-                int targetCol = move[1];
-    
-                // Create a copy of the board to simulate the move
-                Game boardCopy = copyGame();
-                
-                // Perform the move on the copied game
-                Piece pieceToMove = boardCopy.getPiece(pieceRow, pieceCol);
-                Piece capturedPiece = boardCopy.getPiece(targetRow, targetCol); // Piece that will be captured
-                
-                boardCopy.setPiece(targetRow, targetCol, pieceToMove);
-                boardCopy.setPiece(pieceRow, pieceCol, null); // Remove piece from the original position
-    
-                // Check if the king is still in check after the move
-                if (!boardCopy.isInCheck(isWhite)) {
-                    // Add the move to legalMoves if it resolves the check
-                    legalMoves.add(move);
-                }
-    
-                // Revert the move on the copied board
-                boardCopy.setPiece(pieceRow, pieceCol, pieceToMove);
-                boardCopy.setPiece(targetRow, targetCol, capturedPiece);
-            }
-        }
-    
-        return legalMoves;
-    }
-
     public boolean checkMate(Game game){
 
        int[] kingPosition = game.isWhiteTurn() ? getWhiteKingPosition() : getBlackKingPosition();

@@ -10,7 +10,7 @@ public class Rook extends Piece {
     }
 
     @Override
-    public List<int[]> getPossibleMoves(Board board) {
+    public List<int[]> getPossibleMoves(Game game) {
         List<int[]> allMoves = new ArrayList<>();
         int[][] directions = {{1, 0}, {-1, 0}, {0, -1}, {0, 1}};
 
@@ -26,7 +26,7 @@ public class Rook extends Piece {
                     break;
                 }
 
-                Piece piece = board.getPiece(newRow, newCol);
+                Piece piece = game.getPiece(newRow, newCol);
 
                 if (piece == null) {
                     allMoves.add(new int[]{newRow, newCol});
