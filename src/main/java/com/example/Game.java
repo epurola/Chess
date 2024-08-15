@@ -14,6 +14,7 @@ public class Game {
    private boolean whiteCanCastleQueenSide ;
    private boolean blackCanCastleKingSide ;
    private boolean blackCanCastleQueenSide ;
+ 
   
   
 
@@ -207,7 +208,7 @@ public class Game {
         int originalRow = selectedPiece.getRow();
         int originalCol = selectedPiece.getCol();
         List<int[]> possibleMoves = new ArrayList<>();
-        Piece capturedPiece = null;
+       Piece capturedPiece = null;
 
         if (row >= 0 && row < 8 && col >= 0 && col < 8) {
            
@@ -227,18 +228,23 @@ public class Game {
             if (validMove) {
                 // Temporarily make the move
                 Piece pieceToMove = selectedPiece.copy();
-                if(pieceToMove instanceof Rook || pieceToMove instanceof King)
-                {
-                 updateCastlingRightsAfterMove(selectedPiece);
-                }
+               
                 // Handle en passant
                 if (capturedPiece != null) {
                     setPiece(capturedPiece.getRow(), capturedPiece.getCol(), null); // Remove the captured pawn from the board
                 }
+                if(pieceToMove instanceof King || pieceToMove instanceof Rook)
+                {
+                    updateCastlingRightsAfterMove(selectedPiece);
+                }
                  // Castling check
                if (pieceToMove instanceof King && Math.abs(fromCol - toCol) == 2) {
                  // King-side or Queen-side castling
-                 performCastling((King) pieceToMove, toRow, toCol);
+                  
+                 
+                 int[] capturedPiecePosition = new int[2];
+                 capturedPiecePosition =performCastling((King) pieceToMove, toRow, toCol);
+                 capturedPiece = new Rook(capturedPiecePosition[0], capturedPiecePosition[1], isWhiteTurn());
                }
                
 
@@ -292,12 +298,18 @@ public class Game {
 
     
 }
-private void performCastling(King king, int kingRow, int kingCol) {
+private int[] performCastling(King king, int kingRow, int kingCol) {
     boolean kingSide = (kingCol == 6);
     int rookCol = kingCol < 4 ? 0 : 7; // Determine if king-side or queen-side
     int newRookCol = kingCol < 4 ? 3 : 5; // New rook position after castling
     int rookRow = kingRow;
     int newKingCol = kingSide ? 6 : 2;
+   
+    int[] capturedPiecePosition = new int[2];
+
+    // Assign values to the array
+    capturedPiecePosition[0] = rookRow;
+    capturedPiecePosition[1] = newRookCol;
     
     Piece rook = getPiece(rookRow, rookCol);
     if (rook instanceof Rook) {
@@ -309,11 +321,12 @@ private void performCastling(King king, int kingRow, int kingCol) {
         // Move the king to its new position
         setPiece(kingRow, kingCol, king);
         king.setPosition(kingRow, newKingCol);
-        
+
         // Update castling rights
         updateCastlingRightsAfterMove(king);
         updateCastlingRightsAfterMove(rook);
     }
+    return capturedPiecePosition;
 }
          
 
@@ -411,7 +424,8 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
             Piece movedPiece = lastMove.getMovedPiece();
     
             Piece capturedPiece = lastMove.getCapturedPiece();
-    
+
+        
             // Move the moved piece back to its original position
             if (movedPiece != null) {
                 board.setPiece(lastMove.getFromRow(), lastMove.getFromCol(), movedPiece);
@@ -421,56 +435,69 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
                 // If the moved piece is null, clear the destination cell
                 board.setPiece(lastMove.getFromRow(), lastMove.getFromCol(), null);
             }
-    
+
             // Restore the captured piece to its original position, if any
             //In case enpassant the eating piece position is not updated so it gets drawn in undo two times
             if (capturedPiece != null) {
                 board.setPiece(lastMove.getCapturePieceRow(), lastMove.getCapturePieceCol(), capturedPiece);
                 capturedPiece.setPosition(lastMove.getCapturePieceRow(), lastMove.getCapturePieceCol());
+                if(getPiece(capturedPiece.getRow(),capturedPiece.getCol()) != null)
+                {
+                    board.setPiece(capturedPiece.getRow(),capturedPiece.getCol(), null);
+                }
+                 //In castling the rook is market as captured and its moved position is in coordinates
+            if(movedPiece.isWhite() == capturedPiece.isWhite())
+            {
+                if(capturedPiece.getCol() == 3 && isWhiteTurn())
+                {
+                    board.setPiece(0, 0, capturedPiece);
+                   
+                }
+                if(capturedPiece.getCol() == 5 && isWhiteTurn())
+                {
+                    board.setPiece(0, 7, capturedPiece);
+                   
+                }
+                if(capturedPiece.getCol() == 3 && !isWhiteTurn())
+                {
+                    board.setPiece(7, 0, capturedPiece);
+                   
+                }
+                if(capturedPiece.getCol() == 5 && !isWhiteTurn())
+                {
+                    board.setPiece(7, 7, capturedPiece);
+                  
+                }
+            }
             } else {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
-                
             }
-           
-            if (!whiteCanCastleKingSide && !isWhiteTurn()) {
-                // White King-side castling
-                board.setPiece(7, 7, new Rook(7, 7, true)); // Place Rook back to its original position (a1)
-                board.setPiece(7, 5, null); // Remove Rook from the castling position (f1)
+         
+            
+            setWhiteTurn(!isWhiteTurn()); 
+            if (!whiteCanCastleKingSide && isWhiteTurn()) {
+        
                 whiteCanCastleKingSide = true;
             }
-            
-            if (!whiteCanCastleQueenSide && !isWhiteTurn()) {
-                // White Queen-side castling
-                board.setPiece(7, 0, new Rook(7, 0, true)); // Place Rook back to its original position (h1)
-                board.setPiece(7, 3, null); // Remove Rook from the castling position (d1)
+            if (!whiteCanCastleQueenSide && isWhiteTurn()) {
+              
                 whiteCanCastleQueenSide = true;
             }
+            if (!blackCanCastleKingSide && !isWhiteTurn()) {
             
-            if (!blackCanCastleKingSide && isWhiteTurn()) {
-                // Black King-side castling
-                board.setPiece(0, 7, new Rook(0, 7, false)); // Place Rook back to its original position (h8)
-                board.setPiece(0, 5, null); // Remove Rook from the castling position (f8)
                 blackCanCastleKingSide = true;
             }
-            
-            if (!blackCanCastleQueenSide && isWhiteTurn() ) {
-                // Black Queen-side castling
-                board.setPiece(0, 0, new Rook(0, 0, false)); // Place Rook back to its original position (a8)
-                board.setPiece(0, 3, null); // Remove Rook from the castling position (d8)
+            if (!blackCanCastleQueenSide && !isWhiteTurn() ) {
                 blackCanCastleQueenSide = true;
             }
-            
-            
-            setWhiteTurn(!isWhiteTurn());
+              
         }
         
     }
  
-    
 
     public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece, int capturePieceRow, int capturePieceCol) {
         moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece, capturePieceRow, capturePieceCol));
-        System.out.println("MOVE WAS ADDED");
     }
 public boolean isInCheck(boolean isWhite) {
     boolean isInCheck = false;
@@ -485,6 +512,7 @@ public boolean isInCheck(boolean isWhite) {
     List<int[]> possibleMoves;
 
     // Check all opponent's pieces
+    //update get possible moves to use bitshifting...
     for (int r = 0; r < 8; r++) {
         for (int c = 0; c < 8; c++) {
             Piece piece = board.getPiece(r, c);

@@ -187,7 +187,12 @@ import java.util.List;
                         pawnToPromote = (Pawn) selectedPiece;
                         promotePawn(row, col);
                     }
-                    if(capturedPiece != null )
+                    if (selectedPiece instanceof Pawn && selectedPiece.getCol()  != col)
+                     {
+                       capturedPiece = new Pawn(row,col,game.isWhiteTurn());
+                     }
+                    
+                    if(capturedPiece != null)
                     {
                         soundManager.playCaptureSound();
 
