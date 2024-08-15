@@ -403,16 +403,19 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
             if(col == 0 )
             {
                 if ( getPiece(row, col + 1) instanceof Pawn) {
+                    System.out.println("Enpassant true");
                     return true;
                 }
             }
             if(col ==7 )
             {
                 if ( getPiece(row, col - 1) instanceof Pawn) {
+                    System.out.println("Enpassant true");
                     return true;
                 }
             }
             if (getPiece(row, col + 1) instanceof Pawn || getPiece(row, (col- 1)) instanceof Pawn) {
+                System.out.println("Enpassant true");
                 return true;
             }
             

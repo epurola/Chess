@@ -6,6 +6,7 @@ module com.example {
     requires javafx.media;
     requires java.net.http;
     requires org.java_websocket;
+    requires org.json;
     
 
     opens com.example to javafx.fxml;

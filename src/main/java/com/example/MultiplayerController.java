@@ -19,6 +19,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 
 import java.io.IOException;
@@ -27,12 +28,12 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.WebSocket.ChessSocketClient;
+import com.example.WebSocket.ChessWebSocketClient;
 
  
-    public class MultiplayerController implements MessageCallBack {
+    public class MultiplayerController  {
         private SoundManager soundManager;
-        private ChessSocketClient socketClient;
+        private ChessWebSocketClient socketClient;
         private Piece selectedPiece;
         private ImageView draggedPiece;
         private Pawn pawnToPromote;
@@ -40,8 +41,9 @@ import com.example.WebSocket.ChessSocketClient;
         private boolean drawPossibleMoves;
         private ToggleSwitch toggleSwitch;
         private Game game;
-        private String currentTurn;
-        private String playerColor;
+        private String color;
+        private boolean isWhite;
+        Piece capturedPiece;
 
         Color lightColor = Color.web("#E8EDF9"); 
         Color darkColor = Color.web("#B7C0D8"); 
@@ -59,63 +61,74 @@ import com.example.WebSocket.ChessSocketClient;
         @FXML private HBox hbox1;
         
     
+       
         @FXML
-        public void initialize() throws InterruptedException, URISyntaxException {
-            soundManager = new SoundManager();
-            
+        public void initialize() {
+            try {
+                // Initialize the SoundManager
+                soundManager = new SoundManager();
+                
+                URI serverUri = new URI("ws://localhost:8887");
+                socketClient = new ChessWebSocketClient(serverUri);
+                socketClient.connectBlocking();
+                socketClient.setController(this);
+                game = new Game();
     
-            URI serverUri = new URI("ws://localhost:8887");
-            socketClient = new ChessSocketClient(serverUri);
-            socketClient.setMessageCallback(this);
-            socketClient.setBoardStateCallback(this::onBoardStateReceived);
-           
-            socketClient.connectBlocking();
-            socketClient.requestBoardState(); 
-            
-    
-            drawPossibleMoves = false;
-    
-            // Initialize status label
-            statusLabel = new Label();
-            statusLabel.setTextFill(Color.BLACK);
-            statusLabel.setVisible(false);
-            rootPane.getChildren().add(statusLabel);
-            StackPane.setAlignment(statusLabel, javafx.geometry.Pos.CENTER);
-            statusLabel.getStyleClass().add("status-label");
-    
-            // Initialize promotionComboBox
-        
-            // Initialize ToggleSwitch
-            toggleSwitch = new ToggleSwitch();
-            hbox1.getChildren().add(toggleSwitch);
-            toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawPossibleMoves = !drawPossibleMoves);
-    
-            chessBoard.setPrefSize(800, 800);
-            StackPane.setAlignment(chessBoard, javafx.geometry.Pos.CENTER);
-            rootPane.setPrefSize(800, 800);
-        }
-        @Override
-        public void onPlayerColorReceived(String color) {
-            Platform.runLater(() -> {
-                this.playerColor = color;
-            });
-        }
 
-        @Override
-        public void onMoveReceived(int fromRow, int fromCol, int toRow, int toCol, String capturedPiece, String movedPiece) {
-            Platform.runLater(() -> {
-                drawBoard(); 
-                soundManager.playMoveSound();
-            });
+                checkAndDrawBoard();
+                socketClient.setController(this);
+        
+                // Initialize the drawPossibleMoves flag
+                drawPossibleMoves = false;
+        
+                // Initialize statusLabel
+                statusLabel = new Label();
+                statusLabel.setTextFill(Color.BLACK);
+                statusLabel.setVisible(false);
+                rootPane.getChildren().add(statusLabel);
+                StackPane.setAlignment(statusLabel, javafx.geometry.Pos.CENTER);
+                statusLabel.getStyleClass().add("status-label");
+        
+                // Initialize promotionComboBox
+                // Ensure that you have set up the promotionComboBox here if needed
+        
+                // Initialize ToggleSwitch
+                toggleSwitch = new ToggleSwitch();
+                hbox1.getChildren().add(toggleSwitch);
+                toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawPossibleMoves = !drawPossibleMoves);
+        
+                // Set preferred size for chessBoard and rootPane
+                chessBoard.setPrefSize(800, 800);
+                StackPane.setAlignment(chessBoard, javafx.geometry.Pos.CENTER);
+                rootPane.setPrefSize(800, 800);
+                
+            } catch (URISyntaxException e) {
+                e.printStackTrace(); // Handle URI syntax exception
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle any other exceptions
+            }
         }
-        @Override
-        public void onBoardStateReceived(String[][] board, String currentTurn) {
-            Platform.runLater(() -> {
-                game = new Game(board, currentTurn);
-                this.currentTurn = currentTurn; // Track current turn
+        private void checkAndDrawBoard() {
+            if (color == null) {
+                System.out.println("Player color is not set yet.");
+                // Schedule a re-check after a delay
+                PauseTransition delay = new PauseTransition(Duration.seconds(1));
+                delay.setOnFinished(event -> checkAndDrawBoard()); // Recursive call after delay
+                delay.play();
+            } else {
+                if(color.equals("white"))
+                {
+                    isWhite = true;
+                }
+                else
+                {
+                    isWhite = false;
+                }
                 drawBoard();
-            });
+            }
         }
+        
+        
         
         @FXML
         private void handleFullScreen() {
@@ -155,11 +168,12 @@ import com.example.WebSocket.ChessSocketClient;
         @FXML
         private void Undo() {
             game.undoLastMove();
+            soundManager.playMoveSound();
             drawBoard();
         }
     
         private void drawBoard() {
-            if (playerColor == null) {
+            if (color == null) {
                 System.out.println("Player color is not set yet.");
                 return; // Exit if player color is not available
             }
@@ -178,8 +192,8 @@ import com.example.WebSocket.ChessSocketClient;
                         pieceView.setFitWidth(100);
         
                         // Set mouse transparency based on the player color
-                        boolean isPlayerPiece = (playerColor.equals("white") && piece.isWhite()) ||
-                                         (playerColor.equals("black") && !piece.isWhite());
+                        boolean isPlayerPiece = (color.equals("white") && piece.isWhite()) ||
+                                         (color.equals("black") && !piece.isWhite());
                         pieceView.setMouseTransparent(!isPlayerPiece);
         
                         chessBoard.add(pieceView, j, i);
@@ -190,7 +204,6 @@ import com.example.WebSocket.ChessSocketClient;
                 }
             }
         }
-        
     
         private Image getPieceImage(Piece piece) {
             String color = piece.isWhite() ? "white-" : "black-";
@@ -218,60 +231,95 @@ import com.example.WebSocket.ChessSocketClient;
                 draggedPiece.setTranslateY(event.getSceneY() - 50 - draggedPiece.getLayoutY() - chessBoard.localToScene(0, 0).getY());
             }
         }
-    
+  
+        @SuppressWarnings("static-access")
         private void handlePieceDrop(MouseEvent event) {
             if (draggedPiece != null) {
                 int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / 100);
                 int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / 100);
-                boolean validMove = game.makeMove(selectedPiece.getRow(), selectedPiece.getCol(), row, col);
-                Piece capturedPiece = game.getPiece(row, col);
-                int pawnStartCol = selectedPiece.getCol();
-
-                if(!validMove)
+                if (row >= 0 && row < 8 && col >= 0 && col < 8) 
                 {
-                    soundManager.playNotifySound();
+                capturedPiece = game.getPiece(row, col);
+                boolean validMove = game.makeMove(selectedPiece.getRow(), selectedPiece.getCol(), row, col);
+                if (!validMove)
+                {
+                  soundManager.playNotifySound();
                 }
-            
+               
                 if (validMove) {
-                    game.recordMove(selectedPiece.getRow(), selectedPiece.getCol(), row, col, capturedPiece, selectedPiece, row, col);
-
-                    if(capturedPiece != null )
-                    {
-                       soundManager.playCaptureSound();
+                    boolean soundPlayed = false;
+        
+                    // Check for castling first
+                    if (selectedPiece instanceof King && Math.abs(col - selectedPiece.getCol()) == 2) {
+                        soundManager.playCastleSound();
+                        soundPlayed = true;
                     }
-                    else{
-                        soundManager.playMoveSound();
+                
+                    // Check for pawn promotion
+                    if (selectedPiece instanceof Pawn && (row == 0 || row == 7)) {
+                        pawnToPromote = (Pawn) selectedPiece;
+                        promotePawn(row, col);
                     }
-
-                    if (socketClient != null && socketClient.isOpen()) {
-                        Move move = game.getLastMove();
-                        socketClient.sendMove(move);
-                        socketClient.requestBoardState();
+                
+                    // Check for captures
+                    if (selectedPiece instanceof Pawn && selectedPiece.getCol() != col) {
+                        capturedPiece = new Pawn(row, col, game.isWhiteTurn());
+                      //Does not currentlu ger executed for some reason
+                      Move lastmove = game.getLastMove();
+                        if(lastmove.getToRow() != lastmove.getCapturePieceRow())
+                        {
+                            capturedPiece =  new Pawn(selectedPiece.getRow(), col, game.isWhiteTurn());
+                        }
                     }
-                } else {
+                
+                    // Play sound based on capture, check, or move
+                    if (!soundPlayed) {
+                        if (capturedPiece != null) {
+                            soundManager.playCaptureSound();
+                        } else if (game.isInCheck(game.isWhiteTurn())) {
+                            soundManager.playCheckSound();
+                        } else {
+                            soundManager.playMoveSound();
+                        }
+                    }
+                    socketClient.sendMove(
+                        selectedPiece.getClass().getSimpleName(), 
+                        selectedPiece.getRow(),
+                        selectedPiece.getCol(),
+                        row,
+                        col,
+                        capturedPiece != null ? capturedPiece.getRow() : row, 
+                        capturedPiece != null ? capturedPiece.getCol() : col, 
+                        isWhite,
+                        capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null"
+                    );
+                }
+                
+            
+                } else{
                     soundManager.playNotifySound();
                 }
-                socketClient.requestBoardState();
+            }
                 drawBoard();
+                if(game.checkMate(game))
+                {
+                     displayConfetti(chessBoard);
+                     soundManager.playWinSound();
+                     statusLabel.setText("Victory");
+                     statusLabel.setVisible(true);
+                }
+                if(game.checkDraw(game))
+                {
+                    statusLabel.setText("Draw");
+                    statusLabel.setVisible(true);
+                    soundManager.playDrawSound();
+                }
                 selectedPiece = null;
                 draggedPiece = null;
-            }
-            if(game.checkMate(game))
-            {
-               displayConfetti(chessBoard);
-            }
-        }
-         private void displayConfetti(Pane pane) {
-            double paneWidth = pane.getWidth();
-            double paneHeight = pane.getHeight();
-        
-            for (int i = 0; i < 100; i++) { // Number of confetti pieces
-                Confetti confetti = new Confetti(Color.hsb(Math.random() * 360, 1.0, 1.0), paneWidth, paneHeight);
-                pane.getChildren().add(confetti);
-                confetti.animate();
-            }
-        }
 
+            }
+
+        
     
         private void promotePawn(int row, int col) {
         
@@ -332,17 +380,27 @@ import com.example.WebSocket.ChessSocketClient;
                         newPiece = new Queen(row, col, pawnToPromote.isWhite());
                 }
                 soundManager.playButtonSound();
-                String pieceName = getPieceNameFromImagePath(choice);
-                if (socketClient != null && socketClient.isOpen()) {
-                    socketClient.sendPromotionRequest(row, col, pieceName);
-                }
-        
-                drawBoard(); // Redraw the board to update the piece's position
+                selectedPiece = newPiece;
+                game.setPiece(row, col, newPiece);
+                System.out.println("Pawn promoted to " + choice + ".");
+                pawnToPromote = null; // Reset pawnToPromote after promotion
+                drawBoard();  // Redraw the board to update the piece's position
                 exitButton.setMouseTransparent(false); 
                 exitButton1.setMouseTransparent(false);
                 fullScreenButton.setMouseTransparent(false);
                 resetButton.setMouseTransparent(false);
                 undoButton.setMouseTransparent(false);
+                socketClient.sendMove(
+                    selectedPiece.getClass().getSimpleName(), 
+                    selectedPiece.getRow(),
+                    selectedPiece.getCol(),
+                    row,
+                    col,
+                    capturedPiece != null ? capturedPiece.getRow() : row, 
+                    capturedPiece != null ? capturedPiece.getCol() : col, 
+                    isWhite,
+                    capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null"
+                );
                 
             });
             promotionMenu.setLayoutX(row);
@@ -354,13 +412,7 @@ import com.example.WebSocket.ChessSocketClient;
             resetButton.setMouseTransparent(true);
             undoButton.setMouseTransparent(true); 
         }
-        private String getPieceNameFromImagePath(String imagePath) {
-            if (imagePath.contains("rook")) return "rook";
-            if (imagePath.contains("bishop")) return "bishop";
-            if (imagePath.contains("knight")) return "knight";
-            if (imagePath.contains("queen")) return "queen";
-            return null;
-        }
+     
     
     
         @FXML
@@ -406,14 +458,8 @@ import com.example.WebSocket.ChessSocketClient;
             double squareSize = 100; // Size of each square on the board
             double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
           
-            if (selectedPiece instanceof Pawn) {
-                // Cast to Pawn and get possible moves including en passant
-                possibleMoves = ((Pawn) selectedPiece).getPossibleMoves( game);
-            } else {
-                // For other pieces, use the standard method
-                possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
-            }
-        
+            possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
+            
             for (int[] move : possibleMoves) {
                 int row = move[0];
                 int col = move[1];
@@ -442,6 +488,58 @@ import com.example.WebSocket.ChessSocketClient;
         
                 chessBoard.add(moveIndicatorContainer, col, row); // Add the container to the grid
             }
-        } 
+        }
+        private void displayConfetti(Pane pane) {
+            double paneWidth = pane.getWidth();
+            double paneHeight = pane.getHeight();
+        
+            for (int i = 0; i < 800; i++) { // Number of confetti pieces
+                Confetti confetti = new Confetti(Color.hsb(Math.random() * 360, 1.0, 1.0), paneWidth*2, paneHeight*2);
+                pane.getChildren().add(confetti);
+                confetti.animate();
+            }
+        }
+
+//In enpassant the captured piece position adn the piecep position are not the same. 
+// need to add more data to the move meaning moved piece column adn row.
+// When promotiing pawn wait for selection to happen before or update when selected
+        public void updateGameState(String pieceName, int fromRow, int fromCol, int movedRoW,int movedCol, int toRow, int toCol,
+             boolean isWhiteTurn, String capturedPiece) {
+            int row = fromRow;
+            int col = fromCol;
+            int mRow = movedRoW;
+            int mCol = movedCol;
+            int tRow = toRow;
+            int tCol = toCol;
+            boolean isWhite = isWhiteTurn;
+
+            game.setPiece(row, col, null);
+            game.setPiece(toRow, toCol, null);
+            game.setPiece(mRow,mCol, getPieceFromString(pieceName, tRow, tCol, isWhite));
+
+            game.recordMove(row, col, mRow, mCol,
+            getPieceFromString(capturedPiece, tRow, tCol, isWhite),
+            getPieceFromString(pieceName, mRow, mCol, isWhite),
+            tRow,
+            tCol
+            );
+
+             Platform.runLater(() -> drawBoard());
+        }
+        private Piece getPieceFromString(String piece,int row,int col,boolean isWhite) {
+            if (piece.contains("Rook")) return new Rook(row, col, isWhite);
+            if (piece.contains("Bishop")) return new Bishop(row, col, isWhite);
+            if (piece.contains("Knight")) return new Knight(row, col, isWhite);
+            if (piece.contains("Queen")) return new Queen(row, col, isWhite);
+            if (piece.contains("Pawn")) return new Pawn(row, col, isWhite);
+            return null;
+        }
+    
+
+
+
+        public void setColor(String color) {
+            this.color = color;
+        }
     }
     
