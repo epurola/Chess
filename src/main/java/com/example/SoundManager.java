@@ -12,6 +12,9 @@ public class SoundManager {
     private static final String NOTIFY_SOUND_PATH = "/com/example/notify.mp3";
     private static final String BUTTON_SOUND_PATH = "/com/example/button.mp3";
     private static final String WIN_SOUND_PATH = "/com/example/WIN.mp3";
+    private static final String DRAW_SOUND_PATH = "/com/example/lose.mp3";
+    private static final String CASTLE_SOUND_PATH = "/com/example/castle.mp3";
+    private static final String CHECK_SOUND_PATH = "/com/example/check.mp3";
 
     // Create MediaPlayers dynamically
     private static MediaPlayer createMediaPlayer(String path) {
@@ -26,6 +29,18 @@ public class SoundManager {
     // Static methods for common sounds
     public static void playMoveSound() {
         MediaPlayer movePlayer = createMediaPlayer(MOVE_SOUND_PATH);
+        playSound(movePlayer);
+    }
+    public static void playCastleSound() {
+        MediaPlayer movePlayer = createMediaPlayer(CASTLE_SOUND_PATH);
+        playSound(movePlayer);
+    }
+    public static void playCheckSound() {
+        MediaPlayer movePlayer = createMediaPlayer(CHECK_SOUND_PATH);
+        playSound(movePlayer);
+    }
+    public static void playDrawSound() {
+        MediaPlayer movePlayer = createMediaPlayer(DRAW_SOUND_PATH);
         playSound(movePlayer);
     }
     public static void playWinSound() {

@@ -115,6 +115,7 @@ import java.util.List;
         @FXML
         private void Undo() {
             game.undoLastMove();
+            soundManager.playMoveSound();
             drawBoard();
         }
     
@@ -183,23 +184,37 @@ import java.util.List;
                 }
                
                 if (validMove) {
+                    boolean soundPlayed = false;
+                
+                    // Check for castling first
+                    if (selectedPiece instanceof King && Math.abs(col - selectedPiece.getCol()) == 2) {
+                        soundManager.playCastleSound();
+                        soundPlayed = true;
+                    }
+                
+                    // Check for pawn promotion
                     if (selectedPiece instanceof Pawn && (row == 0 || row == 7)) {
                         pawnToPromote = (Pawn) selectedPiece;
                         promotePawn(row, col);
                     }
-                    if (selectedPiece instanceof Pawn && selectedPiece.getCol()  != col)
-                     {
-                       capturedPiece = new Pawn(row,col,game.isWhiteTurn());
-                     }
-                    
-                    if(capturedPiece != null)
-                    {
-                        soundManager.playCaptureSound();
-
-                    }else{
-                        soundManager.playMoveSound();
+                
+                    // Check for captures
+                    if (selectedPiece instanceof Pawn && selectedPiece.getCol() != col) {
+                        capturedPiece = new Pawn(row, col, game.isWhiteTurn());
                     }
+                
+                    // Play sound based on capture, check, or move
+                    if (!soundPlayed) {
+                        if (capturedPiece != null) {
+                            soundManager.playCaptureSound();
+                        } else if (game.isInCheck(game.isWhiteTurn())) {
+                            soundManager.playCheckSound();
+                        } else {
+                            soundManager.playMoveSound();
+                        }
                     }
+                }
+                
         
                 } else{
                     soundManager.playNotifySound();
@@ -217,6 +232,7 @@ import java.util.List;
                 {
                     statusLabel.setText("Draw");
                     statusLabel.setVisible(true);
+                    soundManager.playDrawSound();
                 }
                 selectedPiece = null;
                 draggedPiece = null;
