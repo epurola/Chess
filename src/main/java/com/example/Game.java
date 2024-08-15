@@ -234,6 +234,10 @@ public class Game {
                 if (capturedPiece != null) {
                     setPiece(capturedPiece.getRow(), capturedPiece.getCol(), null); // Remove the captured pawn from the board
                 }
+                if( capturedPiece instanceof Rook)
+                {
+                    updateCastlingRightsAfterMove(capturedPiece);
+                }
                 if(pieceToMove instanceof King || pieceToMove instanceof Rook)
                 {
                     updateCastlingRightsAfterMove(selectedPiece);
@@ -241,8 +245,6 @@ public class Game {
                  // Castling check
                if (pieceToMove instanceof King && Math.abs(fromCol - toCol) == 2) {
                  // King-side or Queen-side castling
-                  
-                 
                  int[] capturedPiecePosition = new int[2];
                  capturedPiecePosition =performCastling((King) pieceToMove, toRow, toCol);
                  capturedPiece = new Rook(capturedPiecePosition[0], capturedPiecePosition[1], isWhiteTurn());
@@ -425,6 +427,7 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
             Piece movedPiece = lastMove.getMovedPiece();
     
             Piece capturedPiece = lastMove.getCapturedPiece();
+           
 
         
             // Move the moved piece back to its original position
@@ -432,27 +435,26 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
                 board.setPiece(lastMove.getFromRow(), lastMove.getFromCol(), movedPiece);
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
                 movedPiece.setPosition(lastMove.getFromRow(), lastMove.getFromCol());
+             
             } else {
                 // If the moved piece is null, clear the destination cell
                 board.setPiece(lastMove.getFromRow(), lastMove.getFromCol(), null);
             }
 
-            // Restore the captured piece to its original position, if any
-            //In case enpassant the eating piece position is not updated so it gets drawn in undo two times
             if (capturedPiece != null) {
                 board.setPiece(lastMove.getCapturePieceRow(), lastMove.getCapturePieceCol(), capturedPiece);
                 capturedPiece.setPosition(lastMove.getCapturePieceRow(), lastMove.getCapturePieceCol());
-                if(getPiece(capturedPiece.getRow(),capturedPiece.getCol()) != null)
+                if(movedPiece.isWhite() == capturedPiece.isWhite())
                 {
                     board.setPiece(capturedPiece.getRow(),capturedPiece.getCol(), null);
                 }
                  //In castling the rook is market as captured and its moved position is in coordinates
             if(movedPiece.isWhite() == capturedPiece.isWhite())
             {
+                System.out.println("Captured piece was white");
                 if(capturedPiece.getCol() == 3 && isWhiteTurn())
                 {
                     board.setPiece(0, 0, capturedPiece);
-                   
                 }
                 if(capturedPiece.getCol() == 5 && isWhiteTurn())
                 {
@@ -473,8 +475,8 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
             } else {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
             }
-         
-            
+        //May not work
+            updateKingPositions();
             setWhiteTurn(!isWhiteTurn()); 
             if (!whiteCanCastleKingSide && isWhiteTurn()) {
         

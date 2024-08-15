@@ -185,7 +185,7 @@ import java.util.List;
                
                 if (validMove) {
                     boolean soundPlayed = false;
-                
+        
                     // Check for castling first
                     if (selectedPiece instanceof King && Math.abs(col - selectedPiece.getCol()) == 2) {
                         soundManager.playCastleSound();
@@ -405,8 +405,8 @@ import java.util.List;
             double paneWidth = pane.getWidth();
             double paneHeight = pane.getHeight();
         
-            for (int i = 0; i < 100; i++) { // Number of confetti pieces
-                Confetti confetti = new Confetti(Color.hsb(Math.random() * 360, 1.0, 1.0), paneWidth, paneHeight);
+            for (int i = 0; i < 800; i++) { // Number of confetti pieces
+                Confetti confetti = new Confetti(Color.hsb(Math.random() * 360, 1.0, 1.0), paneWidth*2, paneHeight*2);
                 pane.getChildren().add(confetti);
                 confetti.animate();
             }
