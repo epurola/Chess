@@ -1,10 +1,24 @@
 package com.example;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.example.WebSocket.ChessWebSocketClient;
+
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -13,22 +27,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import javafx.animation.FadeTransition;
-import javafx.animation.PauseTransition;
-import javafx.application.Platform;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.example.WebSocket.ChessWebSocketClient;
 
  
     public class MultiplayerController  {
@@ -45,6 +45,7 @@ import com.example.WebSocket.ChessWebSocketClient;
         private boolean isWhite;
         private Piece capturedPiece;
         private boolean isCastle;
+        private boolean isMyTurn ;
 
         Color lightColor = Color.web("#E8EDF9"); 
         Color darkColor = Color.web("#B7C0D8"); 
@@ -69,7 +70,7 @@ import com.example.WebSocket.ChessWebSocketClient;
                 // Initialize the SoundManager
                 soundManager = new SoundManager();
                 
-                URI serverUri = new URI("ws://localhost:8887");
+                URI serverUri = new URI("ws://192.168.97.231:8887");
                 socketClient = new ChessWebSocketClient(serverUri);
                 socketClient.connectBlocking();
                 socketClient.setController(this);
@@ -121,10 +122,12 @@ import com.example.WebSocket.ChessWebSocketClient;
                 if(color.equals("white"))
                 {
                     isWhite = true;
+                    isMyTurn = true;
                 }
                 else
                 {
                     isWhite = false;
+                    isCastle = false;
                 }
                 drawBoard();
             }
@@ -197,7 +200,6 @@ import com.example.WebSocket.ChessWebSocketClient;
                         boolean isPlayerPiece = (color.equals("white") && piece.isWhite()) ||
                                          (color.equals("black") && !piece.isWhite());
                         pieceView.setMouseTransparent(!isPlayerPiece);
-        
                         chessBoard.add(pieceView, j, i);
                         pieceView.setOnMousePressed(event -> handlePieceDragStart(event, pieceView, piece));
                         pieceView.setOnMouseDragged(this::handlePieceDrag);
@@ -219,8 +221,14 @@ import com.example.WebSocket.ChessWebSocketClient;
         }
     
         private void handlePieceDragStart(MouseEvent event, ImageView pieceView, Piece piece) {
+
+            if(!isMyTurn)
+            {
+                return;
+            }
             selectedPiece = piece;
             draggedPiece = pieceView;
+           
             if (drawPossibleMoves) {
                 drawPossibleMoves(selectedPiece);
             }
@@ -228,6 +236,11 @@ import com.example.WebSocket.ChessWebSocketClient;
         }
     
         private void handlePieceDrag(MouseEvent event) {
+            if(!isMyTurn)
+            {
+                return;
+            }
+            
             if (draggedPiece != null) {
                 draggedPiece.setTranslateX(event.getSceneX() - 50 - draggedPiece.getLayoutX() - chessBoard.localToScene(0, 0).getX());
                 draggedPiece.setTranslateY(event.getSceneY() - 50 - draggedPiece.getLayoutY() - chessBoard.localToScene(0, 0).getY());
@@ -236,6 +249,10 @@ import com.example.WebSocket.ChessWebSocketClient;
   
         @SuppressWarnings("static-access")
         private void handlePieceDrop(MouseEvent event) {
+            if(!isMyTurn)
+            {
+                return;
+            }
             if (draggedPiece != null) {
                 int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / 100);
                 int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / 100);
@@ -329,6 +346,7 @@ import com.example.WebSocket.ChessWebSocketClient;
                 }
                 selectedPiece = null;
                 draggedPiece = null;
+                isMyTurn = false;
 
             }
 
@@ -551,6 +569,7 @@ import com.example.WebSocket.ChessWebSocketClient;
             tRow,
             tCol
             );
+            isMyTurn = true;
 
              Platform.runLater(() -> drawBoard());
         }
