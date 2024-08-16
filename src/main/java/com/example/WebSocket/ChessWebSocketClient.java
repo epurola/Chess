@@ -44,6 +44,7 @@ public void onMessage(String message) {
                 controller.setColor(color);
             }
         } else {
+            System.out.println("Received message: " + message); 
             JSONObject jsonObject = new JSONObject(message);
 
             String pieceName = jsonObject.optString("pieceName");
@@ -55,9 +56,10 @@ public void onMessage(String message) {
             int toCol = jsonObject.optInt("toCol", -1);
             boolean isWhiteTurn = jsonObject.optBoolean("isWhiteTurn");
             String capturedPiece = jsonObject.optString("capturedPiece");
-
+            boolean isCastle = jsonObject.optBoolean("isCastle");
+        
             if (controller != null) {
-                controller.updateGameState(pieceName, fromRow, fromCol,movedRow,movedCol, toRow, toCol, isWhiteTurn, capturedPiece);
+                controller.updateGameState(pieceName, fromRow, fromCol,movedRow,movedCol, toRow, toCol, isWhiteTurn, capturedPiece, isCastle);
             }
         }
     } catch (JSONException e) {
@@ -70,9 +72,10 @@ public void onMessage(String message) {
 }
 
 
-    public void sendMove(String pieceName, Integer fromRow, Integer fromCol, Integer movedRow, Integer movedCol,Integer toRow, Integer toCol, boolean isWhiteTurn, String capturedPiece) {
+    public void sendMove(String pieceName, Integer fromRow, Integer fromCol, Integer movedRow, Integer movedCol,Integer toRow, Integer toCol, boolean isWhiteTurn, String capturedPiece, boolean isCastle) {
         // Change int to Integer to allow null values
-        String jsonPayload = String.format("{\"pieceName\":\"%s\",\"fromRow\":%s,\"fromCol\":%s,\"movedRow\":%s,\"movedCol\":%s,\"toRow\":%s,\"toCol\":%s,\"isWhiteTurn\":%b,\"capturedPiece\":%s}",
+        
+        String jsonPayload = String.format("{\"pieceName\":\"%s\",\"fromRow\":%s,\"fromCol\":%s,\"movedRow\":%s,\"movedCol\":%s,\"toRow\":%s,\"toCol\":%s,\"isWhiteTurn\":%b,\"capturedPiece\":%s,\"isCastle\":%b}",
                 pieceName,
                 fromRow != null ? fromRow : "null",
                 fromCol != null ? fromCol : "null",
@@ -81,7 +84,9 @@ public void onMessage(String message) {
                 toRow != null ? toRow : "null",
                 toCol != null ? toCol : "null",
                 isWhiteTurn,
-                capturedPiece != null ? "\"" + capturedPiece + "\"" : "null");
+                capturedPiece != null ? "\"" + capturedPiece + "\"" : "null",
+                isCastle
+                );
         // Send the JSON payload
         send(jsonPayload);
     }

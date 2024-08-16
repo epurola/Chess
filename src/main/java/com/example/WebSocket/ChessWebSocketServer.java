@@ -65,9 +65,11 @@ public class ChessWebSocketServer extends WebSocketServer {
             boolean isWhiteTurn = jsonMessage.optBoolean("isWhiteTurn");
             String capturedPiece = jsonMessage.optString("capturedPiece");
             String selectedPiece = jsonMessage.optString("selectedPiece");
+            boolean isCastle = jsonMessage.optBoolean("isCastle");
+            System.out.println(isCastle);
     
             // Call the broadcastMove method with the extracted data
-            broadcastMove(pieceName, fromRow, fromCol,movedRow,movedCol, toRow, toCol, isWhiteTurn, capturedPiece, selectedPiece);
+            broadcastMove(pieceName, fromRow, fromCol,movedRow,movedCol, toRow, toCol, isWhiteTurn, capturedPiece, selectedPiece, isCastle);
     
         } 
          catch (Exception e) {
@@ -92,18 +94,37 @@ public class ChessWebSocketServer extends WebSocketServer {
         System.out.println("Server started successfully.");
     }
 
-    public void broadcastMove(String pieceName, int fromRow, int fromCol,int movedRow, int movedCol, int toRow, int toCol, boolean isWhiteTurn, String capturedPiece, String selectedPiece) {
-        // Create JSON payload
-        String jsonPayload = String.format("{\"pieceName\":\"%s\",\"fromRow\":%s,\"fromCol\":%s,\"movedRow\":%s,\"movedCol\":%s,\"toRow\":%s,\"toCol\":%s,\"isWhiteTurn\":%b,\"capturedPiece\":%s}",
-                                            pieceName, fromRow, fromCol,movedRow,movedCol, toRow, toCol, isWhiteTurn, capturedPiece, selectedPiece);
+    public void broadcastMove(String pieceName, int fromRow, int fromCol, int movedRow, int movedCol, int toRow, int toCol, boolean isWhiteTurn, String capturedPiece, String selectedPiece, boolean isCastle) {
+        // Create JSON payload using JSONObject
+        JSONObject jsonPayload = new JSONObject();
         
-        // Iterate over all clients and send the JSON payload
-        for (WebSocket client : clients) {
-            if (client.isOpen()) {
-                client.send(jsonPayload);
+        try {
+            jsonPayload.put("pieceName", pieceName);
+            jsonPayload.put("fromRow", fromRow);
+            jsonPayload.put("fromCol", fromCol);
+            jsonPayload.put("movedRow", movedRow);
+            jsonPayload.put("movedCol", movedCol);
+            jsonPayload.put("toRow", toRow);
+            jsonPayload.put("toCol", toCol);
+            jsonPayload.put("isWhiteTurn", isWhiteTurn);
+            jsonPayload.put("capturedPiece", capturedPiece);
+            jsonPayload.put("selectedPiece", selectedPiece);
+            jsonPayload.put("isCastle", isCastle);
+    
+            // Print the JSON payload for debugging
+            System.out.println("Broadcasting: " + jsonPayload.toString());
+    
+            // Iterate over all clients and send the JSON payload
+            for (WebSocket client : clients) {
+                if (client.isOpen()) {
+                    client.send(jsonPayload.toString()); // Send the JSON string
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
+    
 
     public static void main(String[] args) {
         try {

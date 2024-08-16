@@ -43,7 +43,8 @@ import com.example.WebSocket.ChessWebSocketClient;
         private Game game;
         private String color;
         private boolean isWhite;
-        Piece capturedPiece;
+        private Piece capturedPiece;
+        private boolean isCastle;
 
         Color lightColor = Color.web("#E8EDF9"); 
         Color darkColor = Color.web("#B7C0D8"); 
@@ -73,6 +74,7 @@ import com.example.WebSocket.ChessWebSocketClient;
                 socketClient.connectBlocking();
                 socketClient.setController(this);
                 game = new Game();
+              
     
 
                 checkAndDrawBoard();
@@ -248,10 +250,19 @@ import com.example.WebSocket.ChessWebSocketClient;
                
                 if (validMove) {
                     boolean soundPlayed = false;
-        
+                   
                     // Check for castling first
                     if (selectedPiece instanceof King && Math.abs(col - selectedPiece.getCol()) == 2) {
                         soundManager.playCastleSound();
+                        isCastle = true;
+                        if(selectedPiece.getCol()> col)
+                        {
+                            capturedPiece = new Rook(selectedPiece.getRow(), col+1, game.isWhiteTurn());
+                        }
+                        else{
+                            capturedPiece = new Rook(selectedPiece.getRow(), col-1, game.isWhiteTurn());
+                        }
+                        
                         soundPlayed = true;
                     }
                 
@@ -264,7 +275,7 @@ import com.example.WebSocket.ChessWebSocketClient;
                     // Check for captures
                     if (selectedPiece instanceof Pawn && selectedPiece.getCol() != col) {
                         capturedPiece = new Pawn(row, col, game.isWhiteTurn());
-                      //Does not currentlu ger executed for some reason
+                 
                       Move lastmove = game.getLastMove();
                         if(lastmove.getToRow() != lastmove.getCapturePieceRow())
                         {
@@ -291,8 +302,10 @@ import com.example.WebSocket.ChessWebSocketClient;
                         capturedPiece != null ? capturedPiece.getRow() : row, 
                         capturedPiece != null ? capturedPiece.getCol() : col, 
                         isWhite,
-                        capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null"
+                        capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null",
+                        isCastle
                     );
+                    System.out.println(isCastle);
                 }
                 
             
@@ -399,7 +412,8 @@ import com.example.WebSocket.ChessWebSocketClient;
                     capturedPiece != null ? capturedPiece.getRow() : row, 
                     capturedPiece != null ? capturedPiece.getCol() : col, 
                     isWhite,
-                    capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null"
+                    capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null",
+                    isCastle
                 );
                 
             });
@@ -500,21 +514,35 @@ import com.example.WebSocket.ChessWebSocketClient;
             }
         }
 
-//In enpassant the captured piece position adn the piecep position are not the same. 
-// need to add more data to the move meaning moved piece column adn row.
-// When promotiing pawn wait for selection to happen before or update when selected
-        public void updateGameState(String pieceName, int fromRow, int fromCol, int movedRoW,int movedCol, int toRow, int toCol,
-             boolean isWhiteTurn, String capturedPiece) {
+        public void updateGameState(String pieceName, int fromRow, int fromCol, int movedRoW,int movedCol, int capturedPieceRow, int capturedPieceCol,
+             boolean isWhiteTurn, String capturedPiece, boolean isCastle) {
             int row = fromRow;
             int col = fromCol;
             int mRow = movedRoW;
             int mCol = movedCol;
-            int tRow = toRow;
-            int tCol = toCol;
+            int tRow = capturedPieceRow;
+            int tCol = capturedPieceCol;
             boolean isWhite = isWhiteTurn;
+            boolean castle = isCastle;
+    
 
             game.setPiece(row, col, null);
-            game.setPiece(toRow, toCol, null);
+            if(castle)
+            {
+                game.setPiece(capturedPieceRow, capturedPieceCol,getPieceFromString(capturedPiece, tRow, tCol, isWhite));
+                if(capturedPieceCol == 3 )
+                {
+                    game.setPiece(movedRoW, 0, null);
+                }
+                else
+                {
+                    game.setPiece(movedRoW, 7, null);
+                }
+            }
+            else{
+                game.setPiece(capturedPieceRow, capturedPieceCol,null);
+            }
+            
             game.setPiece(mRow,mCol, getPieceFromString(pieceName, tRow, tCol, isWhite));
 
             game.recordMove(row, col, mRow, mCol,
@@ -532,6 +560,7 @@ import com.example.WebSocket.ChessWebSocketClient;
             if (piece.contains("Knight")) return new Knight(row, col, isWhite);
             if (piece.contains("Queen")) return new Queen(row, col, isWhite);
             if (piece.contains("Pawn")) return new Pawn(row, col, isWhite);
+            if (piece.contains("King")) return new King(row, col, isWhite);
             return null;
         }
     
