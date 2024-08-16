@@ -70,7 +70,7 @@ import javafx.util.Duration;
                 // Initialize the SoundManager
                 soundManager = new SoundManager();
                 
-                URI serverUri = new URI("ws://192.168.97.231:8887");
+                URI serverUri = new URI("ws://localhost:8887");
                 socketClient = new ChessWebSocketClient(serverUri);
                 socketClient.connectBlocking();
                 socketClient.setController(this);
