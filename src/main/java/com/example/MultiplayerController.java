@@ -267,6 +267,7 @@ import javafx.util.Duration;
                
                 if (validMove) {
                     boolean soundPlayed = false;
+                    isMyTurn = false;
                    
                     // Check for castling first
                     if (selectedPiece instanceof King && Math.abs(col - selectedPiece.getCol()) == 2) {
@@ -346,7 +347,7 @@ import javafx.util.Duration;
                 }
                 selectedPiece = null;
                 draggedPiece = null;
-                isMyTurn = false;
+               
 
             }
 

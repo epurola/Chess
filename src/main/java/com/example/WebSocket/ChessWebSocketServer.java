@@ -56,7 +56,7 @@ public class ChessWebSocketServer extends WebSocketServer {
             JSONObject jsonMessage = new JSONObject(message);
     
             String pieceName = jsonMessage.optString("pieceName");
-            Integer fromRow = jsonMessage.optInt("fromRow", -1); // Default to -1 if not present
+            Integer fromRow = jsonMessage.optInt("fromRow", -1);
             Integer fromCol = jsonMessage.optInt("fromCol", -1);
             Integer movedRow = jsonMessage.optInt("movedRow");
             Integer movedCol = jsonMessage.optInt("movedCol");
@@ -69,14 +69,13 @@ public class ChessWebSocketServer extends WebSocketServer {
             System.out.println(isCastle);
     
             // Call the broadcastMove method with the extracted data
-            broadcastMove(pieceName, fromRow, fromCol,movedRow,movedCol, toRow, toCol, isWhiteTurn, capturedPiece, selectedPiece, isCastle);
+            broadcastMove(pieceName, fromRow, fromCol, movedRow, movedCol, toRow, toCol, isWhiteTurn, capturedPiece, selectedPiece, isCastle, conn);
     
-        } 
-         catch (Exception e) {
+        } catch (Exception e) {
             System.err.println("Unexpected error: " + e.getMessage());
-            // Handle general exceptions
         }
     }
+
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
@@ -94,10 +93,10 @@ public class ChessWebSocketServer extends WebSocketServer {
         System.out.println("Server started successfully.");
     }
 
-    public void broadcastMove(String pieceName, int fromRow, int fromCol, int movedRow, int movedCol, int toRow, int toCol, boolean isWhiteTurn, String capturedPiece, String selectedPiece, boolean isCastle) {
+    public void broadcastMove(String pieceName, int fromRow, int fromCol, int movedRow, int movedCol, int toRow, int toCol, boolean isWhiteTurn, String capturedPiece, String selectedPiece, boolean isCastle, WebSocket sender) {
         // Create JSON payload using JSONObject
         JSONObject jsonPayload = new JSONObject();
-        
+    
         try {
             jsonPayload.put("pieceName", pieceName);
             jsonPayload.put("fromRow", fromRow);
@@ -114,16 +113,24 @@ public class ChessWebSocketServer extends WebSocketServer {
             // Print the JSON payload for debugging
             System.out.println("Broadcasting: " + jsonPayload.toString());
     
-            // Iterate over all clients and send the JSON payload
-            for (WebSocket client : clients) {
-                if (client.isOpen()) {
-                    client.send(jsonPayload.toString()); // Send the JSON string
-                }
+            // Determine which client to send the move to (the opponent)
+            WebSocket opponent;
+            if (sender.equals(whitePlayer)) {
+                opponent = blackPlayer;
+            } else {
+                opponent = whitePlayer;
             }
+    
+            // Send the move to the opponent only if their connection is open
+            if (opponent != null && opponent.isOpen()) {
+                opponent.send(jsonPayload.toString()); // Send the JSON string
+            }
+    
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+    
     
 
     public static void main(String[] args) {
