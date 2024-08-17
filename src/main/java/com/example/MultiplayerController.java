@@ -27,6 +27,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -41,7 +42,7 @@ import javafx.util.Duration;
         private boolean drawPossibleMoves;
         private ToggleSwitch toggleSwitch;
         private Game game;
-        private String color;
+        private String playerColor;
         private boolean isWhite;
         private Piece capturedPiece;
         private boolean isCastle;
@@ -74,10 +75,8 @@ import javafx.util.Duration;
                 socketClient = new ChessWebSocketClient(serverUri);
                 socketClient.connectBlocking();
                 socketClient.setController(this);
-                game = new Game();
-              
-    
 
+            
                 checkAndDrawBoard();
                 socketClient.setController(this);
         
@@ -112,22 +111,24 @@ import javafx.util.Duration;
             }
         }
         private void checkAndDrawBoard() {
-            if (color == null) {
+            if (playerColor == null) {
                 System.out.println("Player color is not set yet.");
                 // Schedule a re-check after a delay
                 PauseTransition delay = new PauseTransition(Duration.seconds(1));
                 delay.setOnFinished(event -> checkAndDrawBoard()); // Recursive call after delay
                 delay.play();
             } else {
-                if(color.equals("white"))
+                if(playerColor.equals("white"))
                 {
                     isWhite = true;
                     isMyTurn = true;
+                    game = new Game();
                 }
                 else
                 {
                     isWhite = false;
                     isCastle = false;
+                    game = new Game( isWhite);
                 }
                 drawBoard();
             }
@@ -178,7 +179,7 @@ import javafx.util.Duration;
         }
     
         private void drawBoard() {
-            if (color == null) {
+            if (playerColor == null) {
                 System.out.println("Player color is not set yet.");
                 return; // Exit if player color is not available
             }
@@ -192,13 +193,20 @@ import javafx.util.Duration;
                     Piece piece = game.getPiece(i, j);
                     if (piece != null) {
                         Image pieceImage = getPieceImage(piece);
+                       
                         ImageView pieceView = new ImageView(pieceImage);
+                        if(!piece.isWhite())
+                        {
+                            Rotate rotate = new Rotate(180, 50, 50);
+                            pieceView.getTransforms().add(rotate);
+                        }
                         pieceView.setFitHeight(100);
                         pieceView.setFitWidth(100);
         
                         // Set mouse transparency based on the player color
-                        boolean isPlayerPiece = (color.equals("white") && piece.isWhite()) ||
-                                         (color.equals("black") && !piece.isWhite());
+                        //Remember to change to is shite when inverting this
+                        boolean isPlayerPiece = (playerColor.equals("white") && piece.isWhite()) ||
+                                         (playerColor.equals("black") && !piece.isWhite());
                         pieceView.setMouseTransparent(!isPlayerPiece);
                         chessBoard.add(pieceView, j, i);
                         pieceView.setOnMousePressed(event -> handlePieceDragStart(event, pieceView, piece));
@@ -211,6 +219,10 @@ import javafx.util.Duration;
     
         private Image getPieceImage(Piece piece) {
             String color = piece.isWhite() ? "white-" : "black-";
+           /* if(playerColor.equals("black"))
+            {
+                color = piece.isWhite() ? "black-" : "white-";
+            }*/ 
             String imagePath = "/images/" + color + piece.getClass().getSimpleName().toLowerCase() + ".png";
             try {
                 return new Image(getClass().getResourceAsStream(imagePath));
@@ -295,9 +307,10 @@ import javafx.util.Duration;
                         capturedPiece = new Pawn(row, col, game.isWhiteTurn());
                  
                       Move lastmove = game.getLastMove();
-                        if(lastmove.getToRow() != lastmove.getCapturePieceRow())
+                      //This causes issue where when two pawn are next to each other both get eaten.
+                        if(lastmove.getToRow() != lastmove.getCapturePieceRow() && game.isEnPassant(row, col))
                         {
-                            capturedPiece =  new Pawn(selectedPiece.getRow(), col, game.isWhiteTurn());
+                           capturedPiece =  new Pawn(selectedPiece.getRow(), col, game.isWhiteTurn());
                         }
                     }
                 
@@ -311,19 +324,23 @@ import javafx.util.Duration;
                             soundManager.playMoveSound();
                         }
                     }
-                    socketClient.sendMove(
-                        selectedPiece.getClass().getSimpleName(), 
-                        selectedPiece.getRow(),
-                        selectedPiece.getCol(),
-                        row,
-                        col,
-                        capturedPiece != null ? capturedPiece.getRow() : row, 
-                        capturedPiece != null ? capturedPiece.getCol() : col, 
-                        isWhite,
-                        capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null",
-                        isCastle
-                    );
-                    System.out.println(isCastle);
+            
+                        socketClient.sendMove(
+                            selectedPiece.getClass().getSimpleName(), 
+                            inverRow(selectedPiece.getRow()),
+                            selectedPiece.getCol(),
+                            inverRow(row),
+                            col,
+                            capturedPiece != null ? inverRow(capturedPiece.getRow()) : inverRow(row), 
+                            capturedPiece != null ? capturedPiece.getCol() : col, 
+                            isWhite,
+                            capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null",
+                            isCastle
+                        );
+                     
+                       
+                        
+                   
                 }
                 
             
@@ -533,29 +550,28 @@ import javafx.util.Duration;
             }
         }
 
-        public void updateGameState(String pieceName, int fromRow, int fromCol, int movedRoW,int movedCol, int capturedPieceRow, int capturedPieceCol,
+        public void updateGameState(String pieceName, int fromRow, int fromCol, int movedRow,int movedCol, int capturedPieceRow, int capturedPieceCol,
              boolean isWhiteTurn, String capturedPiece, boolean isCastle) {
             int row = fromRow;
             int col = fromCol;
-            int mRow = movedRoW;
+            int mRow = movedRow;
             int mCol = movedCol;
             int tRow = capturedPieceRow;
             int tCol = capturedPieceCol;
             boolean isWhite = isWhiteTurn;
             boolean castle = isCastle;
-    
-
+            boolean capture = false;
             game.setPiece(row, col, null);
             if(castle)
             {
                 game.setPiece(capturedPieceRow, capturedPieceCol,getPieceFromString(capturedPiece, tRow, tCol, isWhite));
                 if(capturedPieceCol == 3 )
                 {
-                    game.setPiece(movedRoW, 0, null);
+                    game.setPiece(movedRow, 0, null);
                 }
                 else
                 {
-                    game.setPiece(movedRoW, 7, null);
+                    game.setPiece(movedRow, 7, null);
                 }
             }
             else{
@@ -571,10 +587,42 @@ import javafx.util.Duration;
             tCol
             );
             isMyTurn = true;
+            game.setWhiteTurn(!game.isWhiteTurn());
+            if(!capturedPiece.equals("null"))
+            {
+                capture = true;
+            }
+            if (capture) {
+                    soundManager.playCaptureSound();
+                } else if (game.isInCheck(game.isWhiteTurn())) {
+                    soundManager.playCheckSound();
+                } else if(castle){
+                    soundManager.playCastleSound();
+                }
+                else{
+                    soundManager.playMoveSound();
+                }
 
              Platform.runLater(() -> drawBoard());
+             if(game.checkMate(game))
+                {
+                     displayConfetti(chessBoard);
+                     soundManager.playWinSound();
+                     statusLabel.setText("Victory");
+                     statusLabel.setVisible(true);
+                }
+                if(game.checkDraw(game))
+                {
+                    statusLabel.setText("Draw");
+                    statusLabel.setVisible(true);
+                    soundManager.playDrawSound();
+                }
         }
+        //This basically only moves black pieces since they are set in the top row in the game, But the board is
+        //drawn  so that both players have their pieces at the bottom. 
+        //The rows are inverted when sending the moves
         private Piece getPieceFromString(String piece,int row,int col,boolean isWhite) {
+           // isWhite = false;
             if (piece.contains("Rook")) return new Rook(row, col, isWhite);
             if (piece.contains("Bishop")) return new Bishop(row, col, isWhite);
             if (piece.contains("Knight")) return new Knight(row, col, isWhite);
@@ -585,10 +633,13 @@ import javafx.util.Duration;
         }
     
 
-
-
-        public void setColor(String color) {
-            this.color = color;
+        public void setPlayerColor(String color) {
+            this.playerColor = color;
+        }
+        //Used for converting black piece movements
+        private int inverRow(int row)
+        {
+            return Math.abs(row-7);
         }
     }
     

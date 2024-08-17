@@ -11,6 +11,9 @@ public class Board {
     public Board() {
         initialize();
     }
+    public Board(boolean isBlack) {
+        initializeBlack();
+    }
     public void setPiece(int row, int col, Piece newPiece) {
         long bitMask = 1L << (row * 8 + col);
     
@@ -175,6 +178,25 @@ public class Board {
 
         whiteKings = 0x1000000000000000L; // White king
         blackKings = 0x0000000000000010L; // Black king
+    }
+    public void initializeBlack() {
+        whitePawns =   0x000000000000FF00L;// 8 white pawns 
+        blackPawns = 0x00FF000000000000L; // 8 black pawns
+       
+        whiteRooks = 0x0000000000000081L; // White rooks
+        blackRooks = 0x8100000000000000L; // Black rooks
+
+        whiteKnights = 0x0000000000000042L; // White knights
+        blackKnights = 0x4200000000000000L;// Black knights
+
+        whiteBishops = 0x0000000000000024L; // White bishops
+        blackBishops = 0x2400000000000000L; // Black bishops
+
+        whiteQueens = 0x0000000000000008L; // White queen
+        blackQueens = 0x0800000000000000L; // Black queen
+
+        whiteKings = 0x0000000000000010L; // White king0x1000000000000000L;
+        blackKings = 0x1000000000000000L;// Black king
     }
 
     public Piece getPiece(int row, int col) {

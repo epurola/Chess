@@ -41,7 +41,7 @@ public void onMessage(String message) {
         if (message.startsWith("COLOR:")) {
             String color = message.substring(6).trim();
             if (controller != null) {
-                controller.setColor(color);
+                controller.setPlayerColor(color);
             }
         } else {
             System.out.println("Received message: " + message); 

@@ -12,13 +12,26 @@ public class Pawn extends Piece {
     public List<int[]> getPossibleMoves(Game game) {
         List<int[]> moves = new ArrayList<>();
         int direction = isWhite() ? -1 : 1; // Determine pawn direction based on color
+        if(game.getIsOnline())
+        {
+            direction = -1;
+        }
 
         // One step forward
         addMoveIfValid(moves, game, getRow() + direction, getCol());
 
         // Two steps forward (only if it's the pawn's first move)
+        if(game.getIsOnline())
+        {
+            if ((isWhite() && getRow() == 6) || (!isWhite() && getRow() == 6)) {
+                addMoveIfValid(moves, game, getRow() + 2 * direction, getCol());
+            }
+        }
+        else{
+           // Two steps forward (only if it's the pawn's first move)
         if ((isWhite() && getRow() == 6) || (!isWhite() && getRow() == 1)) {
             addMoveIfValid(moves, game, getRow() + 2 * direction, getCol());
+        }
         }
 
         // Diagonal captures

@@ -14,6 +14,7 @@ public class Game {
    private boolean whiteCanCastleQueenSide ;
    private boolean blackCanCastleKingSide ;
    private boolean blackCanCastleQueenSide ;
+   private boolean isOnline;
  
  
   
@@ -29,6 +30,20 @@ public class Game {
         whiteCanCastleQueenSide  = true;
         blackCanCastleKingSide = true;
         blackCanCastleQueenSide = true;
+
+        updateKingPositions();
+    }
+    public Game(boolean isBlack) {
+        board = new Board(isBlack);
+        whiteTurn = true; // White always starts first
+        moveStack = new Stack<>(); // Initialize the move stack
+        whiteKingPosition = new int[2];
+        blackKingPosition = new int[2];
+        whiteCanCastleKingSide = true ;
+        whiteCanCastleQueenSide  = true;
+        blackCanCastleKingSide = true;
+        blackCanCastleQueenSide = true;
+        isOnline=true;
         updateKingPositions();
     }
 
@@ -47,6 +62,11 @@ public class Game {
         whiteKingPosition = new int[2];
         blackKingPosition = new int[2];
         updateKingPositions();
+    }
+
+    public boolean getIsOnline()
+    {
+        return isOnline;
     }
     //Board constructor initialises pieces in starting position....
     private Board parseBoardState(String[][] board2) {
@@ -430,8 +450,6 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
             Piece movedPiece = lastMove.getMovedPiece();
     
             Piece capturedPiece = lastMove.getCapturedPiece();
-           
-
         
             // Move the moved piece back to its original position
             if (movedPiece != null) {
