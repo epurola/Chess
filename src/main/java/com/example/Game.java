@@ -229,7 +229,7 @@ public class Game {
         int originalRow = selectedPiece.getRow();
         int originalCol = selectedPiece.getCol();
         List<int[]> possibleMoves = new ArrayList<>();
-       Piece capturedPiece = null;
+        Piece capturedPiece = null;
 
         if (row >= 0 && row < 8 && col >= 0 && col < 8) {
            

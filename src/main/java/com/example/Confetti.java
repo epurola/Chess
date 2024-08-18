@@ -28,6 +28,8 @@ public class Confetti extends Circle {
         translateTransition.setCycleCount(1); // Play animation only once
         translateTransition.setInterpolator(javafx.animation.Interpolator.LINEAR); // Linear movement for consistent speed
 
+        
+
         // Fade-out transition
         FadeTransition fadeTransition = new FadeTransition(Duration.millis(FADE_DURATION), this);
         fadeTransition.setFromValue(1.0); // Fully opaque

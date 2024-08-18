@@ -1,6 +1,7 @@
 package com.example;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -19,6 +20,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +54,21 @@ import java.util.List;
         @FXML private Button resetButton;
         @FXML private Button undoButton;
         @FXML private HBox hbox1;
+        @FXML private HBox timer1;
+        @FXML private HBox timer2;
+
+
+        private int player1TimeLeft = 600; 
+        private int player2TimeLeft = 600; 
+        private Timeline player1Timer;
+        private Timeline player2Timer;
+        CountdownClock countdownClock;
+        CountdownClock countdownClock2;
+
+    @FXML
+    private Label player1TimerLabel;
+    @FXML
+    private Label player2TimerLabel;
     
         @FXML
         public void initialize()  {
@@ -56,7 +76,9 @@ import java.util.List;
             game = new Game();
             drawPossibleMoves = false;
             drawBoard();
-    
+            initializeTimers();
+            
+            
             // Initialize status label
             statusLabel = new Label();
             statusLabel.setTextFill(Color.BLACK);
@@ -71,11 +93,110 @@ import java.util.List;
             toggleSwitch = new ToggleSwitch();
             hbox1.getChildren().add(toggleSwitch);
             toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawPossibleMoves = !drawPossibleMoves);
+
+            countdownClock = new CountdownClock(); 
+            countdownClock2 = new CountdownClock(); 
+            
+
+        
+            timer1.setAlignment(Pos.CENTER);
+            timer1.getChildren().addAll(countdownClock);
+            timer2.setAlignment(Pos.CENTER);
+            timer2.getChildren().addAll(countdownClock2);
     
             chessBoard.setPrefSize(800, 800);
             StackPane.setAlignment(chessBoard, javafx.geometry.Pos.CENTER);
             rootPane.setPrefSize(800, 800);
         }
+         private void initializeTimers() {
+        // Timer for Player 1
+            player1Timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            player1TimeLeft--;
+            updateTimerLabel(player1TimerLabel, player1TimeLeft);
+            if (player1TimeLeft <= 0) {
+                player1Timer.stop();
+                onTimeOut(1);
+            }
+        }));
+        player1Timer.setCycleCount(Timeline.INDEFINITE);
+
+        // Timer for Player 2
+        player2Timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            player2TimeLeft--;
+            updateTimerLabel(player2TimerLabel, player2TimeLeft);
+            if (player2TimeLeft <= 0) {
+                player2Timer.stop();
+                onTimeOut(2);
+            }
+        }));
+        player2Timer.setCycleCount(Timeline.INDEFINITE);
+
+        // Update the labels with the initial time
+        updateTimerLabel(player1TimerLabel, player1TimeLeft);
+        updateTimerLabel(player2TimerLabel, player2TimeLeft);
+    }
+
+    private void updateTimerLabel(Label label, int timeLeft) {
+        int minutes = timeLeft / 60;
+        int seconds = timeLeft % 60;
+        Platform.runLater(() -> label.setText(String.format("%02d:%02d", minutes, seconds)));
+    }
+
+    private void onTimeOut(int player) {
+        if (player == 1) {
+            statusLabel.setText("Black Wins by Timeout!");
+            displayConfetti(chessBoard);
+            countdownClock.stop();
+            countdownClock2.stop();
+        } else {
+            statusLabel.setText("White Wins by Timeout!");
+            countdownClock.stop();
+            countdownClock2.stop();
+            displayConfetti(chessBoard);
+        }
+        statusLabel.setVisible(true);
+        soundManager.playWinSound();
+    }
+
+    // Call this method when a player makes a move
+    private void switchPlayer() {
+        if (game.isWhiteTurn()) {
+            player2Timer.pause();
+            player1Timer.play();
+            countdownClock2.startCountdown();
+            countdownClock.stop();
+            
+            timer2.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #ffffff;"+
+               "-fx-background-radius: 5; "
+            );
+            timer1.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #6f6f6f;"+
+               "-fx-background-radius: 5; "
+            );
+        } else {
+            player1Timer.pause();
+            player2Timer.play();
+            countdownClock.startCountdown();
+            countdownClock2.stop();
+            timer1.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #ffffff;"+
+               "-fx-background-radius: 5; "
+            );
+            timer2.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #6f6f6f;"+
+               "-fx-background-radius: 5; "
+            );
+        }
+    }
 
         @FXML
         private void handleFullScreen() {
@@ -185,6 +306,9 @@ import java.util.List;
                
                 if (validMove) {
                     boolean soundPlayed = false;
+                    
+                    switchPlayer(); // Switch the active timer after a valid move
+                    
         
                     // Check for castling first
                     if (selectedPiece instanceof King && Math.abs(col - selectedPiece.getCol()) == 2) {
@@ -227,12 +351,16 @@ import java.util.List;
                      soundManager.playWinSound();
                      statusLabel.setText("Victory");
                      statusLabel.setVisible(true);
+                     countdownClock.stop();
+                     countdownClock2.stop();
                 }
                 if(game.checkDraw(game))
                 {
                     statusLabel.setText("Draw");
                     statusLabel.setVisible(true);
                     soundManager.playDrawSound();
+                    countdownClock.stop();
+                    countdownClock2.stop();
                 }
                 selectedPiece = null;
                 draggedPiece = null;

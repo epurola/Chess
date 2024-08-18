@@ -48,6 +48,20 @@
   -fx-font-size: 16px;
   -fx-text-fill: #000000;
 }
+.labelTimer {
+  -fx-font-size: 16px;
+  -fx-text-fill: #000000;
+  -fx-background-color: #ffffff;
+  -fx-background-radius: 5; 
+  
+}
+.labelTimer1 {
+  -fx-font-size: 16px;
+  -fx-text-fill: #000000;
+  -fx-background-color: transparent;
+  -fx-background-radius: 5; 
+  
+}
 .status-label {
   -fx-font-size: 24px; /* Size of the text */
   -fx-font-weight: bold; /* Bold text */
