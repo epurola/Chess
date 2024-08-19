@@ -212,7 +212,19 @@
               </VBox>
           </left>
           <right>
-              <VBox alignment="TOP_CENTER" prefHeight="815.0" prefWidth="125.0" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER" />
+              <VBox alignment="CENTER" prefHeight="815.0" prefWidth="125.0" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
+               <children>
+                  <HBox fx:id="timer1" alignment="CENTER" prefHeight="34.0" prefWidth="273.0" styleClass="labelTimer" stylesheets="@styles.css">
+                     <VBox.margin>
+                        <Insets bottom="250.0" left="10.0" />
+                     </VBox.margin>
+                  </HBox>
+                  <HBox fx:id="timer2" alignment="CENTER" styleClass="labelTimer" stylesheets="@styles.css" prefHeight="34.0" prefWidth="273.0">
+                     <VBox.margin>
+                        <Insets left="10.0" top="250.0" />
+                     </VBox.margin>
+                  </HBox>
+               </children></VBox>
           </right>
           <bottom>
               <HBox styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">

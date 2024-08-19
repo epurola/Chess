@@ -12,6 +12,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -62,6 +63,10 @@ import javafx.util.Duration;
         @FXML private Button resetButton;
         @FXML private Button undoButton;
         @FXML private HBox hbox1;
+        @FXML private HBox timer1;
+        @FXML private HBox timer2;
+        CountdownClock countdownClock;
+        CountdownClock countdownClock2;
         
     
        
@@ -90,9 +95,13 @@ import javafx.util.Duration;
                 rootPane.getChildren().add(statusLabel);
                 StackPane.setAlignment(statusLabel, javafx.geometry.Pos.CENTER);
                 statusLabel.getStyleClass().add("status-label");
+                countdownClock = new CountdownClock(this); 
+               countdownClock2 = new CountdownClock(this); 
         
-                // Initialize promotionComboBox
-                // Ensure that you have set up the promotionComboBox here if needed
+              timer1.setAlignment(Pos.CENTER);
+              timer1.getChildren().addAll(countdownClock);
+              timer2.setAlignment(Pos.CENTER);
+              timer2.getChildren().addAll(countdownClock2);
         
                 // Initialize ToggleSwitch
                 toggleSwitch = new ToggleSwitch();
@@ -110,6 +119,109 @@ import javafx.util.Duration;
                 e.printStackTrace(); // Handle any other exceptions
             }
         }
+         // Call this method when a player makes a move
+    private void switchPlayer() {
+      if(playerColor.equals("black"))
+      {
+        if (game.isWhiteTurn() ) {
+            countdownClock2.pause();
+            countdownClock.start();
+            timer1.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #ffffff;"+
+               "-fx-background-radius: 5; "+
+               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+            );
+            timer1.setOpacity(1);
+            timer2.setOpacity(0.5);
+            timer2.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #6f6f6f;"+
+               "-fx-background-radius: 5; "
+            );
+           
+        } else {
+            countdownClock.pause();
+            countdownClock2.start();
+            
+            timer2.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #ffffff;"+
+               "-fx-background-radius: 5; "+
+               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+            );
+            timer2.setOpacity(1);
+            timer1.setOpacity(0.5);
+            timer1.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #6f6f6f;"+
+               "-fx-background-radius: 5; "
+            );
+        }
+      
+      }
+      else
+      {
+         if (game.isWhiteTurn() ) {
+            countdownClock.pause();
+            countdownClock2.start();
+            
+            timer2.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #ffffff;"+
+               "-fx-background-radius: 5; "+
+               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+            );
+            timer2.setOpacity(1);
+            timer1.setOpacity(0.5);
+            timer1.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #6f6f6f;"+
+               "-fx-background-radius: 5; "
+            );
+        } else {
+            countdownClock2.pause();
+            countdownClock.start();
+            timer1.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #ffffff;"+
+               "-fx-background-radius: 5; "+
+               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+            );
+            timer1.setOpacity(1);
+            timer2.setOpacity(0.5);
+            timer2.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #6f6f6f;"+
+               "-fx-background-radius: 5; "
+            );
+        }
+      }
+       
+    }
+    public void onTimeOut() {
+        if (game.isWhiteTurn()) {
+            statusLabel.setText("Black Wins by Timeout!");
+            displayConfetti(chessBoard);
+            countdownClock.stop();
+            countdownClock2.stop();
+        } else {
+            statusLabel.setText("White Wins by Timeout!");
+            countdownClock.stop();
+            countdownClock2.stop();
+            displayConfetti(chessBoard);
+        }
+        statusLabel.setVisible(true);
+        soundManager.playWinSound();
+    }
         private void checkAndDrawBoard() {
             if (playerColor == null) {
                 System.out.println("Player color is not set yet.");
@@ -280,6 +392,8 @@ import javafx.util.Duration;
                 if (validMove) {
                     boolean soundPlayed = false;
                     isMyTurn = false;
+
+                    switchPlayer();
                    
                     // Check for castling first
                     if (selectedPiece instanceof King && Math.abs(col - selectedPiece.getCol()) == 2) {
@@ -587,7 +701,9 @@ import javafx.util.Duration;
             tCol
             );
             isMyTurn = true;
+            
             game.setWhiteTurn(!game.isWhiteTurn());
+            switchPlayer();
             if(!capturedPiece.equals("null"))
             {
                 capture = true;

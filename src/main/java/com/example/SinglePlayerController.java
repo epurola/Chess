@@ -1,28 +1,30 @@
 package com.example;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.animation.FadeTransition;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.application.Platform;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,31 +56,24 @@ import java.util.List;
         @FXML private Button resetButton;
         @FXML private Button undoButton;
         @FXML private HBox hbox1;
+        @FXML private VBox vbox2;
         @FXML private HBox timer1;
         @FXML private HBox timer2;
+        @FXML private HBox WhiteHbox;
+        @FXML private HBox blackHbox;
+        @FXML private AnchorPane pane;
 
-
-        private int player1TimeLeft = 600; 
-        private int player2TimeLeft = 600; 
-        private Timeline player1Timer;
-        private Timeline player2Timer;
         CountdownClock countdownClock;
         CountdownClock countdownClock2;
-
-    @FXML
-    private Label player1TimerLabel;
-    @FXML
-    private Label player2TimerLabel;
+        double screenWidth;
+        double screenHeight;
     
         @FXML
         public void initialize()  {
             soundManager = new SoundManager();
             game = new Game();
             drawPossibleMoves = false;
-            drawBoard();
-            initializeTimers();
-            
-            
+        
             // Initialize status label
             statusLabel = new Label();
             statusLabel.setTextFill(Color.BLACK);
@@ -86,118 +81,58 @@ import java.util.List;
             rootPane.getChildren().add(statusLabel);
             StackPane.setAlignment(statusLabel, javafx.geometry.Pos.CENTER);
             statusLabel.getStyleClass().add("status-label");
-    
-            // Initialize promotionComboBox
-        
+
             // Initialize ToggleSwitch
             toggleSwitch = new ToggleSwitch();
             hbox1.getChildren().add(toggleSwitch);
             toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawPossibleMoves = !drawPossibleMoves);
+          
+            countdownClock = new CountdownClock(this); 
+            countdownClock2 = new CountdownClock(this); 
+            Screen screen = Screen.getPrimary();
+            Rectangle2D bounds = screen.getBounds();
+             screenWidth = bounds.getWidth();
+             screenHeight = bounds.getHeight();
 
-            countdownClock = new CountdownClock(); 
-            countdownClock2 = new CountdownClock(); 
+            // Set chessboard size to 60% of screen height and ensure it's square
+            double chessBoardSize = screenHeight * 0.8 ;
             
-
-        
+            StackPane.setAlignment(chessBoard, Pos.CENTER);
+            
             timer1.setAlignment(Pos.CENTER);
             timer1.getChildren().addAll(countdownClock);
+         
             timer2.setAlignment(Pos.CENTER);
             timer2.getChildren().addAll(countdownClock2);
-    
-            chessBoard.setPrefSize(800, 800);
-            StackPane.setAlignment(chessBoard, javafx.geometry.Pos.CENTER);
-            rootPane.setPrefSize(800, 800);
-        }
-         private void initializeTimers() {
-        // Timer for Player 1
-            player1Timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
-            player1TimeLeft--;
-            updateTimerLabel(player1TimerLabel, player1TimeLeft);
-            if (player1TimeLeft <= 0) {
-                player1Timer.stop();
-                onTimeOut(1);
-            }
-        }));
-        player1Timer.setCycleCount(Timeline.INDEFINITE);
-
-        // Timer for Player 2
-        player2Timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
-            player2TimeLeft--;
-            updateTimerLabel(player2TimerLabel, player2TimeLeft);
-            if (player2TimeLeft <= 0) {
-                player2Timer.stop();
-                onTimeOut(2);
-            }
-        }));
-        player2Timer.setCycleCount(Timeline.INDEFINITE);
-
-        // Update the labels with the initial time
-        updateTimerLabel(player1TimerLabel, player1TimeLeft);
-        updateTimerLabel(player2TimerLabel, player2TimeLeft);
-    }
-
-    private void updateTimerLabel(Label label, int timeLeft) {
-        int minutes = timeLeft / 60;
-        int seconds = timeLeft % 60;
-        Platform.runLater(() -> label.setText(String.format("%02d:%02d", minutes, seconds)));
-    }
-
-    private void onTimeOut(int player) {
-        if (player == 1) {
-            statusLabel.setText("Black Wins by Timeout!");
-            displayConfetti(chessBoard);
-            countdownClock.stop();
-            countdownClock2.stop();
-        } else {
-            statusLabel.setText("White Wins by Timeout!");
-            countdownClock.stop();
-            countdownClock2.stop();
-            displayConfetti(chessBoard);
-        }
-        statusLabel.setVisible(true);
-        soundManager.playWinSound();
-    }
-
-    // Call this method when a player makes a move
-    private void switchPlayer() {
-        if (game.isWhiteTurn()) {
-            player2Timer.pause();
-            player1Timer.play();
-            countdownClock2.startCountdown();
-            countdownClock.stop();
             
-            timer2.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #ffffff;"+
-               "-fx-background-radius: 5; "
-            );
-            timer1.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #6f6f6f;"+
-               "-fx-background-radius: 5; "
-            );
-        } else {
-            player1Timer.pause();
-            player2Timer.play();
-            countdownClock.startCountdown();
-            countdownClock2.stop();
-            timer1.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #ffffff;"+
-               "-fx-background-radius: 5; "
-            );
-            timer2.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #6f6f6f;"+
-               "-fx-background-radius: 5; "
-            );
-        }
-    }
+         
+            pane.setMaxSize(screenHeight, screenWidth);
+            borderPane.setMaxSize(screenWidth, screenHeight);
+    
+            chessBoard.setPrefSize(chessBoardSize, chessBoardSize);
+            rootPane.setMinSize(chessBoardSize+30, chessBoardSize+30);
+            double boxWidth = (screenWidth - chessBoardSize) / 2;
+            hbox1.setPrefWidth(boxWidth );
+            vbox2.setPrefWidth(boxWidth);
+            vbox2.setMaxHeight(screenHeight);
+            vbox2.setSpacing(screenHeight/2);
+            double hboxHeight = (screenHeight -chessBoardSize) /2;  // Set height as 10% of the screen height
+            WhiteHbox.setMinHeight(hboxHeight-30);
+            WhiteHbox.setPrefHeight(hboxHeight);
+            WhiteHbox.setMaxHeight(hboxHeight-30);
+            
+            blackHbox.setMinHeight(hboxHeight);
+            blackHbox.setPrefHeight(hboxHeight);
+            blackHbox.setMaxHeight(hboxHeight-30);
 
+            
+            // Enable fill height for HBoxes to stretch vertically if needed
+            WhiteHbox.setFillHeight(true);
+            blackHbox.setFillHeight(true);
+            
+            drawBoard();
+        }
+    
         @FXML
         private void handleFullScreen() {
             Stage stage = (Stage) borderPane.getScene().getWindow();
@@ -242,17 +177,18 @@ import java.util.List;
     
         private void drawBoard() {
             chessBoard.getChildren().clear();
+            double squareSize = chessBoard.getPrefWidth() / 8;
             for (int i = 0; i < 8; i++) {
                 for (int j = 0; j < 8; j++) {
-                    Rectangle square = new Rectangle(100, 100);
+                    Rectangle square = new Rectangle(squareSize, squareSize);
                     square.setFill((i + j) % 2 == 0 ? lightColor : darkColor);
                     chessBoard.add(square, j, i);
                     Piece piece = game.getPiece(i, j);
                     if (piece != null) {
                         Image pieceImage = getPieceImage(piece);
                         ImageView pieceView = new ImageView(pieceImage);
-                        pieceView.setFitHeight(100);
-                        pieceView.setFitWidth(100);
+                        pieceView.setFitHeight(squareSize);
+                        pieceView.setFitWidth(squareSize);
                         chessBoard.add(pieceView, j, i);
                         pieceView.setMouseTransparent(!game.isWhiteTurn() == piece.isWhite());
                         pieceView.setOnMousePressed(event -> handlePieceDragStart(event, pieceView, piece));
@@ -285,16 +221,17 @@ import java.util.List;
     
         private void handlePieceDrag(MouseEvent event) {
             if (draggedPiece != null) {
-                draggedPiece.setTranslateX(event.getSceneX() - 50 - draggedPiece.getLayoutX() - chessBoard.localToScene(0, 0).getX());
+                draggedPiece.setTranslateX(event.getSceneX() - 50- draggedPiece.getLayoutX() - chessBoard.localToScene(0, 0).getX());
                 draggedPiece.setTranslateY(event.getSceneY() - 50 - draggedPiece.getLayoutY() - chessBoard.localToScene(0, 0).getY());
             }
         }
   
         @SuppressWarnings("static-access")
         private void handlePieceDrop(MouseEvent event) {
+            double squareSize = chessBoard.getPrefWidth() / 8;
             if (draggedPiece != null) {
-                int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / 100);
-                int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / 100);
+                int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
+                int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
                 if (row >= 0 && row < 8 && col >= 0 && col < 8) 
                 {
                 Piece capturedPiece = game.getPiece(row, col);
@@ -331,6 +268,7 @@ import java.util.List;
                     if (!soundPlayed) {
                         if (capturedPiece != null) {
                             soundManager.playCaptureSound();
+                            addTograve( capturedPiece);
                         } else if (game.isInCheck(game.isWhiteTurn())) {
                             soundManager.playCheckSound();
                         } else {
@@ -367,6 +305,25 @@ import java.util.List;
             }
         
     
+        private void addTograve(Piece capturedPiece) {
+           boolean isWhite = capturedPiece.isWhite();
+           Image pieceImage = getPieceImage(capturedPiece);
+           ImageView piece = new ImageView(pieceImage);
+           piece.setFitHeight(30);
+           piece.setFitWidth(30);
+
+           if(!isWhite)
+           {
+           blackHbox.getChildren().addAll(piece);
+           }
+           else{
+           WhiteHbox.getChildren().addAll(piece);
+           }
+           }
+           
+
+
+
         private void promotePawn(int row, int col) {
         
             List<String> promotionImagePaths = List.of(
@@ -495,7 +452,7 @@ import java.util.List;
             // Clear existing move indicators
             chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
         
-            double squareSize = 100; // Size of each square on the board
+            double squareSize = chessBoard.getPrefWidth() / 8;
             double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
           
             possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
@@ -539,31 +496,63 @@ import java.util.List;
                 confetti.animate();
             }
         }
+         // Call this method when a player makes a move
+    private void switchPlayer() {
+        if (game.isWhiteTurn()) {
+            countdownClock.pause();
+            countdownClock2.start();
+            
+            timer2.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #ffffff;"+
+               "-fx-background-radius: 5; "+
+               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+            );
+            timer2.setOpacity(1);
+            timer1.setOpacity(0.5);
+            timer1.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #6f6f6f;"+
+               "-fx-background-radius: 5; "
+            );
+        } else {
+            countdownClock2.pause();
+            countdownClock.start();
+            timer1.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #ffffff;"+
+               "-fx-background-radius: 5; "+
+               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+            );
+            timer1.setOpacity(1);
+            timer2.setOpacity(0.5);
+            timer2.setStyle(
+                "-fx-font-size: 16px;"+
+                "-fx-text-fill: #000000;"+
+               " -fx-background-color: #6f6f6f;"+
+               "-fx-background-radius: 5; "
+            );
+        }
+    }
+    public void onTimeOut() {
+        if (game.isWhiteTurn()) {
+            statusLabel.setText("Black Wins by Timeout!");
+            displayConfetti(chessBoard);
+            countdownClock.stop();
+            countdownClock2.stop();
+        } else {
+            statusLabel.setText("White Wins by Timeout!");
+            countdownClock.stop();
+            countdownClock2.stop();
+            displayConfetti(chessBoard);
+        }
+        statusLabel.setVisible(true);
+        soundManager.playWinSound();
+    }
+
 
        
     }
-   
-   
-    
-   
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
