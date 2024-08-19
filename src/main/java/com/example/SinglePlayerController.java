@@ -1,13 +1,20 @@
 package com.example;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javafx.animation.FadeTransition;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -18,17 +25,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import javafx.animation.FadeTransition;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
  
     public class SinglePlayerController {
@@ -116,14 +115,14 @@ import java.util.List;
             vbox2.setPrefWidth(boxWidth);
             vbox2.setMaxHeight(screenHeight);
             vbox2.setSpacing(screenHeight/2);
-            double hboxHeight = (screenHeight -chessBoardSize) /2;  // Set height as 10% of the screen height
-            WhiteHbox.setMinHeight(hboxHeight-30);
+            double hboxHeight = (screenHeight -chessBoardSize-30) /2;  // Set height as 10% of the screen height
+            WhiteHbox.setMinHeight(hboxHeight);
             WhiteHbox.setPrefHeight(hboxHeight);
-            WhiteHbox.setMaxHeight(hboxHeight-30);
+            WhiteHbox.setMaxHeight(hboxHeight);
             
             blackHbox.setMinHeight(hboxHeight);
             blackHbox.setPrefHeight(hboxHeight);
-            blackHbox.setMaxHeight(hboxHeight-30);
+            blackHbox.setMaxHeight(hboxHeight);
 
             
             // Enable fill height for HBoxes to stretch vertically if needed

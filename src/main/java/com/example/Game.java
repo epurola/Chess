@@ -595,7 +595,13 @@ public boolean isInCheck(boolean isWhite) {
         List<int[]> allLegalMoves = new ArrayList<>();
         // Retrieve all pieces of the current player
         List<Piece> pieces = game.getAllPieces(whiteTurn);
-         // Iterate over each piece and collect its legal moves
+        List<Piece> pieces1 = game.getAllPieces(!whiteTurn);
+        if(pieces.size() == 1 && pieces1.size() ==1)
+        {
+            return true;
+        }
+
+         
        for (Piece piece : pieces) {
           List<int[]> legalMovesForPiece = piece.getLegalMovesWithoutCheck(game);
           allLegalMoves.addAll(legalMovesForPiece);
