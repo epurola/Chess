@@ -51,4 +51,9 @@ public class Queen extends Piece {
 
         return new Queen(getRow(), getCol(), isWhite());
     }
+
+    @Override
+    protected int getValue() {
+       return 9;
+    }
 }

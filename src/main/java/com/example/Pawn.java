@@ -108,6 +108,11 @@ public class Pawn extends Piece {
     public Piece copy() {
         return new Pawn(getRow(), getCol(), isWhite());
     }
+
+    @Override
+    protected int getValue() {
+        return 1;
+    }
 }
 
 

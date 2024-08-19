@@ -54,4 +54,9 @@ public class Rook extends Piece {
     public Piece copy() {
         return new Rook(getRow(), getCol(), isWhite());
     }
+
+    @Override
+    protected int getValue() {
+        return 5;
+    }
 }

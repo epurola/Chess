@@ -39,6 +39,10 @@ import javafx.util.Duration;
         private boolean drawPossibleMoves;
         private ToggleSwitch toggleSwitch;
         private Game game;
+        private Label whiteScore;
+        private Label blackScore;
+        private int bScore;
+        private int wScore;
     
 
         Color lightColor = Color.web("#E8EDF9"); 
@@ -72,6 +76,14 @@ import javafx.util.Duration;
             soundManager = new SoundManager();
             game = new Game();
             drawPossibleMoves = false;
+            whiteScore = new Label();
+            blackScore = new Label();
+            whiteScore.setText("0");
+            blackScore.setText("0");
+            whiteScore.setVisible(false);
+            blackScore.setVisible(false);
+            blackScore.setStyle("-fx-font-size: 13px;");
+            whiteScore.setStyle("-fx-font-size: 13px;");
         
             // Initialize status label
             statusLabel = new Label();
@@ -93,7 +105,6 @@ import javafx.util.Duration;
              screenWidth = bounds.getWidth();
              screenHeight = bounds.getHeight();
 
-            // Set chessboard size to 60% of screen height and ensure it's square
             double chessBoardSize = screenHeight * 0.8 ;
             
             StackPane.setAlignment(chessBoard, Pos.CENTER);
@@ -123,11 +134,15 @@ import javafx.util.Duration;
             blackHbox.setMinHeight(hboxHeight);
             blackHbox.setPrefHeight(hboxHeight);
             blackHbox.setMaxHeight(hboxHeight);
+            blackHbox.getChildren().add(whiteScore);
+            WhiteHbox.getChildren().addAll(blackScore);
 
             
             // Enable fill height for HBoxes to stretch vertically if needed
             WhiteHbox.setFillHeight(true);
             blackHbox.setFillHeight(true);
+
+            
             
             drawBoard();
         }
@@ -303,22 +318,65 @@ import javafx.util.Duration;
                 draggedPiece = null;
             }
         
-    
-        private void addTograve(Piece capturedPiece) {
-           boolean isWhite = capturedPiece.isWhite();
-           Image pieceImage = getPieceImage(capturedPiece);
-           ImageView piece = new ImageView(pieceImage);
-           piece.setFitHeight(30);
-           piece.setFitWidth(30);
-
-           if(!isWhite)
-           {
-           blackHbox.getChildren().addAll(piece);
-           }
-           else{
-           WhiteHbox.getChildren().addAll(piece);
-           }
-           }
+    //Fix this mess wtf is this
+            private void addTograve(Piece capturedPiece) {
+                boolean isWhite = capturedPiece.isWhite();
+                Image pieceImage = getPieceImage(capturedPiece);
+                ImageView piece = new ImageView(pieceImage);
+                piece.setFitHeight(30);
+                piece.setFitWidth(30);
+            
+                // Assuming Piece has a getValue() method that returns the piece's value
+                int pieceValue = capturedPiece.getValue();
+            
+                if (isWhite) {
+                    blackHbox.getChildren().add(0,piece);
+                    wScore += pieceValue;
+                    bScore -= pieceValue;
+                    String btext = String.valueOf(bScore);
+                    String wtext = String.valueOf(wScore);
+                    blackScore.setText("+" + btext);
+                    whiteScore.setText("+"+wtext);
+                    if(wScore > 0 && wScore > bScore)
+                    {
+                       String text = String.valueOf(wScore);
+                       whiteScore.setText("+" + text);
+                       whiteScore.setVisible(true);
+                       blackScore.setVisible(false);
+                    }
+                  
+                    if(wScore == bScore){
+                        whiteScore.setVisible(false);
+                        blackScore.setVisible(false);
+                    }
+                  
+                   
+                } else {
+                    WhiteHbox.getChildren().add(0,piece);
+                    
+                    wScore -= pieceValue;
+                    bScore += pieceValue;
+                    String btext = String.valueOf(bScore);
+                    String wtext = String.valueOf(wScore);
+                    blackScore.setText("+" + btext);
+                    whiteScore.setText("+"+wtext);
+                    if (bScore > 0 && bScore > wScore)
+                      {
+                       String text = String.valueOf(bScore);
+                       blackScore.setText("+"+ text); 
+                       blackScore.setVisible(true);
+                       whiteScore.setVisible(false);
+                    }
+                    
+                    if(wScore == bScore){
+                        whiteScore.setVisible(false);
+                        blackScore.setVisible(false);
+                    }
+                      
+                }
+            }
+            
+            
            
 
 

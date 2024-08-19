@@ -70,6 +70,12 @@ public class King extends Piece {
         return new King(getRow(), getCol(), isWhite());
     }
 
+    @Override
+    protected int getValue() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getValue'");
+    }
+
 
 }
 

@@ -84,4 +84,6 @@ public List<int[]> getLegalMovesWithoutCheck(Game game) {
     return legalMoves;
 }
 
+protected abstract int getValue();
+
 }

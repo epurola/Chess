@@ -55,6 +55,11 @@ public class Bishop extends Piece {
         // Create a new Bishop object with the same properties
         return new Bishop(getRow(), getCol(), isWhite());
     }
+
+    @Override
+    protected int getValue() {
+       return 3;
+    }
 }
 
 

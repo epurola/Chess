@@ -43,4 +43,9 @@ public class Knight extends Piece {
         return new Knight(getRow(), getCol(), isWhite());
     }
 
+    @Override
+    protected int getValue() {
+        return 3;
+    }
+
 }
