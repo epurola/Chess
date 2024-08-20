@@ -618,5 +618,11 @@ public boolean isInCheck(boolean isWhite) {
         // Create a new Game object with a deep copy of the board
         return new Game(this.board.copyBoard()); 
     }
+    public String toFen() {
+        String fen =getBoard().toFEN(isWhiteTurn(), " ", " ");
+        System.out.println(fen);
+
+        return fen;
+    }
 }
 

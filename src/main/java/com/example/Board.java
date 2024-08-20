@@ -180,7 +180,7 @@ public class Board {
         blackKings = 0x0000000000000010L; // Black king
     }
     public void initializeBlack() {
-        whitePawns =   0x000000000000FF00L;// 8 white pawns 
+        whitePawns =  0x000000000000FF00L;// 8 white pawns 
         blackPawns = 0x00FF000000000000L; // 8 black pawns
        
         whiteRooks = 0x0000000000000081L; // White rooks
@@ -265,6 +265,66 @@ public class Board {
     
         // If no piece is found at the given position
         return null;
+    }
+
+      // Method to convert the board state to FEN notation
+      public String toFEN(boolean whiteToMove, String castlingRights, String enPassant) {
+        StringBuilder fen = new StringBuilder();
+
+        for (int row = 0; row < 8; row++) {  // Iterate from row 0 to 7
+            int emptyCount = 0;
+            for (int col = 0; col < 8; col++) {  // Columns remain in the same left-to-right order
+                Piece piece = getPiece(row, col);
+        
+                if (piece == null) {
+                    emptyCount++;
+                } else {
+                    if (emptyCount > 0) {
+                        fen.append(emptyCount);  // Append number of empty squares
+                        emptyCount = 0;
+                    }
+                    fen.append(getFENCharForPiece(piece));  // Append the piece character
+                }
+            }
+            if (emptyCount > 0) {
+                fen.append(emptyCount);
+            }
+            if (row < 7) {  // Separate rows with a '/'
+                fen.append("/");
+            }
+        }
+        
+
+        // Add active color
+        fen.append(" ").append(whiteToMove ? "w" : "b");
+
+        // Add castling rights
+        // implement
+        fen.append(" ").append(castlingRights.isEmpty() ? "-" : castlingRights);
+
+        // Add en passant target square
+        // implement later
+        fen.append(" ").append(enPassant.isEmpty() ? "-" : enPassant);
+
+
+        return fen.toString();
+    }
+
+    private char getFENCharForPiece(Piece piece) {
+        if (piece instanceof Pawn) {
+            return piece.isWhite() ? 'P' : 'p';
+        } else if (piece instanceof Rook) {
+            return piece.isWhite() ? 'R' : 'r';
+        } else if (piece instanceof Knight) {
+            return piece.isWhite() ? 'N' : 'n';
+        } else if (piece instanceof Bishop) {
+            return piece.isWhite() ? 'B' : 'b';
+        } else if (piece instanceof Queen) {
+            return piece.isWhite() ? 'Q' : 'q';
+        } else if (piece instanceof King) {
+            return piece.isWhite() ? 'K' : 'k';
+        }
+        return ' ';
     }
     
 }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -70,11 +71,13 @@ import javafx.util.Duration;
         CountdownClock countdownClock2;
         double screenWidth;
         double screenHeight;
+        Stockfish stockfish;
     
         @FXML
-        public void initialize()  {
+        public void initialize() throws IOException  {
             soundManager = new SoundManager();
             game = new Game();
+            stockfish = new Stockfish(game);
             drawPossibleMoves = false;
             whiteScore = new Label();
             blackScore = new Label();
@@ -136,8 +139,6 @@ import javafx.util.Duration;
             blackHbox.setMaxHeight(hboxHeight);
             blackHbox.getChildren().add(whiteScore);
             WhiteHbox.getChildren().addAll(blackScore);
-
-            
             // Enable fill height for HBoxes to stretch vertically if needed
             WhiteHbox.setFillHeight(true);
             blackHbox.setFillHeight(true);
@@ -211,7 +212,73 @@ import javafx.util.Duration;
                     }
                 }
             }
+                
         }
+
+        private void drawBestMoveIndicators(int fromRow, int fromCol, int toRow, int toCol) {
+    double squareSize = chessBoard.getPrefWidth() / 8;
+    double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
+
+    // Clear existing move indicators
+    chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
+
+    // Highlight the best move in gold color
+    Circle bestMoveIndicator = new Circle(indicatorSize / 2);
+    bestMoveIndicator.setStroke(Color.GOLD); // Set stroke color to gold
+    bestMoveIndicator.setStrokeWidth(4); // Adjust the stroke width if needed
+    bestMoveIndicator.setFill(null); // No fill
+
+    StackPane bestMoveContainer = new StackPane();
+    bestMoveContainer.setPickOnBounds(false);
+    bestMoveContainer.getChildren().add(bestMoveIndicator);
+    bestMoveContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
+    bestMoveContainer.setMouseTransparent(true);
+
+    Platform.runLater(() -> {
+        chessBoard.add(bestMoveContainer, toCol, toRow); // Add the container to the grid at the destination square
+    });
+
+    // Highlight the piece that can make the best move in gold
+    Circle bestPieceIndicator = new Circle(squareSize / 3); // Full square size
+    bestPieceIndicator.setStroke(Color.GOLD); // Set stroke color to gold
+    bestPieceIndicator.setStrokeWidth(4); // Adjust the stroke width if needed
+    bestPieceIndicator.setFill(null); // No fill
+
+    StackPane bestPieceContainer = new StackPane();
+    bestPieceContainer.setPickOnBounds(false);
+    bestPieceContainer.getChildren().add(bestPieceIndicator);
+    bestPieceContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
+    bestPieceContainer.setMouseTransparent(true);
+
+    Platform.runLater(() -> {
+        chessBoard.add(bestPieceContainer, fromCol, fromRow); // Add the container to the grid at the origin square
+    });
+}
+private volatile boolean running = true; // Flag to control the thread
+
+private void triggerBestMoveAnalysis() {
+    new Thread(() -> {
+        try {
+            // Analyze the best move using Stockfish
+            int[] bestMove = parseMove(stockfish.getBestMove());
+
+            // Update the UI in the JavaFX Application Thread
+            Platform.runLater(() -> {
+                drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }).start();
+}
+
+
+private void stopBestMoveThread() {
+    running = false; // Signal the thread to stop
+}
+
+
     
         private Image getPieceImage(Piece piece) {
             String color = piece.isWhite() ? "white-" : "black-";
@@ -257,6 +324,7 @@ import javafx.util.Duration;
                
                 if (validMove) {
                     boolean soundPlayed = false;
+                    triggerBestMoveAnalysis();
                     
                     switchPlayer(); // Switch the active timer after a valid move
                     
@@ -506,14 +574,21 @@ import javafx.util.Duration;
         private void drawPossibleMoves(Piece selectedPiece) {
             List<int[]> possibleMoves = new ArrayList<>();
         
+            // Parse the best move from Stockfish
+            int[] bestMove = parseMove(stockfish.getBestMove());
+            int fromRow = bestMove[0];
+            int fromCol = bestMove[1];
+            int toRow = bestMove[2];
+            int toCol = bestMove[3];
+        
             // Clear existing move indicators
             chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
         
             double squareSize = chessBoard.getPrefWidth() / 8;
             double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
-          
+        
             possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
-            
+        
             for (int[] move : possibleMoves) {
                 int row = move[0];
                 int col = move[1];
@@ -537,11 +612,31 @@ import javafx.util.Duration;
                 moveIndicatorContainer.setPickOnBounds(false);
                 moveIndicatorContainer.getChildren().add(moveIndicator);
                 moveIndicatorContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
-        
                 moveIndicatorContainer.setMouseTransparent(true);
         
                 chessBoard.add(moveIndicatorContainer, col, row); // Add the container to the grid
             }
+        
+            // Highlight the best move in gold color
+           // Add the container to the grid at the origin square
+    
+        }
+        
+
+        public static int[] parseMove(String bestMove) {
+            // Parse the move string like "e2e4"
+            String from = bestMove.substring(0, 2); // e2
+            String to = bestMove.substring(2, 4);   // e4
+    
+            // Convert from algebraic notation to row and column indices
+            int fromCol = from.charAt(0) - 'a';     // 'e' - 'a' = 4
+            int fromRow = '8' - from.charAt(1);     // '8' - '2' = 6
+    
+            int toCol = to.charAt(0) - 'a';         // 'e' - 'a' = 4
+            int toRow = '8' - to.charAt(1);         // '8' - '4' = 4
+    
+            // Return the row and column positions in an array [fromRow, fromCol, toRow, toCol]
+            return new int[] {fromRow, fromCol, toRow, toCol};
         }
         private void displayConfetti(Pane pane) {
             double paneWidth = pane.getWidth();

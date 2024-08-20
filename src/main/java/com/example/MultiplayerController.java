@@ -13,6 +13,7 @@ import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -20,15 +21,18 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Rotate;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -65,8 +69,16 @@ import javafx.util.Duration;
         @FXML private HBox hbox1;
         @FXML private HBox timer1;
         @FXML private HBox timer2;
+     
+        @FXML private VBox vbox2;
+     
+        @FXML private HBox WhiteHbox;
+        @FXML private HBox blackHbox;
+        @FXML private AnchorPane pane;
         CountdownClock countdownClock;
         CountdownClock countdownClock2;
+        double screenWidth;
+        double screenHeight;
         
     
        
@@ -107,11 +119,37 @@ import javafx.util.Duration;
                 toggleSwitch = new ToggleSwitch();
                 hbox1.getChildren().add(toggleSwitch);
                 toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawPossibleMoves = !drawPossibleMoves);
+                Screen screen = Screen.getPrimary();
+              Rectangle2D bounds = screen.getBounds();
+             screenWidth = bounds.getWidth();
+             screenHeight = bounds.getHeight();
+
+               double chessBoardSize = screenHeight * 0.8 ;
         
-                // Set preferred size for chessBoard and rootPane
-                chessBoard.setPrefSize(800, 800);
-                StackPane.setAlignment(chessBoard, javafx.geometry.Pos.CENTER);
-                rootPane.setPrefSize(800, 800);
+                pane.setMaxSize(screenHeight, screenWidth);
+                borderPane.setMaxSize(screenWidth, screenHeight);
+        
+                chessBoard.setPrefSize(chessBoardSize, chessBoardSize);
+                rootPane.setMinSize(chessBoardSize+30, chessBoardSize+30);
+                double boxWidth = (screenWidth - chessBoardSize) / 2;
+                hbox1.setPrefWidth(boxWidth );
+                vbox2.setPrefWidth(boxWidth);
+                vbox2.setMaxHeight(screenHeight);
+                vbox2.setSpacing(screenHeight/2);
+                double hboxHeight = (screenHeight -chessBoardSize-30) /2;  // Set height as 10% of the screen height
+                WhiteHbox.setMinHeight(hboxHeight);
+                WhiteHbox.setPrefHeight(hboxHeight);
+                WhiteHbox.setMaxHeight(hboxHeight);
+                
+                blackHbox.setMinHeight(hboxHeight);
+                blackHbox.setPrefHeight(hboxHeight);
+                blackHbox.setMaxHeight(hboxHeight);
+               
+
+                // Enable fill height for HBoxes to stretch vertically if needed
+                WhiteHbox.setFillHeight(true);
+                blackHbox.setFillHeight(true);
+    
                 
             } catch (URISyntaxException e) {
                 e.printStackTrace(); // Handle URI syntax exception
@@ -296,10 +334,11 @@ import javafx.util.Duration;
                 return; // Exit if player color is not available
             }
             chessBoard.getChildren().clear();
+            double squareSize = chessBoard.getPrefWidth() / 8;
            
             for (int i = 0; i < 8; i++) {
                 for (int j = 0; j < 8; j++) {
-                    Rectangle square = new Rectangle(100, 100);
+                    Rectangle square = new Rectangle(squareSize, squareSize);
                     square.setFill((i + j) % 2 == 0 ? lightColor : darkColor);
                     chessBoard.add(square, j, i);
                     Piece piece = game.getPiece(i, j);
@@ -309,11 +348,11 @@ import javafx.util.Duration;
                         ImageView pieceView = new ImageView(pieceImage);
                         if(!piece.isWhite())
                         {
-                            Rotate rotate = new Rotate(180, 50, 50);
+                            Rotate rotate = new Rotate(180, squareSize/2,squareSize/2);
                             pieceView.getTransforms().add(rotate);
                         }
-                        pieceView.setFitHeight(100);
-                        pieceView.setFitWidth(100);
+                        pieceView.setFitHeight(squareSize);
+                        pieceView.setFitWidth(squareSize);
         
                         // Set mouse transparency based on the player color
                         //Remember to change to is shite when inverting this
