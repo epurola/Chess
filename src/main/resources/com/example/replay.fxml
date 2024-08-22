@@ -3,6 +3,7 @@
 <?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
@@ -13,7 +14,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane fx:id="pane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.SinglePlayerController">
+<AnchorPane fx:id="pane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.Replay">
    <children>
       <BorderPane fx:id="borderPane" layoutX="-14.0" styleClass="root" stylesheets="@styles.css">
           <center>
@@ -42,29 +43,24 @@
           </top>
           <left>
               <VBox fx:id="vbox" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
-                  <Button fx:id="undoButton" onAction="#Undo" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Undo">
-                      <graphic>
-                          <FontAwesomeIconView fill="WHITE" glyphName="UNDO" wrappingWidth="32.0" />
-                      </graphic>
-                      <VBox.margin>
-                          <Insets left="15.0" right="15.0" />
-                      </VBox.margin>
-                  <padding>
-                     <Insets right="30.0" />
-                  </padding>
-                  </Button>
-                  <!-- Add additional buttons here -->
-                  <Button fx:id="resetButton" onAction="#handleReset" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Reset">
-                      <graphic>
-                          <FontAwesomeIconView fill="WHITE" glyphName="REFRESH" wrappingWidth="32.0" />
-                      </graphic>
-                      <VBox.margin>
-                          <Insets left="15.0" right="15.0" top="15.0" />
-                      </VBox.margin>
-                  <padding>
-                     <Insets right="30.0" />
-                  </padding>
-                  </Button>
+               <ComboBox fx:id="gameSelector" onAction="#handleGameSelection" prefHeight="38.0" prefWidth="154.0" stylesheets="@styles.css" />
+<Button fx:id="rewindForward" mnemonicParsing="false" onAction="#handleRewindForward" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css">
+    <graphic>
+        <FontAwesomeIconView glyphName="ARROW_RIGHT" />
+    </graphic>
+                  <VBox.margin>
+                     <Insets top="15.0" />
+                  </VBox.margin>
+</Button>
+              
+              <Button fx:id="rewindBack" mnemonicParsing="false" onAction="#handleRewindBack" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css">
+    <graphic>
+        <FontAwesomeIconView glyphName="ARROW_LEFT" styleClass="button1" />
+    </graphic>
+                  <VBox.margin>
+                     <Insets top="15.0" />
+                  </VBox.margin>
+</Button>
                   <!-- Full Screen Button -->
                   <Button fx:id="fullScreenButton" onAction="#handleFullScreen" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Full Screen">
                       <graphic>
@@ -89,29 +85,9 @@
                      <Insets right="40.0" />
                   </padding>
                   </Button>
-               <Button fx:id="exitButton1" layoutX="92.0" layoutY="269.0" onAction="#handleBackButton" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Back">
-                  <graphic>
-                     <FontAwesomeIconView fill="WHITE" glyphName="ARROW_LEFT" wrappingWidth="34.5" />
-                  </graphic>
-                  <padding>
-                     <Insets right="40.0" />
-                  </padding>
-                  <VBox.margin>
-                     <Insets bottom="15.0" top="15.0" />
-                  </VBox.margin>
-               </Button>
                <HBox fx:id="hbox1" alignment="CENTER" prefHeight="38.0" prefWidth="154.0">
                   <children>
-                     <Label styleClass="label1" text="Move Indicator">
-                        <HBox.margin>
-                           <Insets right="15.0" />
-                        </HBox.margin>
-                     </Label>
-                  </children>
-               </HBox>
-               <HBox fx:id="hbox11" alignment="CENTER" layoutX="10.0" layoutY="375.0" prefHeight="38.0" prefWidth="154.0">
-                  <children>
-                     <Label fx:id="hbox2" styleClass="label1" text="AI Helper">
+                     <Label styleClass="label1">
                         <HBox.margin>
                            <Insets right="15.0" />
                         </HBox.margin>
@@ -124,25 +100,7 @@
               </VBox>
           </left>
           <right>
-              <VBox fx:id="vbox2" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
-               <children>
-                  <HBox fx:id="timer1" alignment="CENTER" maxHeight="34.0" maxWidth="172.0" prefHeight="34.0" prefWidth="172.0" styleClass="labelTimer" stylesheets="@styles.css">
-                     <VBox.margin>
-                        <Insets />
-                     </VBox.margin>
-                     <padding>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </padding>
-                  </HBox>
-                  <HBox fx:id="timer2" alignment="CENTER" maxHeight="34.0" maxWidth="172.0" prefHeight="34.0" prefWidth="273.0" styleClass="labelTimer" stylesheets="@styles.css">
-                     <VBox.margin>
-                        <Insets />
-                     </VBox.margin>
-                     <padding>
-                        <Insets bottom="5.0" right="5.0" top="5.0" />
-                     </padding>
-                  </HBox>
-               </children></VBox>
+              <VBox fx:id="vbox2" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER" />
           </right>
           <bottom>
               <HBox fx:id="WhiteHbox" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER" />

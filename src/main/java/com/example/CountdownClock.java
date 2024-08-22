@@ -26,6 +26,7 @@ public class CountdownClock extends Parent {
     private boolean isRunning = false; // To keep track of the timer state
     private SinglePlayerController controller;
     private MultiplayerController Mcontroller;
+    private BotController bController;
 
     public CountdownClock(SinglePlayerController controller) {
         // Create a circle
@@ -60,6 +61,36 @@ public class CountdownClock extends Parent {
     public CountdownClock(MultiplayerController Mcontroller) {
         // Create a circle
         this.Mcontroller = Mcontroller;
+        Circle circle = new Circle(10);
+        circle.setStroke(Color.BLACK);
+        circle.setFill(Color.TRANSPARENT);
+        // Create a line to act as the second hand
+        secondHand = new Line(0, 0, 0, -7); // Line extending upward
+        secondHand.setStroke(Color.BLUE);
+        secondHand.setStrokeWidth(1.5);
+        Group clockGroup = new Group(circle, secondHand);
+        // Create a Rotate transform
+        rotate = new Rotate();
+        rotate.setPivotX(circle.getCenterX());
+        rotate.setPivotY(circle.getCenterY());
+        secondHand.getTransforms().add(rotate);
+        playerTimerLabel = new Label();
+        playerTimerLabel.setText("10:00");  // Set the initial time to 10:00 minutes
+        playerTimerLabel.setStyle("-fx-font-size: 16; -fx-text-fill: black; -fx-background-color: transparent;");
+
+        HBox layout = new HBox(10);  // 10 is the spacing between the clock and the label
+        layout.setAlignment(Pos.CENTER);  // Center the contents horizontally
+        layout.getChildren().addAll(clockGroup, playerTimerLabel);
+
+        // Initialize the timers and the shared timeline
+        initializeTimers();
+
+        // Add the HBox to the parent node
+        getChildren().add(layout);
+    }
+    public CountdownClock(BotController Bcontroller) {
+        // Create a circle
+        this.bController = Bcontroller;
         Circle circle = new Circle(10);
         circle.setStroke(Color.BLACK);
         circle.setFill(Color.TRANSPARENT);

@@ -45,8 +45,20 @@ public class Pawn extends Piece {
     }
 
     private void addMoveIfValid(List<int[]> moves, Game game, int row, int col) {
-        if (isValidPosition(row, col) && game.getPiece(row, col) == null) {
-            moves.add(new int[]{row, col});
+        if (isValidPosition(row, col)) {
+            Piece piece = game.getPiece(row, col);
+            if (piece == null) {
+                // Check for two-step move if the pawn is at its starting position
+                if (Math.abs(row - getRow()) == 2) {
+                    int midRow = getRow() + (row - getRow()) / 2;
+                    Piece middlePiece = game.getPiece(midRow, col);
+                    if (middlePiece == null) {
+                        moves.add(new int[]{row, col});
+                    }
+                } else {
+                    moves.add(new int[]{row, col});
+                }
+            }
         }
     }
 

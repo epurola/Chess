@@ -7,6 +7,7 @@ module com.example {
     requires java.net.http;
     requires org.java_websocket;
     requires org.json;
+    requires java.sql;
     
 
     opens com.example to javafx.fxml;

@@ -3,7 +3,6 @@ package com.example;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -29,10 +28,13 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
- 
+
     public class SinglePlayerController {
-        private SoundManager soundManager;
+       
         private Piece selectedPiece;
         private ImageView draggedPiece;
         private Pawn pawnToPromote;
@@ -44,6 +46,7 @@ import javafx.util.Duration;
         private Label blackScore;
         private int bScore;
         private int wScore;
+        private String fen;
     
 
         Color lightColor = Color.web("#E8EDF9"); 
@@ -60,7 +63,9 @@ import javafx.util.Duration;
         @FXML private Button resetButton;
         @FXML private Button undoButton;
         @FXML private HBox hbox1;
+        @FXML private HBox hbox11;
         @FXML private VBox vbox2;
+        @FXML private VBox vbox;
         @FXML private HBox timer1;
         @FXML private HBox timer2;
         @FXML private HBox WhiteHbox;
@@ -72,10 +77,12 @@ import javafx.util.Duration;
         double screenWidth;
         double screenHeight;
         Stockfish stockfish;
+        boolean drawBestMove;
+      
     
         @FXML
         public void initialize() throws IOException  {
-            soundManager = new SoundManager();
+           
             game = new Game();
             stockfish = new Stockfish(game);
             drawPossibleMoves = false;
@@ -87,6 +94,7 @@ import javafx.util.Duration;
             blackScore.setVisible(false);
             blackScore.setStyle("-fx-font-size: 13px;");
             whiteScore.setStyle("-fx-font-size: 13px;");
+        
         
             // Initialize status label
             statusLabel = new Label();
@@ -100,6 +108,9 @@ import javafx.util.Duration;
             toggleSwitch = new ToggleSwitch();
             hbox1.getChildren().add(toggleSwitch);
             toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawPossibleMoves = !drawPossibleMoves);
+            toggleSwitch = new ToggleSwitch();
+            hbox11.getChildren().add(toggleSwitch);
+            toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawBestMove = !drawBestMove);
           
             countdownClock = new CountdownClock(this); 
             countdownClock2 = new CountdownClock(this); 
@@ -186,7 +197,7 @@ import javafx.util.Duration;
         @FXML
         private void Undo() {
             game.undoLastMove();
-            soundManager.playMoveSound();
+            SoundManager.playMoveSound();
             drawBoard();
         }
     
@@ -208,78 +219,94 @@ import javafx.util.Duration;
                         pieceView.setMouseTransparent(!game.isWhiteTurn() == piece.isWhite());
                         pieceView.setOnMousePressed(event -> handlePieceDragStart(event, pieceView, piece));
                         pieceView.setOnMouseDragged(this::handlePieceDrag);
-                        pieceView.setOnMouseReleased(this::handlePieceDrop);
+                        pieceView.setOnMouseReleased(event -> {
+                            try {
+                                handlePieceDrop(event);
+                            } catch (InterruptedException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        });
                     }
                 }
-            }
-                
+            }     
         }
 
-        private void drawBestMoveIndicators(int fromRow, int fromCol, int toRow, int toCol) {
+ private void drawBestMoveIndicators(int fromRow, int fromCol, int toRow, int toCol) {
     double squareSize = chessBoard.getPrefWidth() / 8;
     double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
-
     // Clear existing move indicators
     chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
-
     // Highlight the best move in gold color
     Circle bestMoveIndicator = new Circle(indicatorSize / 2);
-    bestMoveIndicator.setStroke(Color.GOLD); // Set stroke color to gold
-    bestMoveIndicator.setStrokeWidth(4); // Adjust the stroke width if needed
-    bestMoveIndicator.setFill(null); // No fill
-
+    bestMoveIndicator.setStroke(Color.GOLD.deriveColor(0, 1, 1, 0.9)); // Set stroke color to gold
+    bestMoveIndicator.setStrokeWidth(3); // Adjust the stroke width if needed
+    bestMoveIndicator.setFill(Color.GOLD.deriveColor(0, 1, 1, 0.9)); // No fill
     StackPane bestMoveContainer = new StackPane();
     bestMoveContainer.setPickOnBounds(false);
     bestMoveContainer.getChildren().add(bestMoveIndicator);
     bestMoveContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
     bestMoveContainer.setMouseTransparent(true);
-
-    Platform.runLater(() -> {
+        if (toRow>= 0 && toRow < 8 && toCol >= 0 && toCol < 8) {
         chessBoard.add(bestMoveContainer, toCol, toRow); // Add the container to the grid at the destination square
-    });
-
+        }
     // Highlight the piece that can make the best move in gold
     Circle bestPieceIndicator = new Circle(squareSize / 3); // Full square size
-    bestPieceIndicator.setStroke(Color.GOLD); // Set stroke color to gold
+    bestPieceIndicator.setStroke(Color.GOLD.deriveColor(0, 1, 1, 0.9)); // Set stroke color to gold
     bestPieceIndicator.setStrokeWidth(4); // Adjust the stroke width if needed
     bestPieceIndicator.setFill(null); // No fill
-
     StackPane bestPieceContainer = new StackPane();
     bestPieceContainer.setPickOnBounds(false);
     bestPieceContainer.getChildren().add(bestPieceIndicator);
     bestPieceContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
     bestPieceContainer.setMouseTransparent(true);
-
-    Platform.runLater(() -> {
+        if (fromRow>= 0 && fromRow < 8 && fromCol >= 0 && fromCol < 8) {
         chessBoard.add(bestPieceContainer, fromCol, fromRow); // Add the container to the grid at the origin square
+        }
+}
+public String rowColToAlgebraic(int row, int col) {
+    // Convert column index to column character ('a' to 'h')
+    char columnChar = (char) ('a' + col);
+    // Convert row index to row character ('1' to '8')
+    char rowChar = (char) ('1' + (7 - row)); // Adjust for 0-based indexing
+    // Combine column and row characters to form the algebraic notation
+    return "" + columnChar + rowChar;
+}
+private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor();
+
+private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
+    analysisExecutor.submit(() -> {
+        try {
+            String moveString = rowColToAlgebraic(fromRow, fromCol) + rowColToAlgebraic(toRow, toCol);
+            stockfish.getBestMoveFromFEN(fen);
+            String analysis = stockfish.analyzeMove(fen, moveString);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     });
 }
-private volatile boolean running = true; // Flag to control the thread
 
 private void triggerBestMoveAnalysis() {
+    if(drawBestMove)
+    {
     new Thread(() -> {
         try {
             // Analyze the best move using Stockfish
             int[] bestMove = parseMove(stockfish.getBestMove());
-
-            // Update the UI in the JavaFX Application Thread
             Platform.runLater(() -> {
-                drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);
+                drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);  
             });
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }).start();
 }
-
-
-private void stopBestMoveThread() {
-    running = false; // Signal the thread to stop
+else
+{
+    return;
+}
 }
 
-
-    
         private Image getPieceImage(Piece piece) {
             String color = piece.isWhite() ? "white-" : "black-";
             String imagePath = "/images/" + color + piece.getClass().getSimpleName().toLowerCase() + ".png";
@@ -307,8 +334,10 @@ private void stopBestMoveThread() {
             }
         }
   
-        @SuppressWarnings("static-access")
-        private void handlePieceDrop(MouseEvent event) {
+        
+        private void handlePieceDrop(MouseEvent event) throws InterruptedException {
+           
+            int moveCount = 0;
             double squareSize = chessBoard.getPrefWidth() / 8;
             if (draggedPiece != null) {
                 int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
@@ -319,19 +348,21 @@ private void stopBestMoveThread() {
                 boolean validMove = game.makeMove(selectedPiece.getRow(), selectedPiece.getCol(), row, col);
                 if (!validMove)
                 {
-                  soundManager.playNotifySound();
+                  SoundManager.playNotifySound();
                 }
                
                 if (validMove) {
+                    fen = game.toFen();
+                    moveCount++;
                     boolean soundPlayed = false;
                     triggerBestMoveAnalysis();
-                    
+                    startGameAnalysis(row, col, selectedPiece.getRow(),selectedPiece.getCol(),fen);
+                
                     switchPlayer(); // Switch the active timer after a valid move
                     
-        
                     // Check for castling first
                     if (selectedPiece instanceof King && Math.abs(col - selectedPiece.getCol()) == 2) {
-                        soundManager.playCastleSound();
+                        SoundManager.playCastleSound();
                         soundPlayed = true;
                     }
                 
@@ -349,42 +380,60 @@ private void stopBestMoveThread() {
                     // Play sound based on capture, check, or move
                     if (!soundPlayed) {
                         if (capturedPiece != null) {
-                            soundManager.playCaptureSound();
+                            SoundManager.playCaptureSound();
                             addTograve( capturedPiece);
                         } else if (game.isInCheck(game.isWhiteTurn())) {
-                            soundManager.playCheckSound();
+                            SoundManager.playCheckSound();
                         } else {
-                            soundManager.playMoveSound();
+                            SoundManager.playMoveSound();
                         }
                     }
                 }
                 
         
                 } else{
-                    soundManager.playNotifySound();
+                    SoundManager.playNotifySound();
                 }
             }
                 drawBoard();
                 if(game.checkMate(game))
                 {
-                     displayConfetti(chessBoard);
-                     soundManager.playWinSound();
-                     statusLabel.setText("Victory");
-                     statusLabel.setVisible(true);
-                     countdownClock.stop();
-                     countdownClock2.stop();
+                    new Thread(() -> {
+                        try {
+                    analysisExecutor.awaitTermination(1,  TimeUnit.SECONDS);
+                    analysisExecutor.shutdown();
+                    if(analysisExecutor.isShutdown())
+                    {
+                       System.err.println("Executor shutdown");
+                       stockfish.handleGameEnd(fen);
+                       System.err.println(stockfish.getMoveHistory().size()); 
+                    } 
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                    displayConfetti(chessBoard);
+                    SoundManager.playWinSound();
+                    statusLabel.setText("Victory");
+                    statusLabel.setVisible(true);
+                    countdownClock.stop();
+                    countdownClock2.stop(); 
+                    
+                     
                 }
                 if(game.checkDraw(game))
                 {
                     statusLabel.setText("Draw");
                     statusLabel.setVisible(true);
-                    soundManager.playDrawSound();
+                    SoundManager.playDrawSound();
                     countdownClock.stop();
                     countdownClock2.stop();
                 }
                 selectedPiece = null;
                 draggedPiece = null;
             }
+            
+            
         
     //Fix this mess wtf is this
             private void addTograve(Piece capturedPiece) {
@@ -444,11 +493,6 @@ private void stopBestMoveThread() {
                 }
             }
             
-            
-           
-
-
-
         private void promotePawn(int row, int col) {
         
             List<String> promotionImagePaths = List.of(
@@ -507,7 +551,7 @@ private void stopBestMoveThread() {
                     default:
                         newPiece = new Queen(row, col, pawnToPromote.isWhite());
                 }
-                soundManager.playButtonSound();
+                SoundManager.playButtonSound();
                 game.setPiece(row, col, newPiece);
                 System.out.println("Pawn promoted to " + choice + ".");
                 pawnToPromote = null; // Reset pawnToPromote after promotion
@@ -528,13 +572,7 @@ private void stopBestMoveThread() {
             resetButton.setMouseTransparent(true);
             undoButton.setMouseTransparent(true); 
         }
-        private String getPieceNameFromImagePath(String imagePath) {
-            if (imagePath.contains("rook")) return "rook";
-            if (imagePath.contains("bishop")) return "bishop";
-            if (imagePath.contains("knight")) return "knight";
-            if (imagePath.contains("queen")) return "queen";
-            return null;
-        }
+      
     
     
         @FXML
@@ -574,12 +612,7 @@ private void stopBestMoveThread() {
         private void drawPossibleMoves(Piece selectedPiece) {
             List<int[]> possibleMoves = new ArrayList<>();
         
-            // Parse the best move from Stockfish
-            int[] bestMove = parseMove(stockfish.getBestMove());
-            int fromRow = bestMove[0];
-            int fromCol = bestMove[1];
-            int toRow = bestMove[2];
-            int toCol = bestMove[3];
+          
         
             // Clear existing move indicators
             chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
@@ -638,6 +671,7 @@ private void stopBestMoveThread() {
             // Return the row and column positions in an array [fromRow, fromCol, toRow, toCol]
             return new int[] {fromRow, fromCol, toRow, toCol};
         }
+
         private void displayConfetti(Pane pane) {
             double paneWidth = pane.getWidth();
             double paneHeight = pane.getHeight();
@@ -648,7 +682,7 @@ private void stopBestMoveThread() {
                 confetti.animate();
             }
         }
-         // Call this method when a player makes a move
+        //This is for the timers
     private void switchPlayer() {
         if (game.isWhiteTurn()) {
             countdownClock.pause();
@@ -695,14 +729,17 @@ private void stopBestMoveThread() {
             displayConfetti(chessBoard);
             countdownClock.stop();
             countdownClock2.stop();
+            stockfish.handleGameEnd("Win");
+            SoundManager.playWinSound();
         } else {
             statusLabel.setText("White Wins by Timeout!");
             countdownClock.stop();
             countdownClock2.stop();
             displayConfetti(chessBoard);
+            SoundManager.playWinSound();
         }
         statusLabel.setVisible(true);
-        soundManager.playWinSound();
+        
     }
 
 

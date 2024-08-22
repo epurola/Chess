@@ -38,6 +38,10 @@ public class SecondaryController {
     private void switchToOnline() throws IOException {
         App.setRoot("online");
     }
+    @FXML
+    private void switchToBot() throws IOException {
+        App.setRoot("replay");
+    }
 
     @FXML
     private void handleExit() {

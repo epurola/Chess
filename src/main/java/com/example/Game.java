@@ -15,10 +15,6 @@ public class Game {
    private boolean blackCanCastleKingSide ;
    private boolean blackCanCastleQueenSide ;
    private boolean isOnline;
- 
- 
-  
-  
 
     public Game() {
         board = new Board();
@@ -223,6 +219,7 @@ public class Game {
 
    
     public boolean makeMove(int fromRow, int fromCol, int toRow, int toCol) {
+      
         int row = toRow;
         int col = toCol;
         Piece selectedPiece = getPiece(fromRow,fromCol);
@@ -249,6 +246,8 @@ public class Game {
             if (validMove) {
                 // Temporarily make the move
                 Piece pieceToMove = selectedPiece.copy();
+                String fen = toFen();
+                
                
                 // Handle en passant
                 if (capturedPiece != null) {
@@ -280,9 +279,7 @@ public class Game {
                     updateKingPositions();
                 }
                
-                recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove,
-                capturedPiece != null ? capturedPiece.getRow() : 1, 
-                capturedPiece != null ? capturedPiece.getCol() : 1);
+               
                   if (!validMove) {
                 return false;
             }
@@ -312,6 +309,11 @@ public class Game {
                     System.out.println("Draw!");
                     return true;
                 }
+                
+                recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove,
+                capturedPiece != null ? capturedPiece.getRow() : 1, 
+                capturedPiece != null ? capturedPiece.getCol() : 1,
+                fen);
                 return true;
             }
            
@@ -496,7 +498,7 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
             } else {
                 board.setPiece(lastMove.getToRow(), lastMove.getToCol(), null);
             }
-        //May not work
+     
             updateKingPositions();
             setWhiteTurn(!isWhiteTurn()); 
             if (!whiteCanCastleKingSide && isWhiteTurn()) {
@@ -518,11 +520,12 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
         }
         
     }
- 
+ //fix the fen to use castling and enpassant aswell.
 
-    public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece, int capturePieceRow, int capturePieceCol) {
-        moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece, capturePieceRow, capturePieceCol));
+    public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece, int capturePieceRow, int capturePieceCol, String fen) {
+        moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece, capturePieceRow, capturePieceCol, fen));
     }
+   
 public boolean isInCheck(boolean isWhite) {
     boolean isInCheck = false;
 
@@ -619,7 +622,7 @@ public boolean isInCheck(boolean isWhite) {
         return new Game(this.board.copyBoard()); 
     }
     public String toFen() {
-        String fen =getBoard().toFEN(isWhiteTurn(), " ", " ");
+        String fen =getBoard().toFEN(isWhiteTurn());
         System.out.println(fen);
 
         return fen;

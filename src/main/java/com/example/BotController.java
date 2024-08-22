@@ -1,15 +1,13 @@
 package com.example;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import com.example.WebSocket.ChessWebSocketClient;
 
 import javafx.animation.FadeTransition;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -37,7 +35,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
  
-    public class MultiplayerController  {
+    public class BotController  {
         private ChessWebSocketClient socketClient;
         private Piece selectedPiece;
         private ImageView draggedPiece;
@@ -51,6 +49,7 @@ import javafx.util.Duration;
         private Piece capturedPiece;
         private boolean isCastle;
         private boolean isMyTurn ;
+        private Stockfish stockfish;
 
         Color lightColor = Color.web("#E8EDF9"); 
         Color darkColor = Color.web("#B7C0D8"); 
@@ -84,17 +83,12 @@ import javafx.util.Duration;
         @FXML
         public void initialize() {
             try {
+            game = new Game();
                
+               stockfish = new Stockfish(game);
+               playerColor ="white";
+              
 
-                URI serverUri = new URI("ws://localhost:8887");
-                socketClient = new ChessWebSocketClient(serverUri);
-                socketClient.connectBlocking();
-                socketClient.setController(this);
-
-            
-                checkAndDrawBoard();
-                socketClient.setController(this);
-        
                 // Initialize the drawPossibleMoves flag
                 drawPossibleMoves = false;
         
@@ -147,11 +141,11 @@ import javafx.util.Duration;
                 // Enable fill height for HBoxes to stretch vertically if needed
                 WhiteHbox.setFillHeight(true);
                 blackHbox.setFillHeight(true);
+                drawBoard();
     
                 
-            } catch (URISyntaxException e) {
-                e.printStackTrace(); // Handle URI syntax exception
-            } catch (Exception e) {
+            } 
+             catch (Exception e) {
                 e.printStackTrace(); // Handle any other exceptions
             }
         }
@@ -258,29 +252,7 @@ import javafx.util.Duration;
         statusLabel.setVisible(true);
         SoundManager.playWinSound();
     }
-        private void checkAndDrawBoard() {
-            if (playerColor == null) {
-                System.out.println("Player color is not set yet.");
-                // Schedule a re-check after a delay
-                PauseTransition delay = new PauseTransition(Duration.seconds(1));
-                delay.setOnFinished(event -> checkAndDrawBoard()); // Recursive call after delay
-                delay.play();
-            } else {
-                if(playerColor.equals("white"))
-                {
-                    isWhite = true;
-                    isMyTurn = true;
-                    game = new Game();
-                }
-                else
-                {
-                    isWhite = false;
-                    isCastle = false;
-                    game = new Game( isWhite);
-                }
-                drawBoard();
-            }
-        }
+        
         
         
         
@@ -327,10 +299,7 @@ import javafx.util.Duration;
         }
     
         private void drawBoard() {
-            if (playerColor == null) {
-                System.out.println("Player color is not set yet.");
-                return; // Exit if player color is not available
-            }
+          
             chessBoard.getChildren().clear();
             double squareSize = chessBoard.getPrefWidth() / 8;
            
@@ -351,7 +320,6 @@ import javafx.util.Duration;
                         }
                         pieceView.setFitHeight(squareSize);
                         pieceView.setFitWidth(squareSize);
-        
                         // Set mouse transparency based on the player color
                         //Remember to change to is shite when inverting this
                         boolean isPlayerPiece = (playerColor.equals("white") && piece.isWhite()) ||
@@ -383,10 +351,7 @@ import javafx.util.Duration;
     
         private void handlePieceDragStart(MouseEvent event, ImageView pieceView, Piece piece) {
 
-            if(!isMyTurn)
-            {
-                return;
-            }
+           
             selectedPiece = piece;
             draggedPiece = pieceView;
            
@@ -397,10 +362,7 @@ import javafx.util.Duration;
         }
     
         private void handlePieceDrag(MouseEvent event) {
-            if(!isMyTurn)
-            {
-                return;
-            }
+           
             
             if (draggedPiece != null) {
                 draggedPiece.setTranslateX(event.getSceneX() - 50 - draggedPiece.getLayoutX() - chessBoard.localToScene(0, 0).getX());
@@ -410,13 +372,10 @@ import javafx.util.Duration;
   
       
         private void handlePieceDrop(MouseEvent event) {
-            if(!isMyTurn)
-            {
-                return;
-            }
+            double squareSize = chessBoard.getPrefWidth() / 8;
             if (draggedPiece != null) {
-                int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / 100);
-                int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / 100);
+                int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
+                int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
                 if (row >= 0 && row < 8 && col >= 0 && col < 8) 
                 {
                 capturedPiece = game.getPiece(row, col);
@@ -475,23 +434,10 @@ import javafx.util.Duration;
                             SoundManager.playMoveSound();
                         }
                     }
-            
-                        socketClient.sendMove(
-                            selectedPiece.getClass().getSimpleName(), 
-                            inverRow(selectedPiece.getRow()),
-                            selectedPiece.getCol(),
-                            inverRow(row),
-                            col,
-                            capturedPiece != null ? inverRow(capturedPiece.getRow()) : inverRow(row), 
-                            capturedPiece != null ? capturedPiece.getCol() : col, 
-                            isWhite,
-                            capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null",
-                            isCastle
-                        );
-                     
-                       
-                        
+
                    
+                   triggerBestMoveAnalysis();
+                
                 }
                 
             
@@ -517,6 +463,33 @@ import javafx.util.Duration;
                 draggedPiece = null;
                
 
+            }
+            private void triggerBestMoveAnalysis() {
+                new Thread(() -> {
+                    try {
+                       
+                            int[] bestMove = parseMove(stockfish.getBestMove());
+                            int fromRow = bestMove[0];
+                            int fromCol = bestMove[1];
+                            int toRow = bestMove[2];
+                            int toCol = bestMove[3];
+                           
+                            
+                        
+                        // Update the UI in the JavaFX Application Thread
+                        Platform.runLater(() -> {
+                           
+                            game.makeMove(fromRow, fromCol, toRow, toCol);
+                            game.setPiece(fromRow, fromCol, null);
+                            drawBoard();
+                         
+                        });
+            
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+             
             }
 
         
@@ -736,7 +709,7 @@ import javafx.util.Duration;
             getPieceFromString(pieceName, mRow, mCol, isWhite),
             tRow,
             tCol,
-           game.getBoard().toFEN(isWhite) );//Fix this later
+            game.getBoard().toFEN(isWhite));// fix later
             isMyTurn = true;
             
             game.setWhiteTurn(!game.isWhiteTurn());
@@ -794,5 +767,29 @@ import javafx.util.Duration;
         {
             return Math.abs(row-7);
         }
-    }
+        private void stockFishMakeMove() {
+            int[] bestMove = parseMove(stockfish.getBestMove());
+            int fromRow = bestMove[0];
+            int fromCol = bestMove[1];
+            int toRow = bestMove[2];
+            int toCol = bestMove[3];
+            game.makeMove(fromRow, fromCol, toRow, toCol);
+            game.setPiece(fromRow, fromCol, null);
+            drawBoard();
+        }
+        public static int[] parseMove(String bestMove) {
+            // Parse the move string like "e2e4"
+            String from = bestMove.substring(0, 2); // e2
+            String to = bestMove.substring(2, 4);   // e4
     
+            // Convert from algebraic notation to row and column indices
+            int fromCol = from.charAt(0) - 'a';     // 'e' - 'a' = 4
+            int fromRow = '8' - from.charAt(1);     // '8' - '2' = 6
+    
+            int toCol = to.charAt(0) - 'a';         // 'e' - 'a' = 4
+            int toRow = '8' - to.charAt(1);         // '8' - '4' = 4
+    
+            // Return the row and column positions in an array [fromRow, fromCol, toRow, toCol]
+            return new int[] {fromRow, fromCol, toRow, toCol};
+        }
+    }

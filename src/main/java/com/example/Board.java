@@ -14,6 +14,23 @@ public class Board {
     public Board(boolean isBlack) {
         initializeBlack();
     }
+    public Board(int empty) {
+        
+    }
+    public void clearBoard() {
+        whitePawns = 0;
+        blackPawns = 0;
+        whiteRooks = 0;
+        blackRooks = 0;
+        whiteKnights = 0;
+        blackKnights = 0;
+        whiteBishops = 0;
+        blackBishops = 0;
+        whiteQueens = 0;
+        blackQueens = 0;
+        whiteKings = 0;
+        blackKings = 0;
+    }
     public void setPiece(int row, int col, Piece newPiece) {
         long bitMask = 1L << (row * 8 + col);
     
@@ -158,7 +175,6 @@ public class Board {
         return copy;
     }
 
-   
 
     public void initialize() {
         whitePawns =  0x00FF000000000000L;// 8 white pawns
@@ -268,7 +284,7 @@ public class Board {
     }
 
       // Method to convert the board state to FEN notation
-      public String toFEN(boolean whiteToMove, String castlingRights, String enPassant) {
+      public String toFEN(boolean whiteToMove) {
         StringBuilder fen = new StringBuilder();
 
         for (int row = 0; row < 8; row++) {  // Iterate from row 0 to 7
@@ -300,11 +316,11 @@ public class Board {
 
         // Add castling rights
         // implement
-        fen.append(" ").append(castlingRights.isEmpty() ? "-" : castlingRights);
+       // fen.append(" ").append(castlingRights.isEmpty() ? "-" : castlingRights);
 
         // Add en passant target square
         // implement later
-        fen.append(" ").append(enPassant.isEmpty() ? "-" : enPassant);
+        //fen.append(" ").append(enPassant.isEmpty() ? "-" : enPassant);
 
 
         return fen.toString();
@@ -326,6 +342,53 @@ public class Board {
         }
         return ' ';
     }
+    private Piece getPieceForChar(char c, int row, int col) {
+        boolean isWhite = Character.isUpperCase(c); // Uppercase is white, lowercase is black
+        c = Character.toLowerCase(c); // Handle pieces uniformly
+    
+        switch (c) {
+            case 'p': return new Pawn(row, col, isWhite);
+            case 'r': return new Rook(row, col, isWhite);
+            case 'n': return new Knight(row, col, isWhite);
+            case 'b': return new Bishop(row, col, isWhite);
+            case 'q': return new Queen(row, col, isWhite);
+            case 'k': return new King(row, col, isWhite);
+            default: return null; // Empty square or invalid character
+        }
+    }
+    //This return 2 bishops ??? even when one should be empty
+    public void setFEN(String fen) {
+        // Clear the board first
+        clearBoard();
+        
+        int row = 0;
+        int col = 0;
+    
+        for (int i = 0; i < fen.length()-2; i++) {
+            char c = fen.charAt(i);
+            
+            if (c == '/') {
+                // Move to the next row and reset column
+                row++;
+                col = 0;
+            } else if (Character.isDigit(c)) {
+                // Skip empty squares
+                int emptySquares = Character.getNumericValue(c);
+                col += emptySquares; // Move column index forward
+            } else {
+                // Place the piece
+                Piece piece = getPieceForChar(c, row, col);
+                if (piece != null) {
+                    setPiece(row, col, piece);
+                }
+                col++; // Move to the next column
+                
+            }
+        }
+    }
+    
+    
+    
     
 }
 

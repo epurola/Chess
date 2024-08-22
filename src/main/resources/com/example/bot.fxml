@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane fx:id="pane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.SinglePlayerController">
+<AnchorPane fx:id="pane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.BotController">
    <children>
       <BorderPane fx:id="borderPane" layoutX="-14.0" styleClass="root" stylesheets="@styles.css">
           <center>
@@ -42,29 +42,6 @@
           </top>
           <left>
               <VBox fx:id="vbox" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
-                  <Button fx:id="undoButton" onAction="#Undo" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Undo">
-                      <graphic>
-                          <FontAwesomeIconView fill="WHITE" glyphName="UNDO" wrappingWidth="32.0" />
-                      </graphic>
-                      <VBox.margin>
-                          <Insets left="15.0" right="15.0" />
-                      </VBox.margin>
-                  <padding>
-                     <Insets right="30.0" />
-                  </padding>
-                  </Button>
-                  <!-- Add additional buttons here -->
-                  <Button fx:id="resetButton" onAction="#handleReset" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Reset">
-                      <graphic>
-                          <FontAwesomeIconView fill="WHITE" glyphName="REFRESH" wrappingWidth="32.0" />
-                      </graphic>
-                      <VBox.margin>
-                          <Insets left="15.0" right="15.0" top="15.0" />
-                      </VBox.margin>
-                  <padding>
-                     <Insets right="30.0" />
-                  </padding>
-                  </Button>
                   <!-- Full Screen Button -->
                   <Button fx:id="fullScreenButton" onAction="#handleFullScreen" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Full Screen">
                       <graphic>
@@ -103,15 +80,6 @@
                <HBox fx:id="hbox1" alignment="CENTER" prefHeight="38.0" prefWidth="154.0">
                   <children>
                      <Label styleClass="label1" text="Move Indicator">
-                        <HBox.margin>
-                           <Insets right="15.0" />
-                        </HBox.margin>
-                     </Label>
-                  </children>
-               </HBox>
-               <HBox fx:id="hbox11" alignment="CENTER" layoutX="10.0" layoutY="375.0" prefHeight="38.0" prefWidth="154.0">
-                  <children>
-                     <Label fx:id="hbox2" styleClass="label1" text="AI Helper">
                         <HBox.margin>
                            <Insets right="15.0" />
                         </HBox.margin>

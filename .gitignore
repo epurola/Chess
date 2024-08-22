@@ -1,2 +1,4 @@
 target/
 stockfish.exe
+move_analysis.db
+
