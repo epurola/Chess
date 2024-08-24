@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.animation.FadeTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ComboBoxBase;
@@ -24,6 +27,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 
@@ -46,6 +53,9 @@ public class Replay {
     @FXML private HBox blackHbox;
     @FXML private AnchorPane pane;
     @FXML private ComboBox<ComboBoxItem> gameSelector;
+    @FXML private Button blunders;
+    @FXML private Button GreatMoves;
+    @FXML private Button backButton;
     
     
     Color lightColor = Color.web("#E8EDF9"); 
@@ -60,6 +70,7 @@ public class Replay {
     private Database database;
     double screenWidth;
     double screenHeight;
+    private Piece piece;
    
 
     // Constructor that initializes the board with move history
@@ -76,15 +87,15 @@ public class Replay {
              screenWidth = bounds.getWidth();
              screenHeight = bounds.getHeight();
 
-            double chessBoardSize = screenHeight * 0.8 ;
+            double chessBoardSize = screenHeight * 0.75 ;
         chessBoard.setPrefSize(chessBoardSize, chessBoardSize);
             rootPane.setMinSize(chessBoardSize+30, chessBoardSize+30);
             double boxWidth = (screenWidth - chessBoardSize) / 2;
-            hbox1.setPrefWidth(boxWidth );
+            vbox.setPrefWidth(boxWidth);
             vbox2.setPrefWidth(boxWidth);
             vbox2.setMaxHeight(screenHeight);
             vbox2.setSpacing(screenHeight/2);
-            double hboxHeight = (screenHeight -chessBoardSize-30) /2;  // Set height as 10% of the screen height
+            double hboxHeight = (screenHeight -chessBoardSize-60) /2;  // Set height as 10% of the screen height
             WhiteHbox.setMinHeight(hboxHeight);
             WhiteHbox.setPrefHeight(hboxHeight);
             WhiteHbox.setMaxHeight(hboxHeight);
@@ -115,15 +126,97 @@ public class Replay {
         int id = selectedGame.getValue();
         loadGame(id);
     }
+    @FXML
+    private void handleBackButton() {
+        try {
+            setRootWithTransition("secondary");
+           
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+     private void setRootWithTransition(String fxml) throws IOException {
+            Parent newRoot = App.loadFXML(fxml);
+            Scene scene = borderPane.getScene();
+            if (scene != null) {
+                Parent oldRoot = scene.getRoot();
+                FadeTransition fadeOut = new FadeTransition(Duration.millis(300), oldRoot);
+                fadeOut.setFromValue(1.0);
+                fadeOut.setToValue(0.0);
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newRoot);
+                fadeIn.setFromValue(0.0);
+                fadeIn.setToValue(1.0);
+                fadeOut.setOnFinished(event -> {
+                    scene.setRoot(newRoot);
+                    fadeIn.play();
+                });
+                fadeOut.play();
+            } else {
+                scene.setRoot(newRoot);
+                newRoot.setOpacity(0.0);
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newRoot);
+                fadeIn.setFromValue(0.0);
+                fadeIn.setToValue(1.0);
+                fadeIn.play();
+            }
+        }
+    
+
+   
+    @FXML
+private void showBlunders() {
+    findNextBlunder();
+    replayMoves();  // Update the board to reflect the move at the new currentMoveIndex
+}
+@FXML
+private void showGreatMoves() {
+    findNextGreatMove();
+    replayMoves();  // Update the board to reflect the move at the new currentMoveIndex
+}
+    
+private void findNextBlunder() {
+    // Start searching from the next index
+    int startIndex = (currentMoveIndex + 1) % moveHistory.size();
+    
+    // Loop through the move history in a cyclic manner
+    for (int i = startIndex; i != currentMoveIndex; i = (i + 1) % moveHistory.size()) {
+        if (moveHistory.get(i).isBlunder(moveHistory.get(i).getPreviousscore())) {
+            currentMoveIndex = i;
+            System.out.println("Next blunder found at move: " + currentMoveIndex);
+            return;  // Exit the method once the next blunder is found
+        }
+    }
+    // If no blunder is found after completing the cycle
+    System.out.println("No more blunders found.");
+}
+
+private void findNextGreatMove() {
+    // Start searching from the next index
+    int startIndex = (currentMoveIndex ) % moveHistory.size();
+    
+    // Loop through the move history in a cyclic manner
+    for (int i = startIndex; i != currentMoveIndex; i = (i + 1) % moveHistory.size()) {
+        if (moveHistory.get(i).isGreatMove(moveHistory.get(i).getPreviousscore())) {
+            currentMoveIndex = i;
+            System.out.println("Next great move found at move: " + currentMoveIndex);
+            return;  // Exit the method once the next great move is found
+        }
+    }
+    // If no great move is found after completing the cycle
+    System.out.println("No more great moves found.");
+}
+
+    
 
     private void loadGame(int gameId) {
         // Retrieve move history for the selected game
         moveHistory = database.getMoveAnalysis(gameId);
 
         if (!moveHistory.isEmpty()) {
-            currentMoveIndex = 0;
+            currentMoveIndex = moveHistory.size()-1;
             board.clearBoard();
-            board.setFEN(moveHistory.get(0).getFEN());  // Set the board to the initial position
+            
+            board.setFEN(moveHistory.get(moveHistory.size()-1).getFEN());  // Set the board to the initial position
             drawBoard();
         }
     }
@@ -143,15 +236,36 @@ public class Replay {
     private void drawBoard() {
         chessBoard.getChildren().clear();
         double squareSize = chessBoard.getPrefWidth() / 8;
-        int[] playerMove={0,0,0,0};
+        int score;
+        int defaultValue = 201;
+        int specialValue = 201;
+        String str = moveHistory.get(currentMoveIndex).getScore();
+        int lastScore;
+        int[] playerMove = {0, 0, 0, 0};
+    
+        // Regular expression to find the first integer in the string, including negative numbers
+        Pattern pattern = Pattern.compile("-?\\d+");
+        Matcher matcher = pattern.matcher(str);
+    
+        if (matcher.find()) {
+            // Extract the first found integer
+            score = Integer.parseInt(matcher.group());
+            lastScore = score;
+        } else if (str.contains("moves to mate")) {
+            // If the string contains "moves to mate", assign the special value
+            score = specialValue;
+            lastScore = score;
+        } else {
+            // If no integer is found and no special phrase is present, assign the default value
+            score = defaultValue;
+            lastScore = score;
+        }
     
         // Coordinates of the best move and the opponent's move
         int[] bestMove = parseMove(moveHistory.get(currentMoveIndex).getBestMove());
-        if(currentMoveIndex > 0)
-        {
-             playerMove = parseMove(moveHistory.get(currentMoveIndex-1).getPlayerMove());
+        if (currentMoveIndex > 0) {
+            playerMove = parseMove(moveHistory.get(currentMoveIndex ).getPlayerMove());
         }
-       
     
         int bestFromRow = bestMove[0];
         int bestFromCol = bestMove[1];
@@ -166,7 +280,7 @@ public class Replay {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 Rectangle square = new Rectangle(squareSize, squareSize);
-                
+    
                 // Different shades for the best move
                 if (i == bestFromRow && j == bestFromCol) {
                     square.setFill(Color.GOLD.darker()); // From square for best move
@@ -175,9 +289,9 @@ public class Replay {
                 }
                 // Different shades for the player's move
                 else if (i == playerFromRow && j == playerFromCol && currentMoveIndex > 0) {
-                    square.setFill(Color.RED.darker()); // From square for player's move
+                    square.setFill(getColorForScore(score)); // Color based on score
                 } else if (i == playerToRow && j == playerToCol && currentMoveIndex > 0) {
-                    square.setFill(Color.RED); // To square for player's move
+                    square.setFill(getColorForScore(score).darker()); // Darker color for to square of player's move
                 }
                 // Regular board colors
                 else {
@@ -200,6 +314,45 @@ public class Replay {
                 }
             }
         }
+    }
+    
+    private Color getColorForScore(int score) {
+        // Define thresholds
+        double lowThreshold = 0.4;  // Below this threshold
+        double highThreshold = 0.7; // Above this threshold
+        double neutralThresholdLow = 0.5;  // Lower bound of neutral range
+        double neutralThresholdHigh = 0.6; // Upper bound of neutral range
+        
+        // Normalize the score
+        double normalizedScore = normalizeScore(score);
+        
+        // Assign colors based on thresholds
+        if (normalizedScore < lowThreshold) {
+            return Color.RED; // Color for low scores (bad moves)
+        } else if (normalizedScore >= lowThreshold && normalizedScore < neutralThresholdLow) {
+            return Color.color(1.0, 0.6, 0.6);// Color for scores between low and neutral
+        } else if (normalizedScore >= neutralThresholdLow && normalizedScore <= neutralThresholdHigh) {
+            return Color.GRAY; // Color for neutral scores
+        } else if (normalizedScore > neutralThresholdHigh && normalizedScore < highThreshold) {
+            return Color.GREEN; // Color for scores between neutral and high
+        } else {
+            return Color.GREEN; // Color for high scores (good moves)
+        }
+    }
+    
+    // Normalize the score to a range [0, 1] based on the expected score range
+    private double normalizeScore(int score) {
+        int minScore = -600; // Example minimum bad score
+        int maxScore = 600;  // Example maximum good score
+        return Math.min(1, Math.max(0, (double)(score - minScore) / (maxScore - minScore)));
+    }
+    
+    // Interpolate between two colors based on a value from [0, 1]
+    private Color interpolateColor(Color color1, Color color2, double t) {
+        double red = color1.getRed() * (1 - t) + color2.getRed() * t;
+        double green = color1.getGreen() * (1 - t) + color2.getGreen() * t;
+        double blue = color1.getBlue() * (1 - t) + color2.getBlue() * t;
+        return new Color(red, green, blue, 1.0);
     }
     
     

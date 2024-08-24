@@ -39,32 +39,33 @@ public int getTotalGames() {
 }
 
 
-    // Create the tables if they don't exist
-    private void createTables() {
-        String createGamesTable = "CREATE TABLE IF NOT EXISTS games ("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "game_name TEXT NOT NULL "
-                + ");";
+private void createTables() {
+    String createGamesTable = "CREATE TABLE IF NOT EXISTS games ("
+            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + "game_name TEXT NOT NULL "
+            + ");";
 
-        String createMoveAnalysisTable = "CREATE TABLE IF NOT EXISTS move_analysis ("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "game_id INTEGER NOT NULL, "
-                + "move_number INTEGER NOT NULL, "
-                + "fen TEXT NOT NULL, "
-                + "move TEXT NOT NULL, "
-                + "best_move TEXT NOT NULL, "
-                + "score INTEGER NOT NULL, "
-                + "FOREIGN KEY (game_id) REFERENCES games(id)"
-                + ");";
+    String createMoveAnalysisTable = "CREATE TABLE IF NOT EXISTS move_analysis ("
+            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + "game_id INTEGER NOT NULL, "
+            + "move_number INTEGER NOT NULL, "
+            + "fen TEXT NOT NULL, "
+            + "move TEXT NOT NULL, "
+            + "best_move TEXT NOT NULL, "
+            + "score INTEGER NOT NULL, "
+            + "previous_score INTEGER, " 
+            + "FOREIGN KEY (game_id) REFERENCES games(id)"
+            + ");";
 
-        try (Connection conn = DriverManager.getConnection(URL);
-             Statement stmt = conn.createStatement()) {
-            stmt.execute(createGamesTable);
-            stmt.execute(createMoveAnalysisTable);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
+    try (Connection conn = DriverManager.getConnection(URL);
+         Statement stmt = conn.createStatement()) {
+        stmt.execute(createGamesTable);
+        stmt.execute(createMoveAnalysisTable);
+    } catch (SQLException e) {
+        System.out.println(e.getMessage());
     }
+}
+
 
     // Insert a new game
     public int insertGame(String gameName) {
@@ -84,9 +85,8 @@ public int getTotalGames() {
         return -1; // Indicates failure
     }
 
-    // Insert move analysis data into the database
     public void insertMoveAnalysis(int gameId, int moveNumber, MoveAnalysis moveAnalysis) {
-        String sql = "INSERT INTO move_analysis(game_id, move_number, fen, move, best_move, score) VALUES(?,?,?,?,?,?)";
+        String sql = "INSERT INTO move_analysis(game_id, move_number, fen, move, best_move, score, previous_score) VALUES(?,?,?,?,?,?,?)";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, gameId);
@@ -95,16 +95,23 @@ public int getTotalGames() {
             pstmt.setString(4, moveAnalysis.getPlayerMove());
             pstmt.setString(5, moveAnalysis.getBestMove());
             pstmt.setString(6, moveAnalysis.getScore());
+            if (moveAnalysis.getPreviousscore() != null) {
+                pstmt.setString(7, moveAnalysis.getPreviousscore());
+            } else {
+                pstmt.setNull(7, Types.INTEGER);
+            }
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
     }
+    
+
 
     // Retrieve move analysis data for a specific game
     public List<MoveAnalysis> getMoveAnalysis(int gameId) {
         List<MoveAnalysis> moveHistory = new ArrayList<>();
-        String sql = "SELECT move_number, fen, move, best_move, score FROM move_analysis WHERE game_id = ? ORDER BY move_number DESC;";
+        String sql = "SELECT move_number, fen, move, best_move, score, previous_score FROM move_analysis WHERE game_id = ? ORDER BY move_number DESC;";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, gameId);
@@ -115,8 +122,9 @@ public int getTotalGames() {
                     String move = rs.getString("move");
                     String bestMove = rs.getString("best_move");
                     String score = rs.getString("score");
+                    String previousScore = rs.getString("previous_score");
 
-                    MoveAnalysis moveAnalysis = new MoveAnalysis(fen, move, bestMove, score);
+                    MoveAnalysis moveAnalysis = new MoveAnalysis(fen, move, bestMove, score,previousScore);
                     moveHistory.add(moveAnalysis);
                 }
             }

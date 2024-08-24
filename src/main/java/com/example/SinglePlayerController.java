@@ -128,8 +128,7 @@ import java.util.concurrent.TimeUnit;
          
             timer2.setAlignment(Pos.CENTER);
             timer2.getChildren().addAll(countdownClock2);
-            
-         
+        
             pane.setMaxSize(screenHeight, screenWidth);
             borderPane.setMaxSize(screenWidth, screenHeight);
     
@@ -168,6 +167,8 @@ import java.util.concurrent.TimeUnit;
         @FXML
         private void handleExit() {
             Stage stage = (Stage) borderPane.getScene().getWindow();
+            countdownClock.stop();
+            countdownClock2.stop();
             stage.close();
         }
     
@@ -181,6 +182,8 @@ import java.util.concurrent.TimeUnit;
                     pieceView.setOnMousePressed(null);
                     pieceView.setOnMouseDragged(null);
                     pieceView.setOnMouseReleased(null);
+                    countdownClock.stop();
+                    countdownClock2.stop();
                 }
             });
         }
@@ -324,6 +327,7 @@ else
             if (drawPossibleMoves) {
                 drawPossibleMoves(selectedPiece);
             }
+            
             pieceView.toFront();
         }
     
@@ -336,12 +340,12 @@ else
   
         
         private void handlePieceDrop(MouseEvent event) throws InterruptedException {
+            fen = game.toFen();
            
-            int moveCount = 0;
             double squareSize = chessBoard.getPrefWidth() / 8;
             if (draggedPiece != null) {
                 int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
-                int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
+               int  col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
                 if (row >= 0 && row < 8 && col >= 0 && col < 8) 
                 {
                 Piece capturedPiece = game.getPiece(row, col);
@@ -352,11 +356,9 @@ else
                 }
                
                 if (validMove) {
-                    fen = game.toFen();
-                    moveCount++;
                     boolean soundPlayed = false;
                     triggerBestMoveAnalysis();
-                    startGameAnalysis(row, col, selectedPiece.getRow(),selectedPiece.getCol(),fen);
+                    startGameAnalysis(selectedPiece.getRow(),selectedPiece.getCol(),row, col,fen);
                 
                     switchPlayer(); // Switch the active timer after a valid move
                     
@@ -389,8 +391,6 @@ else
                         }
                     }
                 }
-                
-        
                 } else{
                     SoundManager.playNotifySound();
                 }
@@ -579,6 +579,8 @@ else
         private void handleBackButton() {
             try {
                 setRootWithTransition("secondary");
+                countdownClock.stop();
+                countdownClock2.stop();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -740,8 +742,6 @@ else
         }
         statusLabel.setVisible(true);
         
-    }
-
-
+    } 
        
     }

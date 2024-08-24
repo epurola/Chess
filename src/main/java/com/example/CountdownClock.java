@@ -161,6 +161,7 @@ public class CountdownClock extends Parent {
         }
     }
     private void onTimeOut() {
+        System.out.print("This WAS TRIGGERED");
          controller.onTimeOut();
     }
 

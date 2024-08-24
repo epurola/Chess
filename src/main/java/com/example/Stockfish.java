@@ -14,6 +14,7 @@ public class Stockfish {
     private String bestMove;
     private String bestMoveCurrent;
     private Database database;
+    private String previousScoreValue;
  
 
     public Stockfish(Game game) throws IOException {
@@ -21,6 +22,7 @@ public class Stockfish {
         this.moveHistory = new ArrayList<>();
         String bestMove = "";
         String bestMoveCurrent = "";
+        previousScoreValue = "";
         database = new Database("jdbc:sqlite:move_analysis.db");
         // Initialize Stockfish process, input/output streams
         ProcessBuilder pb = new ProcessBuilder("stockfish.exe");
@@ -33,6 +35,7 @@ public class Stockfish {
         this.moveHistory = new ArrayList<>();
         String bestMove = "";
         String bestMoveCurrent = "";
+
         // Initialize Stockfish process, input/output streams
         ProcessBuilder pb = new ProcessBuilder("stockfish.exe");
         stockfishProcess = pb.start();
@@ -119,11 +122,14 @@ public class Stockfish {
         } catch (Exception e) {
             e.printStackTrace();
         }
+       
 
         // Save the move analysis to the history
-        moveHistory.add(new MoveAnalysis(fen, move, bestMoveCurrent, score));
+        moveHistory.add(new MoveAnalysis(fen, move, bestMoveCurrent, score,previousScoreValue));
+        previousScoreValue = score;
+        System.err.println("Move: " + move + ", Best Move: " + bestMoveCurrent + ", Score: " + score);
 
-        return "Move: " + move + ", Best Move: " + bestMoveCurrent + ", Score: " + score;
+        return "Move: " + move + ", Best Move: " + bestMove + ", Score: " + score;
     }
 
     // Method to get move history
@@ -132,15 +138,7 @@ public class Stockfish {
     }
 
     // Method to identify blunders in the game
-    public List<MoveAnalysis> getBlunders() {
-        List<MoveAnalysis> blunders = new ArrayList<>();
-        for (MoveAnalysis analysis : moveHistory) {
-            if (analysis.isBlunder()) {
-                blunders.add(analysis);
-            }
-        }
-        return blunders;
-    }
+  
     public void handleGameEnd(String gameName ) {
         // Insert the game record and retrieve the game ID
         int gameId = database.insertGame(gameName);

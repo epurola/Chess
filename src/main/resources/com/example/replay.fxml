@@ -4,7 +4,6 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -44,23 +43,6 @@
           <left>
               <VBox fx:id="vbox" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
                <ComboBox fx:id="gameSelector" onAction="#handleGameSelection" prefHeight="38.0" prefWidth="154.0" stylesheets="@styles.css" />
-<Button fx:id="rewindForward" mnemonicParsing="false" onAction="#handleRewindForward" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css">
-    <graphic>
-        <FontAwesomeIconView glyphName="ARROW_RIGHT" />
-    </graphic>
-                  <VBox.margin>
-                     <Insets top="15.0" />
-                  </VBox.margin>
-</Button>
-              
-              <Button fx:id="rewindBack" mnemonicParsing="false" onAction="#handleRewindBack" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css">
-    <graphic>
-        <FontAwesomeIconView glyphName="ARROW_LEFT" styleClass="button1" />
-    </graphic>
-                  <VBox.margin>
-                     <Insets top="15.0" />
-                  </VBox.margin>
-</Button>
                   <!-- Full Screen Button -->
                   <Button fx:id="fullScreenButton" onAction="#handleFullScreen" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Full Screen">
                       <graphic>
@@ -85,15 +67,27 @@
                      <Insets right="40.0" />
                   </padding>
                   </Button>
-               <HBox fx:id="hbox1" alignment="CENTER" prefHeight="38.0" prefWidth="154.0">
-                  <children>
-                     <Label styleClass="label1">
-                        <HBox.margin>
-                           <Insets right="15.0" />
-                        </HBox.margin>
-                     </Label>
-                  </children>
-               </HBox>
+               <Button fx:id="blunders" mnemonicParsing="false" onAction="#showBlunders" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Show Blunders">
+                  <VBox.margin>
+                     <Insets top="15.0" />
+                  </VBox.margin>
+               </Button>
+               <Button fx:id="GreatMoves" mnemonicParsing="false" onAction="#showGreatMoves" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Show Great Moves">
+                  <VBox.margin>
+                     <Insets top="15.0" />
+                  </VBox.margin>
+               </Button>
+               <Button fx:id="backButton" layoutX="25.0" layoutY="212.0" onAction="#handleBackButton" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Back">
+                  <padding>
+                     <Insets right="40.0" />
+                  </padding>
+                  <VBox.margin>
+                     <Insets top="15.0" />
+                  </VBox.margin>
+                  <graphic>
+                     <FontAwesomeIconView fill="WHITE" glyphName="ARROW_LEFT" wrappingWidth="39.5" />
+                  </graphic>
+               </Button>
                <BorderPane.margin>
                   <Insets />
                </BorderPane.margin>
@@ -103,7 +97,26 @@
               <VBox fx:id="vbox2" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER" />
           </right>
           <bottom>
-              <HBox fx:id="WhiteHbox" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER" />
+              <HBox fx:id="WhiteHbox" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
+               <children>
+   <Button fx:id="rewindForward" mnemonicParsing="false" onAction="#handleRewindForward" prefHeight="52.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css">
+       <graphic>
+           <FontAwesomeIconView glyphName="ARROW_LEFT" />
+       </graphic>
+   </Button>
+                 
+                 <Button fx:id="rewindBack" mnemonicParsing="false" onAction="#handleRewindBack" prefHeight="52.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css">
+       <graphic>
+           <FontAwesomeIconView glyphName="ARROW_RIGHT" styleClass="button1" />
+       </graphic>
+                     <HBox.margin>
+                        <Insets left="25.0" />
+                     </HBox.margin>
+   </Button>
+               </children>
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin></HBox>
           </bottom>
       </BorderPane>
    </children>
