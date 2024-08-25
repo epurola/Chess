@@ -137,12 +137,10 @@ public class Replay {
             System.err.println("Index out of bounds!" + currentMove);
             return currentScore;
         }
-
         // Loop through moves up to the specified index
         for (int i = 0; i <= currentMove; i++) {
             MoveAnalysis move = moveHistory.get(i);
             String score = move.getScore();
-
             try {
                 if (score.contains("centipawns")) {
                     // Extract numerical value for centipawns
@@ -153,8 +151,18 @@ public class Replay {
                     // Extract numerical value for mate moves
                     String[] parts = score.split(" ");
                     int mateMoves = Integer.parseInt(parts[0]);
-                    // Example: adjusting score for mate scenario
-                    currentScore -= mateMoves * 100; // Example adjustment factor
+                    if(mateMoves <= 2)
+                    {
+                        currentScore += mateMoves * 200; 
+                    }
+                    else if (mateMoves >= 2 && mateMoves <= 5){
+                        currentScore += mateMoves * 100; 
+                    }
+                    else
+                    {
+                        currentScore += mateMoves * 50; 
+                    }
+                    
                 }
             } catch (NumberFormatException e) {
                 System.err.println("Error parsing score: " + e.getMessage());
