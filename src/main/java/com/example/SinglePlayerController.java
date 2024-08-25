@@ -644,9 +644,7 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
         }
         private void drawPossibleMoves(Piece selectedPiece) {
             List<int[]> possibleMoves = new ArrayList<>();
-        
-          
-        
+
             // Clear existing move indicators
             chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
         
@@ -662,29 +660,27 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
                 // Check if the square is occupied
                 boolean isOccupied = game.getPiece(row, col) != null; // Use your board's method to check for occupation
         
-                // Create and configure the move indicator
-                Circle moveIndicator = new Circle(indicatorSize / 2);
-                if (isOccupied) {
-                    moveIndicator.setFill(null); // No fill for occupied squares
-                    moveIndicator.setStroke(moveHelpColor.deriveColor(0, 1, 1, 0.5)); // Set stroke color with transparency (50% opacity)
-                    moveIndicator.setStrokeWidth(4); // Adjust the stroke width if needed
-                    moveIndicator.setRadius(40);
-                } else {
-                    moveIndicator.setFill(moveHelpColor.deriveColor(0, 1, 1, 0.5)); // Set fill color with transparency (50% opacity)
-                }
-        
-                // Use a StackPane to center the Circle
+                               
                 StackPane moveIndicatorContainer = new StackPane();
+               
+                if (isOccupied) {
+                    Rectangle moveIndicatorR = new Rectangle(squareSize-4 , squareSize-4); 
+                    moveIndicatorR.setFill(null); // No fill for occupied squares
+                    moveIndicatorR.setStroke(moveHelpColor); // Set stroke color with transparency (50% opacity)
+                    moveIndicatorR.setStrokeWidth(4); // Adjust the stroke width if needed
+                    moveIndicatorContainer.getChildren().add(moveIndicatorR);
+                    
+                } else {
+                    Circle moveIndicator = new Circle(indicatorSize / 2);
+                    moveIndicator.setFill(moveHelpColor.deriveColor(0, 1, 1, 0.7)); // Set fill color with transparency (50% opacity)
+                    moveIndicatorContainer.getChildren().add(moveIndicator);
+                }
+    
                 moveIndicatorContainer.setPickOnBounds(false);
-                moveIndicatorContainer.getChildren().add(moveIndicator);
                 moveIndicatorContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
                 moveIndicatorContainer.setMouseTransparent(true);
-        
                 chessBoard.add(moveIndicatorContainer, col, row); // Add the container to the grid
             }
-        
-            // Highlight the best move in gold color
-           // Add the container to the grid at the origin square
     
         }
         
