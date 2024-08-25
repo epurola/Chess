@@ -35,6 +35,9 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
  
     public class MultiplayerController  {
@@ -78,6 +81,7 @@ import javafx.util.Duration;
         CountdownClock countdownClock2;
         double screenWidth;
         double screenHeight;
+        Stockfish stockfish;
         
     
        
@@ -258,12 +262,18 @@ import javafx.util.Duration;
         statusLabel.setVisible(true);
         SoundManager.playWinSound();
     }
-        private void checkAndDrawBoard() {
+        private void checkAndDrawBoard() throws IOException {
             if (playerColor == null) {
                 System.out.println("Player color is not set yet.");
                 // Schedule a re-check after a delay
                 PauseTransition delay = new PauseTransition(Duration.seconds(1));
-                delay.setOnFinished(event -> checkAndDrawBoard()); // Recursive call after delay
+                delay.setOnFinished(event -> {
+                    try {
+                        checkAndDrawBoard();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }); // Recursive call after delay
                 delay.play();
             } else {
                 if(playerColor.equals("white"))
@@ -271,12 +281,14 @@ import javafx.util.Duration;
                     isWhite = true;
                     isMyTurn = true;
                     game = new Game();
+                    stockfish = new Stockfish(game);
                 }
                 else
                 {
                     isWhite = false;
                     isCastle = false;
                     game = new Game( isWhite);
+                    stockfish = new Stockfish(game);
                 }
                 drawBoard();
             }
@@ -407,6 +419,57 @@ import javafx.util.Duration;
                 draggedPiece.setTranslateY(event.getSceneY() - 50 - draggedPiece.getLayoutY() - chessBoard.localToScene(0, 0).getY());
             }
         }
+        private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor();
+        private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
+            analysisExecutor.submit(() -> {
+                try {
+                    String moveString = rowColToAlgebraic(fromRow, fromCol) + rowColToAlgebraic(toRow, toCol);
+                    stockfish.getBestMoveFromFEN(fen);
+                    String analysis = stockfish.analyzeMove(fen, moveString);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        public String rowColToAlgebraic(int row, int col) {
+            // Convert column index to column character ('a' to 'h')
+            char columnChar = (char) ('a' + col);
+            // Convert row index to row character ('1' to '8')
+            char rowChar = (char) ('1' + (7 - row)); // Adjust for 0-based indexing
+            // Combine column and row characters to form the algebraic notation
+            return "" + columnChar + rowChar;
+        }
+        
+        private void triggerBestMoveAnalysis() {
+          
+            new Thread(() -> {
+                try {
+                    // Analyze the best move using Stockfish
+                  //  int[] bestMove = parseMove(stockfish.getBestMove());
+                   /* Platform.runLater(() -> {
+                        drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);  
+                    });*/ 
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+       
+        }
+        public static int[] parseMove(String bestMove) {
+            // Parse the move string like "e2e4"
+            String from = bestMove.substring(0, 2); // e2
+            String to = bestMove.substring(2, 4);   // e4
+    
+            // Convert from algebraic notation to row and column indices
+            int fromCol = from.charAt(0) - 'a';     // 'e' - 'a' = 4
+            int fromRow = '8' - from.charAt(1);     // '8' - '2' = 6
+    
+            int toCol = to.charAt(0) - 'a';         // 'e' - 'a' = 4
+            int toRow = '8' - to.charAt(1);         // '8' - '4' = 4
+    
+            // Return the row and column positions in an array [fromRow, fromCol, toRow, toCol]
+            return new int[] {fromRow, fromCol, toRow, toCol};
+        }
   
       
         private void handlePieceDrop(MouseEvent event) {
@@ -414,6 +477,7 @@ import javafx.util.Duration;
             {
                 return;
             }
+            String fen = game.toFen();
             if (draggedPiece != null) {
                 int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / 100);
                 int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / 100);
@@ -429,6 +493,8 @@ import javafx.util.Duration;
                 if (validMove) {
                     boolean soundPlayed = false;
                     isMyTurn = false;
+                    triggerBestMoveAnalysis();
+                    startGameAnalysis(selectedPiece.getRow(),selectedPiece.getCol(),row, col,fen);
 
                     switchPlayer();
                    

@@ -436,7 +436,7 @@ import javafx.util.Duration;
                     }
 
                    
-                   triggerBestMoveAnalysis();
+                //   triggerBestMoveAnalysis();
                 
                 }
                 
@@ -464,15 +464,15 @@ import javafx.util.Duration;
                
 
             }
-            private void triggerBestMoveAnalysis() {
+            /*  private void triggerBestMoveAnalysis() {
                 new Thread(() -> {
                     try {
                        
-                            int[] bestMove = parseMove(stockfish.getBestMove());
+                           /int[] bestMove = parseMove(stockfish.getBestMove());
                             int fromRow = bestMove[0];
                             int fromCol = bestMove[1];
                             int toRow = bestMove[2];
-                            int toCol = bestMove[3];
+                            int toCol = bestMove[3];*
                            
                             
                         
@@ -490,7 +490,8 @@ import javafx.util.Duration;
                     }
                 }).start();
              
-            }
+            }*/ 
+           
 
         
     
@@ -767,7 +768,8 @@ import javafx.util.Duration;
         {
             return Math.abs(row-7);
         }
-        private void stockFishMakeMove() {
+
+       /* private void stockFishMakeMove() {
             int[] bestMove = parseMove(stockfish.getBestMove());
             int fromRow = bestMove[0];
             int fromCol = bestMove[1];
@@ -776,7 +778,7 @@ import javafx.util.Duration;
             game.makeMove(fromRow, fromCol, toRow, toCol);
             game.setPiece(fromRow, fromCol, null);
             drawBoard();
-        }
+        }*/ 
         public static int[] parseMove(String bestMove) {
             // Parse the move string like "e2e4"
             String from = bestMove.substring(0, 2); // e2

@@ -15,6 +15,7 @@ public class Stockfish {
     private String bestMoveCurrent;
     private Database database;
     private String previousScoreValue;
+    private int currentScore;
  
 
     public Stockfish(Game game) throws IOException {
@@ -29,6 +30,7 @@ public class Stockfish {
         stockfishProcess = pb.start();
         input = new BufferedReader(new InputStreamReader(stockfishProcess.getInputStream()));
         output = new PrintWriter(stockfishProcess.getOutputStream());
+        System.out.println("Stockfish ready");
     }
 
     public Stockfish() throws IOException {
@@ -48,8 +50,8 @@ public class Stockfish {
         output.flush();
     }
 
-    public String getBestMove() {
-        String fen = game.toFen();
+    public String getBestMove(String fen) {
+       
         sendUciCommand("position fen " + fen);
         sendUciCommand("go depth 20"); // Adjust depth as needed
         // Parse Stockfish's output for the best move
@@ -58,15 +60,16 @@ public class Stockfish {
             String line;
             while ((line = input.readLine()) != null) {
                 if (line.startsWith("bestmove")) {
-                    bestMove = line.split(" ")[1];
+                    bestMoveCurrent = line.split(" ")[1];
                     break;
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return bestMove;
+        return bestMoveCurrent;
     }
+    
 //This is called from analyzegame and will get the best move for current player so it c
 //can be stored. If get AI help is on we cant use the best move so that is why.
     public String getBestMoveFromFEN(String fen) {
@@ -92,15 +95,16 @@ public class Stockfish {
     public String analyzeMove(String fen, String move) {
         // Apply the move and request analysis
        System.out.println(fen);
-        sendUciCommand("position fen " + fen + " moves " + move);
+        sendUciCommand("position fen " + fen);
         sendUciCommand("go depth 20"); // Adjust depth as needed
-
-       
-        String score = "";
+        String score = "0";
 
         try {
             String line;
             while ((line = input.readLine()) != null) {
+                if (line.startsWith("bestmove")) {
+                    bestMove = line.split(" ")[1];
+                }
                 if (line.startsWith("info") && line.contains("score")) {
                     // Example parsing score from info lines
                     String[] tokens = line.split(" ");
@@ -122,12 +126,11 @@ public class Stockfish {
         } catch (Exception e) {
             e.printStackTrace();
         }
-       
 
         // Save the move analysis to the history
-        moveHistory.add(new MoveAnalysis(fen, move, bestMoveCurrent, score,previousScoreValue));
+        moveHistory.add(new MoveAnalysis(fen, move, bestMove, score , previousScoreValue));
         previousScoreValue = score;
-        System.err.println("Move: " + move + ", Best Move: " + bestMoveCurrent + ", Score: " + score);
+        System.err.println("Move: " + move + ", Best Move: " + bestMove + ", Score: " + score);
 
         return "Move: " + move + ", Best Move: " + bestMove + ", Score: " + score;
     }

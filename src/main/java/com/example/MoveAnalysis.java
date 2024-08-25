@@ -1,11 +1,14 @@
 package com.example;
 
+import javafx.scene.paint.Color;
+
 public class MoveAnalysis {
     private String fen;
     private String playerMove;
     private String bestMove;
     private String score;
     private String previousScoreValue;
+    private Color scoreColor; 
 
     public MoveAnalysis(String fen, String playerMove, String bestMove, String score, String previousScoreValue) {
         this.fen = fen;
@@ -13,6 +16,15 @@ public class MoveAnalysis {
         this.bestMove = bestMove;
         this.score = score;
         this.previousScoreValue = previousScoreValue;
+    }
+    
+
+   
+    public Color getScoreColor() {
+        return scoreColor;
+    }
+    public void setScoreColor(Color scoreColor) {
+        this.scoreColor = scoreColor;
     }
 
     public String getFEN() {

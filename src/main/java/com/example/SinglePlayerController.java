@@ -78,6 +78,7 @@ import java.util.concurrent.TimeUnit;
         double screenHeight;
         Stockfish stockfish;
         boolean drawBestMove;
+        boolean analysis;
       
     
         @FXML
@@ -254,7 +255,7 @@ import java.util.concurrent.TimeUnit;
         chessBoard.add(bestMoveContainer, toCol, toRow); // Add the container to the grid at the destination square
         }
     // Highlight the piece that can make the best move in gold
-    Circle bestPieceIndicator = new Circle(squareSize / 3); // Full square size
+    Rectangle bestPieceIndicator = new Rectangle(squareSize-4 , squareSize-4); // Full square size
     bestPieceIndicator.setStroke(Color.GOLD.deriveColor(0, 1, 1, 0.9)); // Set stroke color to gold
     bestPieceIndicator.setStrokeWidth(4); // Adjust the stroke width if needed
     bestPieceIndicator.setFill(null); // No fill
@@ -280,35 +281,24 @@ private final ExecutorService analysisExecutor = Executors.newSingleThreadExecut
 private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
     analysisExecutor.submit(() -> {
         try {
+            if(drawBestMove)
+            {
+            int[] bestMove = parseMove(stockfish.getBestMove(game.toFen()));
+            Platform.runLater(() -> {
+                drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);  
+            });
+        }
             String moveString = rowColToAlgebraic(fromRow, fromCol) + rowColToAlgebraic(toRow, toCol);
-            stockfish.getBestMoveFromFEN(fen);
-            String analysis = stockfish.analyzeMove(fen, moveString);
+            stockfish.analyzeMove(fen, moveString);
+           
         } catch (Exception e) {
             e.printStackTrace();
         }
     });
 }
 
-private void triggerBestMoveAnalysis() {
-    if(drawBestMove)
-    {
-    new Thread(() -> {
-        try {
-            // Analyze the best move using Stockfish
-            int[] bestMove = parseMove(stockfish.getBestMove());
-            Platform.runLater(() -> {
-                drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);  
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }).start();
-}
-else
-{
-    return;
-}
-}
+
+
 
         private Image getPieceImage(Piece piece) {
             String color = piece.isWhite() ? "white-" : "black-";
@@ -324,6 +314,7 @@ else
         private void handlePieceDragStart(MouseEvent event, ImageView pieceView, Piece piece) {
             selectedPiece = piece;
             draggedPiece = pieceView;
+            analysis = false;
             if (drawPossibleMoves) {
                 drawPossibleMoves(selectedPiece);
             }
@@ -341,7 +332,7 @@ else
         
         private void handlePieceDrop(MouseEvent event) throws InterruptedException {
             fen = game.toFen();
-           
+            
             double squareSize = chessBoard.getPrefWidth() / 8;
             if (draggedPiece != null) {
                 int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
@@ -354,10 +345,11 @@ else
                 {
                   SoundManager.playNotifySound();
                 }
-               
+               //Sometime there is race conditions here fix them...
                 if (validMove) {
                     boolean soundPlayed = false;
-                    triggerBestMoveAnalysis();
+                    //If you move too fast this will be left behind...
+                  
                     startGameAnalysis(selectedPiece.getRow(),selectedPiece.getCol(),row, col,fen);
                 
                     switchPlayer(); // Switch the active timer after a valid move
@@ -398,6 +390,7 @@ else
                 drawBoard();
                 if(game.checkMate(game))
                 {
+                    SoundManager.playWinSound();
                     new Thread(() -> {
                         try {
                     analysisExecutor.awaitTermination(1,  TimeUnit.SECONDS);
@@ -413,7 +406,7 @@ else
                         }
                     }).start();
                     displayConfetti(chessBoard);
-                    SoundManager.playWinSound();
+                    
                     statusLabel.setText("Victory");
                     statusLabel.setVisible(true);
                     countdownClock.stop();

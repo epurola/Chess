@@ -71,12 +71,21 @@ public class Replay {
     double screenWidth;
     double screenHeight;
     private Piece piece;
+    private int currentScore;
+    private int previousScore;
+  
+    private List<Color> moveColors;
+    private Color colour;
+    private boolean forward;
+    private boolean back;
+    
    
 
     // Constructor that initializes the board with move history
     @FXML
     
     public void  initialize() {
+        moveColors = new ArrayList<>();
         moveHistory = new ArrayList<>();
         database = new Database("jdbc:sqlite:move_analysis.db");
         int totalGames = database.getTotalGames();
@@ -88,7 +97,7 @@ public class Replay {
              screenHeight = bounds.getHeight();
 
             double chessBoardSize = screenHeight * 0.75 ;
-        chessBoard.setPrefSize(chessBoardSize, chessBoardSize);
+            chessBoard.setPrefSize(chessBoardSize, chessBoardSize);
             rootPane.setMinSize(chessBoardSize+30, chessBoardSize+30);
             double boxWidth = (screenWidth - chessBoardSize) / 2;
             vbox.setPrefWidth(boxWidth);
@@ -115,64 +124,47 @@ public class Replay {
             board.setFEN(moveHistory.get(0).getFEN());  // Set the board to the initial position
 
             initializeGameComboBox();
+
            
             loadGame(totalGames);
         }
     }
-    @FXML
-    private void handleGameSelection() {
-        ComboBoxItem selectedGame = gameSelector.getValue();
-       
-        int id = selectedGame.getValue();
-        loadGame(id);
-    }
-    @FXML
-    private void handleBackButton() {
-        try {
-            setRootWithTransition("secondary");
-           
-        } catch (IOException e) {
-            e.printStackTrace();
+    public static int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove) {
+        int currentScore = 0;
+
+        // Ensure the index is within bounds
+        if (currentMove < 0 || currentMove >= moveHistory.size()) {
+            System.err.println("Index out of bounds!" + currentMove);
+            return currentScore;
         }
-    }
-     private void setRootWithTransition(String fxml) throws IOException {
-            Parent newRoot = App.loadFXML(fxml);
-            Scene scene = borderPane.getScene();
-            if (scene != null) {
-                Parent oldRoot = scene.getRoot();
-                FadeTransition fadeOut = new FadeTransition(Duration.millis(300), oldRoot);
-                fadeOut.setFromValue(1.0);
-                fadeOut.setToValue(0.0);
-                FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newRoot);
-                fadeIn.setFromValue(0.0);
-                fadeIn.setToValue(1.0);
-                fadeOut.setOnFinished(event -> {
-                    scene.setRoot(newRoot);
-                    fadeIn.play();
-                });
-                fadeOut.play();
-            } else {
-                scene.setRoot(newRoot);
-                newRoot.setOpacity(0.0);
-                FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newRoot);
-                fadeIn.setFromValue(0.0);
-                fadeIn.setToValue(1.0);
-                fadeIn.play();
+
+        // Loop through moves up to the specified index
+        for (int i = 0; i <= currentMove; i++) {
+            MoveAnalysis move = moveHistory.get(i);
+            String score = move.getScore();
+
+            try {
+                if (score.contains("centipawns")) {
+                    // Extract numerical value for centipawns
+                    String[] parts = score.split(" ");
+                    int scoreValue = Integer.parseInt(parts[0]);
+                    currentScore += scoreValue;
+                } else if (score.contains("moves to mate")) {
+                    // Extract numerical value for mate moves
+                    String[] parts = score.split(" ");
+                    int mateMoves = Integer.parseInt(parts[0]);
+                    // Example: adjusting score for mate scenario
+                    currentScore -= mateMoves * 100; // Example adjustment factor
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Error parsing score: " + e.getMessage());
             }
         }
-    
 
-   
-    @FXML
-private void showBlunders() {
-    findNextBlunder();
-    replayMoves();  // Update the board to reflect the move at the new currentMoveIndex
-}
-@FXML
-private void showGreatMoves() {
-    findNextGreatMove();
-    replayMoves();  // Update the board to reflect the move at the new currentMoveIndex
-}
+        return currentScore;
+    }
+
+
     
 private void findNextBlunder() {
     // Start searching from the next index
@@ -215,8 +207,8 @@ private void findNextGreatMove() {
         if (!moveHistory.isEmpty()) {
             currentMoveIndex = moveHistory.size()-1;
             board.clearBoard();
-            
-            board.setFEN(moveHistory.get(moveHistory.size()-1).getFEN());  // Set the board to the initial position
+            updateScoreAndColor();
+            board.setFEN(moveHistory.get(currentMoveIndex).getFEN());  // Set the board to the initial position
             drawBoard();
         }
     }
@@ -236,31 +228,9 @@ private void findNextGreatMove() {
     private void drawBoard() {
         chessBoard.getChildren().clear();
         double squareSize = chessBoard.getPrefWidth() / 8;
-        int score;
-        int defaultValue = 201;
-        int specialValue = 201;
-        String str = moveHistory.get(currentMoveIndex).getScore();
-        int lastScore;
+       
+       
         int[] playerMove = {0, 0, 0, 0};
-    
-        // Regular expression to find the first integer in the string, including negative numbers
-        Pattern pattern = Pattern.compile("-?\\d+");
-        Matcher matcher = pattern.matcher(str);
-    
-        if (matcher.find()) {
-            // Extract the first found integer
-            score = Integer.parseInt(matcher.group());
-            lastScore = score;
-        } else if (str.contains("moves to mate")) {
-            // If the string contains "moves to mate", assign the special value
-            score = specialValue;
-            lastScore = score;
-        } else {
-            // If no integer is found and no special phrase is present, assign the default value
-            score = defaultValue;
-            lastScore = score;
-        }
-    
         // Coordinates of the best move and the opponent's move
         int[] bestMove = parseMove(moveHistory.get(currentMoveIndex).getBestMove());
         if (currentMoveIndex > 0) {
@@ -276,7 +246,8 @@ private void findNextGreatMove() {
         int playerFromCol = playerMove[1];
         int playerToRow = playerMove[2];
         int playerToCol = playerMove[3];
-    
+        colour = updateScoreAndColor();
+        
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 Rectangle square = new Rectangle(squareSize, squareSize);
@@ -289,9 +260,15 @@ private void findNextGreatMove() {
                 }
                 // Different shades for the player's move
                 else if (i == playerFromRow && j == playerFromCol && currentMoveIndex > 0) {
-                    square.setFill(getColorForScore(score)); // Color based on score
+                  
+                        square.setFill(colour.darker()); 
+                  
+                   // Color based on score
                 } else if (i == playerToRow && j == playerToCol && currentMoveIndex > 0) {
-                    square.setFill(getColorForScore(score).darker()); // Darker color for to square of player's move
+                  
+                  
+                        square.setFill(colour); 
+                 
                 }
                 // Regular board colors
                 else {
@@ -314,7 +291,10 @@ private void findNextGreatMove() {
                 }
             }
         }
+       
+       
     }
+ 
     
     private Color getColorForScore(int score) {
         // Define thresholds
@@ -339,6 +319,59 @@ private void findNextGreatMove() {
             return Color.GREEN; // Color for high scores (good moves)
         }
     }
+   
+  
+    private Color updateScoreAndColor() {
+     
+        currentScore = calculateCurrentScore(moveHistory, currentMoveIndex);
+      
+        // Get color based on score change
+        Color color = getColorForScoreChange(currentScore, previousScore);
+        // Update previous score
+       // previousScore = currentScore;
+      
+        // Use the color for visualization as needed
+         moveColors.add(color);
+         return color;
+       
+    }
+    private Color getColorForScoreChange(int currentScore, int previousScore) {
+        // Calculate the change in score
+        int scoreChange;
+       if(currentMoveIndex + 1 < moveHistory.size())
+       {
+        scoreChange = (calculateCurrentScore(moveHistory, currentMoveIndex + 1 )- currentScore) * -1  ;
+       }
+       else
+       {
+        scoreChange = 0;
+       }
+        
+    
+        // Define thresholds for color mapping
+        int highChangeThreshold = 200;
+        int mediumChangeThreshold = 100;
+        int lowChangeThreshold = 50;
+    
+        // Determine color based on the direction and magnitude of the score change
+        if (scoreChange >= highChangeThreshold) {
+            return Color.GREEN; // Significant improvement
+        } else if (scoreChange >= mediumChangeThreshold) {
+            return Color.LIGHTGREEN; // Moderate improvement
+        } else if (scoreChange >= lowChangeThreshold) {
+            return Color.GRAY; // Minor improvement
+        } else if (scoreChange <= -highChangeThreshold) {
+            return Color.RED; // Significant worsening
+        } else if (scoreChange <= -mediumChangeThreshold) {
+            return Color.PINK; // Moderate worsening
+        } else if (scoreChange <= -lowChangeThreshold) {
+            return Color.GRAY; // Minor worsening
+        } else {
+            return Color.GRAY; // Little to no change
+        }
+    }
+    
+    
     
     // Normalize the score to a range [0, 1] based on the expected score range
     private double normalizeScore(int score) {
@@ -347,13 +380,7 @@ private void findNextGreatMove() {
         return Math.min(1, Math.max(0, (double)(score - minScore) / (maxScore - minScore)));
     }
     
-    // Interpolate between two colors based on a value from [0, 1]
-    private Color interpolateColor(Color color1, Color color2, double t) {
-        double red = color1.getRed() * (1 - t) + color2.getRed() * t;
-        double green = color1.getGreen() * (1 - t) + color2.getGreen() * t;
-        double blue = color1.getBlue() * (1 - t) + color2.getBlue() * t;
-        return new Color(red, green, blue, 1.0);
-    }
+  
     
     
     public static int[] parseMove(String bestMove) {
@@ -415,10 +442,20 @@ private void findNextGreatMove() {
             int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
             if (row >= 0 && row < 8 && col >= 0 && col < 8) {
                 board.setPiece(row, col, selectedPiece);
-                board.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), null);
-                drawBoard();  // Redraw the board after the move
+                if(row != selectedPiece.getRow() || col != selectedPiece.getCol())
+                {
+                    board.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), null);
+                }
+                
+                 SoundManager.playMoveSound();
+            }
+            else
+            {
+                board.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), selectedPiece);
+                SoundManager.playNotifySound();
             }
         }
+        drawBoard();
     }
 
     @FXML
@@ -433,6 +470,9 @@ private void findNextGreatMove() {
     private void handleRewindForward() {
         if (currentMoveIndex <= moveHistory.size() - 1) {
             currentMoveIndex++;
+            forward= true;
+        
+        
             replayMoves();
         }
     }
@@ -442,6 +482,7 @@ private void findNextGreatMove() {
             MoveAnalysis moveAnalysis = moveHistory.get(currentMoveIndex);
             board.clearBoard();
             board.setFEN(moveAnalysis.getFEN());
+            forward = false;
           
             drawBoard();
         }
@@ -457,5 +498,59 @@ private void findNextGreatMove() {
             drawBoard();
         }
     }
+    @FXML
+    private void handleGameSelection() {
+        ComboBoxItem selectedGame = gameSelector.getValue();
+       
+        int id = selectedGame.getValue();
+        loadGame(id);
+    }
+    @FXML
+    private void handleBackButton() {
+        try {
+            setRootWithTransition("secondary");
+           
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+     private void setRootWithTransition(String fxml) throws IOException {
+            Parent newRoot = App.loadFXML(fxml);
+            Scene scene = borderPane.getScene();
+            if (scene != null) {
+                Parent oldRoot = scene.getRoot();
+                FadeTransition fadeOut = new FadeTransition(Duration.millis(300), oldRoot);
+                fadeOut.setFromValue(1.0);
+                fadeOut.setToValue(0.0);
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newRoot);
+                fadeIn.setFromValue(0.0);
+                fadeIn.setToValue(1.0);
+                fadeOut.setOnFinished(event -> {
+                    scene.setRoot(newRoot);
+                    fadeIn.play();
+                });
+                fadeOut.play();
+            } else {
+                scene.setRoot(newRoot);
+                newRoot.setOpacity(0.0);
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newRoot);
+                fadeIn.setFromValue(0.0);
+                fadeIn.setToValue(1.0);
+                fadeIn.play();
+            }
+        }
+    
+
+   
+    @FXML
+private void showBlunders() {
+    findNextBlunder();
+    replayMoves();  // Update the board to reflect the move at the new currentMoveIndex
+}
+@FXML
+private void showGreatMoves() {
+    findNextGreatMove();
+    replayMoves();  // Update the board to reflect the move at the new currentMoveIndex
+}
 }
 

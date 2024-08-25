@@ -22,7 +22,7 @@ public class CountdownClock extends Parent {
     private double currentAngle = 0; // Current angle of the second hand
     private Timeline sharedTimeline;  // Shared timeline between clock and countdown timer
     private Label playerTimerLabel;
-    private int playerTimeLeft = 600;
+    private int playerTimeLeft = 900;
     private boolean isRunning = false; // To keep track of the timer state
     private SinglePlayerController controller;
     private MultiplayerController Mcontroller;

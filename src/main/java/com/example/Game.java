@@ -623,9 +623,9 @@ public boolean isInCheck(boolean isWhite) {
     }
     public String toFen() {
         String fen =getBoard().toFEN(isWhiteTurn());
-        System.out.println(fen);
-
+        System.out.println("Game tofen" +fen);
         return fen;
     }
+   
 }
 
