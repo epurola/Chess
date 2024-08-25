@@ -14,6 +14,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ComboBoxBase;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -259,7 +260,7 @@ private void findNextGreatMove() {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 Rectangle square = new Rectangle(squareSize, squareSize);
-    
+                
                 // Different shades for the best move
                 if (i == bestFromRow && j == bestFromCol) {
                     square.setFill(Color.GOLD.darker()); // From square for best move
@@ -291,6 +292,22 @@ private void findNextGreatMove() {
                     ImageView pieceView = new ImageView(pieceImage);
                     pieceView.setFitHeight(squareSize);
                     pieceView.setFitWidth(squareSize);
+                      if(!piece.isWhite())
+                        {
+                            ColorAdjust colorAdjust = new ColorAdjust();
+                            colorAdjust.setContrast(0.3); 
+                             // Adjust this value between -1.0 and 1.
+                        pieceView.setEffect(colorAdjust);
+                        }
+                        else
+                        {
+                            ColorAdjust colorAdjust = new ColorAdjust();
+                            colorAdjust.setContrast(0.3);  // Increase contrast (adjust as needed)
+                            colorAdjust.setBrightness(-0.2);  // Slightly decrease brightness (adjust as needed)
+                            colorAdjust.setSaturation(0);  // Optional: set to 0 for grayscale effect
+                            
+                        pieceView.setEffect(colorAdjust);
+                        }
                     chessBoard.add(pieceView, j, i);
     
                     pieceView.setOnMousePressed(event -> handlePieceDragStart(event, pieceView, piece));
