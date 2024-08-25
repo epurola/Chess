@@ -17,6 +17,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -154,9 +159,23 @@ import java.util.concurrent.TimeUnit;
             // Enable fill height for HBoxes to stretch vertically if needed
             WhiteHbox.setFillHeight(true);
             blackHbox.setFillHeight(true);
+          /*Image backgroundImage = new Image("file:C:/Users/eelip/Chess/src/main/resources/images/300.png");
 
-            
-            
+
+        // Create a BackgroundImage
+              BackgroundImage background = new BackgroundImage(
+                backgroundImage,
+                BackgroundRepeat.NO_REPEAT,    // Don't repeat the image
+                BackgroundRepeat.NO_REPEAT,    // Don't repeat the image
+                BackgroundPosition.CENTER,     // Position the image in the center
+                new BackgroundSize(
+                    chessBoardSize,
+                    chessBoardSize,
+                    true, true, true, false
+                ) // Use the original size of the image, scale if necessary
+        ); chessBoard.setBackground(new Background(background)); */  
+
+        // Set the backgroun
             drawBoard();
         }
     
@@ -212,8 +231,9 @@ import java.util.concurrent.TimeUnit;
             for (int i = 0; i < 8; i++) {
                 for (int j = 0; j < 8; j++) {
                     Rectangle square = new Rectangle(squareSize, squareSize);
-                    square.setFill((i + j) % 2 == 0 ? lightColor : darkColor);
-                    chessBoard.add(square, j, i);
+                  // square.setFill(Color.TRANSPARENT);
+                  square.setFill((i + j) % 2 == 0 ? lightColor : darkColor);
+                   chessBoard.add(square, j, i);
                     Piece piece = game.getPiece(i, j);
                     if (piece != null) {
                         Image pieceImage = getPieceImage(piece);
