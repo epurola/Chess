@@ -89,7 +89,7 @@ public class Replay {
     public void  initialize() {
         moveColors = new ArrayList<>();
         moveHistory = new ArrayList<>();
-        database = new Database("jdbc:sqlite:move_analysis.db");
+        database = new Database();
         int totalGames = database.getTotalGames();
         moveHistory = database.getMoveAnalysis(totalGames);
         Image cursorImage = new Image(getClass().getResource("/com/example/pointer.png").toExternalForm());

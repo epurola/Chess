@@ -15,6 +15,8 @@ public class Game {
    private boolean blackCanCastleKingSide ;
    private boolean blackCanCastleQueenSide ;
    private boolean isOnline;
+  private boolean isInCheck;
+  List<int[]> possibleMoves;
 
     public Game() {
         board = new Board();
@@ -186,9 +188,18 @@ public class Game {
     public void setWhiteTurn(boolean whiteTurn) {
         this.whiteTurn = whiteTurn;
     }
+   
     public boolean canCastle(boolean isWhite, boolean kingSide) {
-        return isWhite ? (kingSide ? whiteCanCastleKingSide : whiteCanCastleQueenSide) 
-                       : (kingSide ? blackCanCastleKingSide : blackCanCastleQueenSide);
+        if(!isInCheck)
+        {
+            return isWhite ? (kingSide ? whiteCanCastleKingSide : whiteCanCastleQueenSide) 
+            : (kingSide ? blackCanCastleKingSide : blackCanCastleQueenSide);
+        }
+        else
+        {
+            return false;
+        }
+            
     }
     public void updateCastlingRightsAfterMove(Piece piece) {
         if (piece instanceof King) {
@@ -216,6 +227,8 @@ public class Game {
             }
         }
     }
+    
+    
 
    
     public boolean makeMove(int fromRow, int fromCol, int toRow, int toCol) {
@@ -525,40 +538,59 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
     public void recordMove(int fromRow, int fromCol, int toRow, int toCol, Piece capturedPiece,Piece movedPiece, int capturePieceRow, int capturePieceCol, String fen) {
         moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece, capturePieceRow, capturePieceCol, fen));
     }
-   
-public boolean isInCheck(boolean isWhite) {
-    boolean isInCheck = false;
-
-    int[] kingPosition = isWhite ? getWhiteKingPosition() : getBlackKingPosition();
-    if (kingPosition == null) {
-        return false; // King not found
-    }
-
-    int kingRow = kingPosition[0];
-    int kingCol = kingPosition[1];
-    List<int[]> possibleMoves;
-
-    // Check all opponent's pieces
-    //update get possible moves to use bitshifting...
-    for (int r = 0; r < 8; r++) {
-        for (int c = 0; c < 8; c++) {
-            Piece piece = board.getPiece(r, c);
-            if (piece != null && piece.isWhite() != isWhite) {
-                possibleMoves = piece.getPossibleMoves(this);
-                for (int[] move : possibleMoves) {
-                    if (move[0] == kingRow && move[1] == kingCol) {
-                        isInCheck = true;
-                        break;
+    public boolean isInCheck(boolean isWhite) {
+        isInCheck = false;
+    
+        int[] kingPosition = isWhite ? getWhiteKingPosition() : getBlackKingPosition();
+        if (kingPosition == null) {
+            System.out.println("King not found");
+            return false; // King not found
+        }
+    
+        int kingRow = kingPosition[0];
+        int kingCol = kingPosition[1];
+        
+      
+    
+        // Check all opponent's pieces
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                Piece piece = board.getPiece(r, c);
+                if (piece != null && piece.isWhite() != isWhite) {
+                    possibleMoves = piece.getPossibleMoves(this);
+                    for (int[] move : possibleMoves) {
+                        // Check if the king is in check
+                        if (move[0] == kingRow && move[1] == kingCol) {
+                            isInCheck = true;
+                        }
+    
+                        // Check castling squares
+                        if (isWhite) {
+                            if ((move[0] == 7 && move[1] == 5) || (move[0] == 7 && move[1] == 6)) {
+                               whiteCanCastleKingSide = false; // f1 or g1 under attack
+                            }
+                            if ((move[0] == 7 && move[1] == 3) || (move[0] == 7 && move[1] == 2)) {
+                                whiteCanCastleQueenSide = false; // d1 or c1 under attack
+                            }
+                        } else {
+                            if ((move[0] == 0 && move[1] == 5) || (move[0] == 0 && move[1] == 6)) {
+                               blackCanCastleKingSide = false; // f8 or g8 under attack
+                            }
+                            if ((move[0] == 0 && move[1] == 3) || (move[0] == 0 && move[1] == 2)) {
+                               blackCanCastleQueenSide= false; // d8 or c8 under attack
+                            }
+                        }
                     }
                 }
-                if (isInCheck) break;
             }
         }
-        if (isInCheck) break;
-    }
 
-    return isInCheck;
-}
+        return isInCheck;
+    }
+    
+
+  
+
     public List<Piece> getAllPieces(boolean isWhite) {
         List<Piece> pieces = new ArrayList<>();
         for (int r = 0; r < 8; r++) {
@@ -571,6 +603,7 @@ public boolean isInCheck(boolean isWhite) {
         }
         return pieces;
     }
+   
     
     public boolean checkMate(Game game){
        // List to hold all legal moves for the current player's pieces

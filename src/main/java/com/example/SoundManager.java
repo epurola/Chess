@@ -11,7 +11,7 @@ public class SoundManager {
     private static final String CAPTURE_SOUND_PATH = "/com/example/capture.mp3";
     private static final String NOTIFY_SOUND_PATH = "/com/example/notify.mp3";
     private static final String BUTTON_SOUND_PATH = "/com/example/button.mp3";
-    private static final String WIN_SOUND_PATH = "/com/example/WIN.mp3";
+    private static final String WIN_SOUND_PATH = "/com/example/win.mp3";
     private static final String DRAW_SOUND_PATH = "/com/example/lose.mp3";
     private static final String CASTLE_SOUND_PATH = "/com/example/castle.mp3";
     private static final String CHECK_SOUND_PATH = "/com/example/check.mp3";

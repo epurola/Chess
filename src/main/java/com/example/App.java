@@ -83,6 +83,7 @@ public class App extends Application {
      public void stop() {
     ExecutorServiceManager.shutdown(); // Ensure shutdown when the application closes
       }
+      
     public static void main(String[] args) {
         launch(args);
     }

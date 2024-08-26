@@ -18,7 +18,8 @@ public class SecondaryController {
     @FXML
     private Button button1;
     @FXML
-    Button button2;
+    private Button button2;
+
     private static final Logger logger = LoggerFactory.getLogger(SecondaryController.class);
 
     @FXML
@@ -30,29 +31,50 @@ public class SecondaryController {
     }
 
     private void addHoverSoundEffect(Button button) {
-        button.setOnMouseEntered(event -> SoundManager.playHoverSound());
+        button.setOnMouseEntered(event -> {
+            try {
+                SoundManager.playHoverSound();
+            } catch (Exception e) {
+                logger.error("Error playing hover sound for button: " + button.getId(), e);
+            }
+        });
     }
 
     @FXML
     private void switchToPrimary() throws IOException {
-       
+        
             App.setRoot("primary");
        
     }
+
     @FXML
-    private void switchToOnline() throws IOException {
-        App.setRoot("online");
+    private void switchToOnline() {
+        try {
+            App.setRoot("online");
+        } catch (IOException e) {
+            logger.error("Failed to switch to online view", e);
+        }
     }
+
     @FXML
-    private void switchToBot() throws IOException {
-        App.setRoot("replay");
+    private void switchToBot() {
+        try {
+            App.setRoot("replay");
+        } catch (IOException e) {
+            logger.error("Failed to switch to bot view", e);
+        }
     }
 
     @FXML
     private void handleExit() {
-        // Get the Stage from the current scene
-        Stage stage = (Stage) vbox.getScene().getWindow();
-        stage.close();
+        try {
+            // Get the Stage from the current scene
+            Stage stage = (Stage) vbox.getScene().getWindow();
+            stage.close();
+        } catch (Exception e) {
+            logger.error("Error occurred while closing the stage", e);
+        }
     }
 }
+
 

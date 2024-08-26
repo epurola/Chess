@@ -30,9 +30,12 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 
     public class SinglePlayerController {
@@ -89,7 +92,15 @@ import java.util.concurrent.TimeUnit;
         public void initialize() throws IOException  {
            
             game = new Game();
-            stockfish = new Stockfish(game);
+            new Thread(() -> {
+                try {
+                    stockfish = new Stockfish(game);
+                } catch (IOException e) {
+                   
+                    e.printStackTrace();
+                }
+            }).start();
+            
             drawPossibleMoves = false;
          
             
@@ -376,8 +387,10 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
             }
         }
   
-        
+           private static final Logger LOGGER = LoggerFactory.getLogger(SinglePlayerController.class);
+
         private void handlePieceDrop(MouseEvent event) throws InterruptedException {
+            
             fen = game.toFen();
             
             double squareSize = chessBoard.getPrefWidth() / 8;
@@ -435,24 +448,47 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
                 }
             }
                 drawBoard();
-                if(game.checkMate(game))
-                {
-                    SoundManager.playWinSound();
-                    new Thread(() -> {
+                if (game.checkMate(game)) {
+                    try {
+                        SoundManager.playWinSound();
+                        
+                        // Handle game end in a separate thread
                         ExecutorServiceManager.getExecutorService().submit(() -> {
-                            stockfish.handleGameEnd(fen);
+                            try {
+                                stockfish.handleGameEnd(fen);
+                            } catch (Exception e) {
+                                LOGGER.error("Error handling game end in Stockfish", e);
+                            }
                         });
-                    
-                    }).start();
-                    displayConfetti(chessBoard);
-                    
-                    statusLabel.setText("Checkmate!");
-                    statusLabel.setVisible(true);
-                    countdownClock.stop();
-                    countdownClock2.stop(); 
-                    
-                     
+                
+                        // Display confetti and update UI on the JavaFX thread
+                        Platform.runLater(() -> {
+                            try {
+                                displayConfetti(chessBoard);
+                            } catch (Exception e) {
+                                LOGGER.error("Error displaying confetti", e);
+                            }
+                
+                            try {
+                                statusLabel.setText("Checkmate!");
+                                statusLabel.setVisible(true);
+                            } catch (Exception e) {
+                                LOGGER.error("Error updating status label", e);
+                            }
+                
+                            try {
+                                countdownClock.stop();
+                                countdownClock2.stop();
+                            } catch (Exception e) {
+                                LOGGER.error("Error stopping countdown clocks", e);
+                            }
+                        });
+                        
+                    } catch (Exception e) {
+                        LOGGER.error("Error during checkmate handling", e);
+                    }
                 }
+                
                 if(game.checkDraw(game))
                 {
                     statusLabel.setText("Draw");

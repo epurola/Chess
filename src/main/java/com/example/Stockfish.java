@@ -21,16 +21,40 @@ public class Stockfish {
     public Stockfish(Game game) throws IOException {
         this.game = game;
         this.moveHistory = new ArrayList<>();
-        String bestMove = "";
-        String bestMoveCurrent = "";
         previousScoreValue = "";
-        database = new Database("jdbc:sqlite:move_analysis.db");
+        database = new Database();
+
+        // Extract Stockfish executable
+        String stockfishPath = extractStockfishExecutable();
+
         // Initialize Stockfish process, input/output streams
-        ProcessBuilder pb = new ProcessBuilder("stockfish.exe");
+        ProcessBuilder pb = new ProcessBuilder(stockfishPath);
         stockfishProcess = pb.start();
         input = new BufferedReader(new InputStreamReader(stockfishProcess.getInputStream()));
         output = new PrintWriter(stockfishProcess.getOutputStream());
         System.out.println("Stockfish ready");
+    }
+    private String extractStockfishExecutable() throws IOException {
+        // Get the executable as a stream
+        InputStream in = getClass().getResourceAsStream("/com/example/stockfish.exe");
+        if (in == null) {
+            throw new FileNotFoundException("Stockfish executable not found in the JAR.");
+        }
+
+        // Define the temporary file
+        File tempFile = File.createTempFile("stockfish", ".exe");
+        tempFile.deleteOnExit();
+
+        // Copy the executable to the temporary file
+        try (OutputStream out = new FileOutputStream(tempFile)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+        }
+
+        return tempFile.getAbsolutePath();
     }
 
     public Stockfish() throws IOException {
