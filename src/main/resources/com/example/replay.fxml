@@ -2,6 +2,7 @@
 
 <?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.Cursor?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -55,24 +56,17 @@
                      <Insets right="15.0" />
                   </padding>
                   </Button>
-                  <!-- Exit Button -->
-                  <Button fx:id="exitButton" onAction="#handleExit" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Exit">
-                      <graphic>
-                          <FontAwesomeIconView fill="WHITE" glyphName="SIGN_OUT" wrappingWidth="39.5" />
-                      </graphic>
-                  <VBox.margin>
-                     <Insets left="15.0" right="15.0" top="15.0" />
-                  </VBox.margin>
-                  <padding>
-                     <Insets right="40.0" />
-                  </padding>
-                  </Button>
                <Button fx:id="blunders" mnemonicParsing="false" onAction="#showBlunders" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Show Blunders">
                   <VBox.margin>
                      <Insets top="15.0" />
                   </VBox.margin>
                </Button>
                <Button fx:id="GreatMoves" mnemonicParsing="false" onAction="#showGreatMoves" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Show Great Moves">
+                  <VBox.margin>
+                     <Insets top="15.0" />
+                  </VBox.margin>
+               </Button>
+               <Button fx:id="delete" layoutX="25.0" layoutY="265.0" mnemonicParsing="false" onAction="#deleteGames" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Delete Games">
                   <VBox.margin>
                      <Insets top="15.0" />
                   </VBox.margin>
@@ -88,6 +82,18 @@
                      <FontAwesomeIconView fill="WHITE" glyphName="ARROW_LEFT" wrappingWidth="39.5" />
                   </graphic>
                </Button>
+                  <!-- Exit Button -->
+                  <Button fx:id="exitButton" onAction="#handleExit" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Exit">
+                      <graphic>
+                          <FontAwesomeIconView fill="WHITE" glyphName="SIGN_OUT" wrappingWidth="39.5" />
+                      </graphic>
+                  <VBox.margin>
+                     <Insets left="15.0" right="15.0" top="15.0" />
+                  </VBox.margin>
+                  <padding>
+                     <Insets right="40.0" />
+                  </padding>
+                  </Button>
                <BorderPane.margin>
                   <Insets />
                </BorderPane.margin>
@@ -120,4 +126,7 @@
           </bottom>
       </BorderPane>
    </children>
+   <cursor>
+      <Cursor fx:constant="OPEN_HAND" />
+   </cursor>
 </AnchorPane>

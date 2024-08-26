@@ -35,14 +35,9 @@ public class SecondaryController {
 
     @FXML
     private void switchToPrimary() throws IOException {
-        logger.info("Attempting to switch to 'primary' view.");
-        try {
+       
             App.setRoot("primary");
-            logger.info("Successfully switched to 'primary' view.");
-        } catch (IOException e) {
-            logger.error("Failed to switch to 'primary' view", e);
-            throw e; // Re-throw the exception to allow the caller to handle it if needed
-        }
+       
     }
     @FXML
     private void switchToOnline() throws IOException {

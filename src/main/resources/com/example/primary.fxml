@@ -113,7 +113,7 @@
                   <children>
                      <Label fx:id="hbox2" styleClass="label1" text="AI Helper">
                         <HBox.margin>
-                           <Insets right="15.0" />
+                           <Insets right="53.0" />
                         </HBox.margin>
                      </Label>
                   </children>

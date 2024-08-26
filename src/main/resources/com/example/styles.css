@@ -4,11 +4,12 @@
 .root {
   -fx-font-family: 'Arial';
   -fx-font-size: 14px;
-  -fx-background-color: #E5E5E5;
+  -fx-background-color: #353941;
 }
 .borderPane
 {
-  -fx-background-image: url("Bg6.jpg"); /* Use classpath-relative path */
+  /*-fx-background-image: url("Bg6.jpg");*/
+  -fx-background-color: #353941;
   -fx-background-size: cover;
 }
 
@@ -16,7 +17,7 @@
 
 /* Style for the VBox layout */
 .VBox {
-  -fx-background-color: #e5e5e5;/* Changed to a softer color */
+  -fx-background-color: #353941;
   -fx-padding: 100 0;
   
 
@@ -24,7 +25,7 @@
 .HBox{
   -fx-fill-width: true;
   -fx-fit-height: true;
-  -fx-background-color:#E5E5E5;
+  -fx-background-color:#353941;
 
 }
 .hBox{
@@ -46,12 +47,12 @@
 }
 .label1 {
   -fx-font-size: 16px;
-  -fx-text-fill: #000000;
+  -fx-text-fill: #ffffff;
 }
 .labelTimer {
   -fx-font-size: 16px;
   -fx-text-fill: #000000;
-  -fx-background-color: #ffffff;
+  -fx-background-color:#E5E5E5;
   -fx-background-radius: 5; 
   
 }
@@ -63,14 +64,18 @@
   
 }
 .status-label {
-  -fx-font-size: 24px; /* Size of the text */
+  -fx-font-size: 50px; /* Size of the text */
   -fx-font-weight: bold; /* Bold text */
-  -fx-text-fill: #333333; /* Modern text color */
-  -fx-background-color: #f0f0f0; /* Light background color */
-  -fx-padding: 10px; /* Padding around the text */
-  -fx-border-radius: 5px; /* Rounded corners */
+  -fx-text-fill: #FFD700; /* Modern text color */
+  -fx-background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+  -fx-padding: 10px; /* Space between text and background border */
   -fx-background-radius: 5px; /* Rounded corners for the background */
+  -fx-border-color: #FFD700; /* Border color to match text */
+  -fx-border-width: 2px; /* Width of the border */
+  -fx-border-radius: 5px; /* Rounded corners for the border */
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 1, 1); /* Drop shadow for added depth */
 }
+
 
 
 
@@ -244,27 +249,7 @@
   -fx-border-radius: 20;
   -fx-overflow: hidden; 
 }
-.custom-progress-bar {
-  
-  -fx-background-color: transparent;
-  -fx-padding: 3px;
-  -fx-accent: linear-gradient(to right, #76c7c0, #4ca1af);
-}
 
-.custom-progress-bar .track {
-  -fx-background-color: #2C3E50;
-  -fx-background-radius: 5;
-}
-
-.custom-progress-bar .bar {
-  -fx-background-color: linear-gradient(to right, #76c7c0, #4ca1af);
-  -fx-background-radius: 5;
-}
-
-.custom-progress-bar .percentage {
-  -fx-text-fill: #ffffff;
-  -fx-font-weight: bold;
-}
 .min-btn{
   -fx-background-color: transparent;
 }

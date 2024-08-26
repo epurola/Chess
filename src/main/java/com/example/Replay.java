@@ -9,6 +9,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.ImageCursor;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -57,6 +58,7 @@ public class Replay {
     @FXML private Button blunders;
     @FXML private Button GreatMoves;
     @FXML private Button backButton;
+    @FXML private Button delete;
     
     
     Color lightColor = Color.web("#E8EDF9"); 
@@ -74,11 +76,10 @@ public class Replay {
     private Piece piece;
     private int currentScore;
     private int previousScore;
-  
+
     private List<Color> moveColors;
     private Color colour;
-    private boolean forward;
-    private boolean back;
+  
     
    
 
@@ -91,6 +92,11 @@ public class Replay {
         database = new Database("jdbc:sqlite:move_analysis.db");
         int totalGames = database.getTotalGames();
         moveHistory = database.getMoveAnalysis(totalGames);
+        Image cursorImage = new Image(getClass().getResource("/com/example/pointer.png").toExternalForm());
+
+    
+            ImageCursor customCursor = new ImageCursor(cursorImage);
+            pane.setCursor(customCursor);
        
         Screen screen = Screen.getPrimary();
             Rectangle2D bounds = screen.getBounds();
@@ -495,9 +501,6 @@ private void findNextGreatMove() {
     private void handleRewindForward() {
         if (currentMoveIndex <= moveHistory.size() - 1) {
             currentMoveIndex++;
-            forward= true;
-        
-        
             replayMoves();
         }
     }
@@ -507,7 +510,7 @@ private void findNextGreatMove() {
             MoveAnalysis moveAnalysis = moveHistory.get(currentMoveIndex);
             board.clearBoard();
             board.setFEN(moveAnalysis.getFEN());
-            forward = false;
+          
           
             drawBoard();
         }
@@ -526,8 +529,14 @@ private void findNextGreatMove() {
     @FXML
     private void handleGameSelection() {
         ComboBoxItem selectedGame = gameSelector.getValue();
-       
-        int id = selectedGame.getValue();
+        int id =0;
+        if (selectedGame != null) {
+             id = selectedGame.getValue();
+            // Continue processing with the value
+        } else {
+            // Handle the case where selectedGame is null
+            System.out.println("No game is selected.");
+        }
         loadGame(id);
     }
     @FXML
@@ -576,6 +585,12 @@ private void showBlunders() {
 private void showGreatMoves() {
     findNextGreatMove();
     replayMoves();  // Update the board to reflect the move at the new currentMoveIndex
+}
+@FXML
+private void deleteGames()
+{
+    database.clearDatabase();
+    initializeGameComboBox();
 }
 }
 

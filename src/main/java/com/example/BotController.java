@@ -108,7 +108,7 @@ import javafx.util.Duration;
               timer2.getChildren().addAll(countdownClock2);
         
                 // Initialize ToggleSwitch
-                toggleSwitch = new ToggleSwitch();
+                toggleSwitch = new ToggleSwitch(moveHelpColor);
                 hbox1.getChildren().add(toggleSwitch);
                 toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawPossibleMoves = !drawPossibleMoves);
                 Screen screen = Screen.getPrimary();

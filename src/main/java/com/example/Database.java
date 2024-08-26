@@ -145,5 +145,23 @@ private void createTables() {
             System.out.println(e.getMessage());
         }
     }
+    public void clearDatabase() {
+        String dropMoveAnalysisTable = "DROP TABLE IF EXISTS move_analysis";
+        String dropGamesTable = "DROP TABLE IF EXISTS games";
+    
+        try (Connection conn = DriverManager.getConnection(URL);
+             Statement stmt = conn.createStatement()) {
+            // Drop the tables
+            stmt.executeUpdate(dropMoveAnalysisTable);
+            stmt.executeUpdate(dropGamesTable);
+    
+            // Recreate the tables
+            createTables();
+    
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    
 }
 

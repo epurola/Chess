@@ -8,6 +8,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.ImageCursor;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -17,11 +18,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundImage;
-import javafx.scene.layout.BackgroundPosition;
-import javafx.scene.layout.BackgroundRepeat;
-import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -34,8 +30,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 
@@ -85,6 +81,8 @@ import java.util.concurrent.TimeUnit;
         Stockfish stockfish;
         boolean drawBestMove;
         boolean analysis;
+       
+        
       
     
         @FXML
@@ -93,6 +91,8 @@ import java.util.concurrent.TimeUnit;
             game = new Game();
             stockfish = new Stockfish(game);
             drawPossibleMoves = false;
+         
+            
             whiteScore = new Label();
             blackScore = new Label();
             whiteScore.setText("0");
@@ -101,6 +101,12 @@ import java.util.concurrent.TimeUnit;
             blackScore.setVisible(false);
             blackScore.setStyle("-fx-font-size: 13px;");
             whiteScore.setStyle("-fx-font-size: 13px;");
+            Image cursorImage = new Image(getClass().getResource("/com/example/pointer.png").toExternalForm());
+
+        
+        // Create an ImageCursor
+            ImageCursor customCursor = new ImageCursor(cursorImage);
+            pane.setCursor(customCursor);
         
         
             // Initialize status label
@@ -112,10 +118,10 @@ import java.util.concurrent.TimeUnit;
             statusLabel.getStyleClass().add("status-label");
 
             // Initialize ToggleSwitch
-            toggleSwitch = new ToggleSwitch();
+            toggleSwitch = new ToggleSwitch(moveHelpColor);
             hbox1.getChildren().add(toggleSwitch);
             toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawPossibleMoves = !drawPossibleMoves);
-            toggleSwitch = new ToggleSwitch();
+            toggleSwitch = new ToggleSwitch(Color.GOLD);
             hbox11.getChildren().add(toggleSwitch);
             toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawBestMove = !drawBestMove);
           
@@ -190,6 +196,8 @@ import java.util.concurrent.TimeUnit;
             Stage stage = (Stage) borderPane.getScene().getWindow();
             countdownClock.stop();
             countdownClock2.stop();
+            stockfish.close();
+            ExecutorServiceManager.shutdown();
             stage.close();
         }
     
@@ -314,10 +322,11 @@ public String rowColToAlgebraic(int row, int col) {
     // Combine column and row characters to form the algebraic notation
     return "" + columnChar + rowChar;
 }
-private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor();
+
 
 private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
-    analysisExecutor.submit(() -> {
+    ExecutorService executor = ExecutorServiceManager.getExecutorService();
+        executor.submit(() -> {
         try {
             if(drawBestMove)
             {
@@ -430,22 +439,14 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
                 {
                     SoundManager.playWinSound();
                     new Thread(() -> {
-                        try {
-                    analysisExecutor.awaitTermination(1,  TimeUnit.SECONDS);
-                    analysisExecutor.shutdown();
-                    if(analysisExecutor.isShutdown())
-                    {
-                       System.err.println("Executor shutdown");
-                       stockfish.handleGameEnd(fen);
-                       System.err.println(stockfish.getMoveHistory().size()); 
-                    } 
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        ExecutorServiceManager.getExecutorService().submit(() -> {
+                            stockfish.handleGameEnd(fen);
+                        });
+                    
                     }).start();
                     displayConfetti(chessBoard);
                     
-                    statusLabel.setText("Victory");
+                    statusLabel.setText("Checkmate!");
                     statusLabel.setVisible(true);
                     countdownClock.stop();
                     countdownClock2.stop(); 
@@ -500,6 +501,13 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
                   
                    
                 } else {
+                    ColorAdjust colorAdjust = new ColorAdjust();
+                    colorAdjust.setContrast(0.01); 
+                    colorAdjust.setBrightness(0.1);
+                   
+                   piece.setEffect(colorAdjust);
+                   
+
                     WhiteHbox.getChildren().add(0,piece);
                     
                     wScore -= pieceValue;
@@ -705,9 +713,9 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
             double paneWidth = pane.getWidth();
             double paneHeight = pane.getHeight();
         
-            for (int i = 0; i < 800; i++) { // Number of confetti pieces
+            for (int i = 0; i < 500; i++) { // Number of confetti pieces
                 Confetti confetti = new Confetti(Color.hsb(Math.random() * 360, 1.0, 1.0), paneWidth*2, paneHeight*2);
-                pane.getChildren().add(confetti);
+                chessBoard.getChildren().add(confetti);
                 confetti.animate();
             }
         }
@@ -770,5 +778,6 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
         statusLabel.setVisible(true);
         
     } 
+  
        
     }
