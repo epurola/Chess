@@ -47,9 +47,7 @@ public class ChessWebSocketServer extends WebSocketServer {
         }
     }
     
-
-    @Override
-    public void onMessage(WebSocket conn, String message) {
+    public void handleMoveMessage(WebSocket conn, String message) {
         System.out.println("Received message: " + message);
     
         try {
@@ -75,6 +73,49 @@ public class ChessWebSocketServer extends WebSocketServer {
             System.err.println("Unexpected error: " + e.getMessage());
         }
     }
+    @Override
+public void onMessage(WebSocket conn, String message) {
+    System.out.println("Received message: " + message);
+
+    try {
+        JSONObject jsonMessage = new JSONObject(message);
+        String messageType = jsonMessage.optString("type");
+
+        switch (messageType) {
+            case "move":
+                // Existing move handling logic
+                handleMoveMessage(conn,message);
+                break;
+            case "playAgain":
+                handlePlayAgainRequest(conn);
+                break;
+            default:
+                System.out.println("Unknown message type: " + messageType);
+        }
+    } catch (Exception e) {
+        System.err.println("Unexpected error: " + e.getMessage());
+    }
+}
+private void handlePlayAgainRequest(WebSocket sender) {
+    WebSocket opponent;
+
+    if (sender.equals(whitePlayer)) {
+        opponent = blackPlayer;
+    } else {
+        opponent = whitePlayer;
+    }
+
+    // Notify the opponent if their connection is open
+    if (opponent != null && opponent.isOpen()) {
+        JSONObject playAgainMessage = new JSONObject();
+        playAgainMessage.put("type", "playAgain");
+
+        opponent.send(playAgainMessage.toString());
+        System.out.println("Play Again request sent to opponent.");
+    }
+}
+
+
 
 
     @Override

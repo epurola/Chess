@@ -41,6 +41,9 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import org.json.JSONObject;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -341,6 +344,13 @@ import java.net.UnknownHostException;
                 }
             }     
         }
+        @FXML
+    public void sendPlayAgainRequest() {
+    JSONObject playAgainRequest = new JSONObject();
+    playAgainRequest.put("type", "playAgain");
+
+    socketClient.send(playAgainRequest.toString());
+}
     
         private Image getPieceImage(Piece piece) {
             String color = piece.isWhite() ? "white-" : "black-";
