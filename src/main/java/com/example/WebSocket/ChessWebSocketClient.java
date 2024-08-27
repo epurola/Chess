@@ -93,30 +93,31 @@ public class ChessWebSocketClient extends WebSocketClient {
             e.printStackTrace();
         }
     }
-    
 
-
-
-
-
-    public void sendMove(String pieceName, Integer fromRow, Integer fromCol, Integer movedRow, Integer movedCol,Integer toRow, Integer toCol, boolean isWhiteTurn, String capturedPiece, boolean isCastle) {
-        // Change int to Integer to allow null values
+    public void sendMove(String pieceName, Integer fromRow, Integer fromCol, Integer movedRow, Integer movedCol, Integer toRow, Integer toCol, boolean isWhiteTurn, String capturedPiece, boolean isCastle) {
+        // Create a JSON object to represent the move
+        JSONObject moveMessage = new JSONObject();
         
-        String jsonPayload = String.format("{\"pieceName\":\"%s\",\"fromRow\":%s,\"fromCol\":%s,\"movedRow\":%s,\"movedCol\":%s,\"toRow\":%s,\"toCol\":%s,\"isWhiteTurn\":%b,\"capturedPiece\":%s,\"isCastle\":%b}",
-                pieceName,
-                fromRow != null ? fromRow : "null",
-                fromCol != null ? fromCol : "null",
-                movedRow,
-                movedCol,
-                toRow != null ? toRow : "null",
-                toCol != null ? toCol : "null",
-                isWhiteTurn,
-                capturedPiece != null ? "\"" + capturedPiece + "\"" : "null",
-                isCastle
-                );
+        // Add data to the JSON object
+        moveMessage.put("type", "move");
+        moveMessage.put("pieceName", pieceName);
+        moveMessage.put("fromRow", fromRow != null ? fromRow : JSONObject.NULL);
+        moveMessage.put("fromCol", fromCol != null ? fromCol : JSONObject.NULL);
+        moveMessage.put("movedRow", movedRow != null ? movedRow : JSONObject.NULL);
+        moveMessage.put("movedCol", movedCol != null ? movedCol : JSONObject.NULL);
+        moveMessage.put("toRow", toRow != null ? toRow : JSONObject.NULL);
+        moveMessage.put("toCol", toCol != null ? toCol : JSONObject.NULL);
+        moveMessage.put("isWhiteTurn", isWhiteTurn);
+        moveMessage.put("capturedPiece", capturedPiece != null ? capturedPiece : JSONObject.NULL);
+        moveMessage.put("isCastle", isCastle);
+        
+        // Convert the JSON object to a string
+        String jsonPayload = moveMessage.toString();
+        
         // Send the JSON payload
         send(jsonPayload);
     }
+    
 
     @Override
     public void onClose(int code, String reason, boolean remote) {

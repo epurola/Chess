@@ -83,7 +83,6 @@ public void onMessage(WebSocket conn, String message) {
 
         switch (messageType) {
             case "move":
-                // Existing move handling logic
                 handleMoveMessage(conn,message);
                 break;
             case "playAgain":
