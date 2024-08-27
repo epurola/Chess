@@ -543,7 +543,7 @@ import java.net.UnknownHostException;
                 drawBoard();
                 if (game.checkMate(game)) {
                         SoundManager.playWinSound();
-                        webSocketServer.stopServer();
+                        
                         // Handle game end in a separate thread
                         ExecutorServiceManager.getExecutorService().submit(() -> {
                         
@@ -815,7 +815,6 @@ import java.net.UnknownHostException;
 
              if (game.checkMate(game)) {
                 SoundManager.playDrawSound();
-                webSocketServer.stopServer();
                 // Handle game end in a separate thread
                 ExecutorServiceManager.getExecutorService().submit(() -> {
                 

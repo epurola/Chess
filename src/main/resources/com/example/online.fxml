@@ -43,6 +43,7 @@
           </top>
           <left>
               <VBox fx:id="vbox" alignment="CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="CENTER">
+               <Button fx:id="playAgain" mnemonicParsing="false" onAction="#sendPlayAgainRequest" prefHeight="38.0" prefWidth="154.0" styleClass="button2" stylesheets="@styles.css" text="Play Again" />
                   <!-- Full Screen Button -->
                   <Button fx:id="fullScreenButton" onAction="#handleFullScreen" prefHeight="38.0" prefWidth="154.0" styleClass="button2" text="Full Screen">
                       <graphic>
