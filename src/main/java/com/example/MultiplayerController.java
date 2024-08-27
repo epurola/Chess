@@ -270,7 +270,7 @@ import java.net.UnknownHostException;
         }
     
         @FXML
-    public void handleReset() {
+    public void handleReset() throws IOException {
 
         if (game != null) {
             chessBoard.getChildren().forEach(node -> {
@@ -283,10 +283,7 @@ import java.net.UnknownHostException;
                 }
             });
         }
-        game = new Game();
-        // Clear the board and draw the new board
-        drawBoard();
-        // Clear status messages
+          checkAndDrawBoard();
         if (statusLabel != null) {
             statusLabel.setText("");
             statusLabel.setVisible(false);
@@ -348,7 +345,7 @@ import java.net.UnknownHostException;
             }     
         }
     @FXML
-    public void sendPlayAgainRequest() {
+    public void sendPlayAgainRequest() throws IOException {
     JSONObject playAgainRequest = new JSONObject();
     playAgainRequest.put("type", "playAgain");
     socketClient.send(playAgainRequest.toString());
