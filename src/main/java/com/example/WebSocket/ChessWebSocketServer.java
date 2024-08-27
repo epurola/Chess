@@ -149,6 +149,7 @@ private void handlePlayAgainRequest(WebSocket sender) {
         JSONObject jsonPayload = new JSONObject();
     
         try {
+            jsonPayload.put("type", "move");
             jsonPayload.put("pieceName", pieceName);
             jsonPayload.put("fromRow", fromRow);
             jsonPayload.put("fromCol", fromCol);
