@@ -5,6 +5,8 @@ import org.java_websocket.handshake.ServerHandshake;
 
 import com.example.MultiplayerController;
 
+import javafx.application.Platform;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -72,8 +74,16 @@ public class ChessWebSocketClient extends WebSocketClient {
                     case "playAgain":
                         // Handle play again messages
                         if (controller != null) {
-                            // Call startNewGame on the controller to restart the game
+                           
+                         /*Platform.runLater(() -> {
+                          try {
                             controller.initialize();
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                          }); */ 
+
                         }
                         break;
     
@@ -88,9 +98,6 @@ public class ChessWebSocketClient extends WebSocketClient {
         } catch (NumberFormatException e) {
             System.err.println("Error parsing numbers: " + e.getMessage());
             // Handle number parsing error
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
     }
 

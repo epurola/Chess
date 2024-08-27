@@ -344,13 +344,12 @@ import java.net.UnknownHostException;
                 }
             }     
         }
-        @FXML
+    @FXML
     public void sendPlayAgainRequest() {
     JSONObject playAgainRequest = new JSONObject();
     playAgainRequest.put("type", "playAgain");
-
     socketClient.send(playAgainRequest.toString());
-}
+     }
     
         private Image getPieceImage(Piece piece) {
             String color = piece.isWhite() ? "white-" : "black-";
