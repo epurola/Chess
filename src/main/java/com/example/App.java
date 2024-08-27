@@ -84,7 +84,7 @@ public class App extends Application {
 
     @Override
      public void stop() {
-    ExecutorServiceManager.shutdown(); 
+    ExecutorServiceManager.shutdown();
       }
       
     public static void main(String[] args) {

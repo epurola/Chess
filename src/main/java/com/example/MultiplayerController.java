@@ -287,6 +287,7 @@ import java.net.UnknownHostException;
         if (statusLabel != null) {
             statusLabel.setText("");
             statusLabel.setVisible(false);
+            statusLabel.setStyle("-fx-text-fill: #FFD700;");
         }
     }
     
