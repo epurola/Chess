@@ -1,17 +1,17 @@
 package com.example.WebSocket;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.example.MultiplayerController;
 
 import javafx.application.Platform;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import org.json.JSONObject;
-import org.json.JSONException;
 
 public class ChessWebSocketClient extends WebSocketClient {
 
@@ -76,12 +76,13 @@ public class ChessWebSocketClient extends WebSocketClient {
                         if (controller != null) {
                            
                          Platform.runLater(() -> {
-                          try {
-                            controller.handleReset();
-                        } catch (IOException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
+                             try {
+                                controller.handleReset();
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            } 
+                       
                           });  
 
                         }

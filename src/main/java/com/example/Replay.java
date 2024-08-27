@@ -3,8 +3,10 @@ package com.example;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -14,7 +16,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.ComboBoxBase;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -26,13 +27,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 
 
@@ -79,6 +80,7 @@ public class Replay {
 
     private List<Color> moveColors;
     private Color colour;
+    Stockfish stockfish;
   
     
    
@@ -86,13 +88,15 @@ public class Replay {
     // Constructor that initializes the board with move history
     @FXML
     
-    public void  initialize() {
+    public void  initialize() throws IOException {
         moveColors = new ArrayList<>();
         moveHistory = new ArrayList<>();
         database = new Database();
         int totalGames = database.getTotalGames();
         moveHistory = database.getMoveAnalysis(totalGames);
         Image cursorImage = new Image(getClass().getResource("/com/example/pointer.png").toExternalForm());
+        stockfish = new Stockfish();
+        
 
     
             ImageCursor customCursor = new ImageCursor(cursorImage);
@@ -195,6 +199,62 @@ private void findNextBlunder() {
     }
     // If no blunder is found after completing the cycle
     System.out.println("No more blunders found.");
+}
+
+ private void drawBestMoveIndicators(int fromRow, int fromCol, int toRow, int toCol) {
+    double squareSize = chessBoard.getPrefWidth() / 8;
+    double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
+    // Clear existing move indicators
+    chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
+    // Highlight the best move in gold color
+    Circle bestMoveIndicator = new Circle(indicatorSize / 2);
+    bestMoveIndicator.setStroke(Color.GOLD.deriveColor(0, 1, 1, 0.9)); // Set stroke color to gold
+    bestMoveIndicator.setStrokeWidth(3); // Adjust the stroke width if needed
+    bestMoveIndicator.setFill(!selectedPiece.isWhite()?Color.WHITE.deriveColor(0, 1, 1, 0.8):Color.BLACK.deriveColor(0, 1, 1, 0.7)); // No fill
+    StackPane bestMoveContainer = new StackPane();
+    bestMoveIndicator.toFront();
+    bestMoveContainer.setPickOnBounds(false);
+    bestMoveContainer.getChildren().add(bestMoveIndicator);
+    bestMoveContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
+    bestMoveContainer.setMouseTransparent(true);
+        if (toRow>= 0 && toRow < 8 && toCol >= 0 && toCol < 8) {
+        chessBoard.add(bestMoveContainer, toCol, toRow); // Add the container to the grid at the destination square
+        }
+    // Highlight the piece that can make the best move in gold
+    Rectangle bestPieceIndicator = new Rectangle(squareSize-4 , squareSize-4); // Full square size
+    bestPieceIndicator.setStroke(Color.GOLD.deriveColor(0, 1, 1, 0.9)); // Set stroke color to gold
+    bestPieceIndicator.setStrokeWidth(4); // Adjust the stroke width if needed
+    bestPieceIndicator.setFill(null); // No fill
+    StackPane bestPieceContainer = new StackPane();
+    bestPieceContainer.setPickOnBounds(false);
+    bestPieceContainer.getChildren().add(bestPieceIndicator);
+    bestPieceContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
+    bestPieceContainer.setMouseTransparent(true);
+        if (fromRow>= 0 && fromRow < 8 && fromCol >= 0 && fromCol < 8) {
+        chessBoard.add(bestPieceContainer, fromCol, fromRow); // Add the container to the grid at the origin square
+        }
+}
+public String rowColToAlgebraic(int row, int col) {
+    // Convert column index to column character ('a' to 'h')
+    char columnChar = (char) ('a' + col);
+    // Convert row index to row character ('1' to '8')
+    char rowChar = (char) ('1' + (7 - row)); // Adjust for 0-based indexing
+    // Combine column and row characters to form the algebraic notation
+    return "" + columnChar + rowChar;
+}
+
+
+private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
+    ExecutorService executor = ExecutorServiceManager.getExecutorService();
+        executor.submit(() -> {
+       
+         
+            int[] bestMove = parseMove(stockfish.getBestMove(fen));
+            Platform.runLater(() -> {
+                drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);  
+            });    
+       
+    });
 }
 
 private void findNextGreatMove() {
@@ -468,10 +528,12 @@ private void findNextGreatMove() {
 
     private void handlePieceDrop(MouseEvent event) {
         double squareSize = chessBoard.getPrefWidth() / 8;
+       
         if (draggedPiece != null) {
             int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
             int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
             if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+                
                 board.setPiece(row, col, selectedPiece);
                 if(row != selectedPiece.getRow() || col != selectedPiece.getCol())
                 {
@@ -479,6 +541,7 @@ private void findNextGreatMove() {
                 }
                 
                  SoundManager.playMoveSound();
+                 startGameAnalysis(row, col, row, col,  board.toFEN(!selectedPiece.isWhite()));
             }
             else
             {
@@ -486,6 +549,7 @@ private void findNextGreatMove() {
                 SoundManager.playNotifySound();
             }
         }
+        
         drawBoard();
     }
 
