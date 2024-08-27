@@ -48,12 +48,10 @@ public class SecondaryController {
     }
 
     @FXML
-    private void switchToOnline() {
-        try {
+    private void switchToOnline() throws IOException {
+        
             App.setRoot("online");
-        } catch (IOException e) {
-            logger.error("Failed to switch to online view", e);
-        }
+      
     }
 
     @FXML

@@ -1,16 +1,19 @@
 package com.example;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.example.WebSocket.ChessWebSocketClient;
+import com.example.WebSocket.ChessWebSocketServer;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -18,6 +21,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -31,13 +36,16 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.transform.Rotate;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+
+
 
  
     public class MultiplayerController  {
@@ -71,6 +79,13 @@ import java.util.concurrent.TimeUnit;
         @FXML private HBox hbox1;
         @FXML private HBox timer1;
         @FXML private HBox timer2;
+        @FXML private Button startServerButton;
+        @FXML private Button connectButton;
+        @FXML private TextField serverIpField;
+      
+       private ChessWebSocketServer webSocketServer;
+       private boolean isServerRunning = false;
+
      
         @FXML private VBox vbox2;
      
@@ -86,18 +101,11 @@ import java.util.concurrent.TimeUnit;
     
        
         @FXML
-        public void initialize() {
-            try {
-               
-
-                URI serverUri = new URI("ws://localhost:8887");
-                socketClient = new ChessWebSocketClient(serverUri);
-                socketClient.connectBlocking();
-                socketClient.setController(this);
-
+        public void initialize() throws IOException {
             
+
                 checkAndDrawBoard();
-                socketClient.setController(this);
+                
         
                 // Initialize the drawPossibleMoves flag
                 drawPossibleMoves = false;
@@ -122,9 +130,9 @@ import java.util.concurrent.TimeUnit;
                 hbox1.getChildren().add(toggleSwitch);
                 toggleSwitch.switchedOn().addListener((obs, oldState, newState) -> drawPossibleMoves = !drawPossibleMoves);
                 Screen screen = Screen.getPrimary();
-              Rectangle2D bounds = screen.getBounds();
-             screenWidth = bounds.getWidth();
-             screenHeight = bounds.getHeight();
+               Rectangle2D bounds = screen.getBounds();
+               screenWidth = bounds.getWidth();
+               screenHeight = bounds.getHeight();
 
                double chessBoardSize = screenHeight * 0.8 ;
         
@@ -138,6 +146,10 @@ import java.util.concurrent.TimeUnit;
                 vbox2.setPrefWidth(boxWidth);
                 vbox2.setMaxHeight(screenHeight);
                 vbox2.setSpacing(screenHeight/2);
+                 vbox2.setMaxHeight(screenHeight);
+                 serverIpField.setMaxWidth(154);
+                 serverIpField.setMinHeight(38);
+              
                 double hboxHeight = (screenHeight -chessBoardSize-30) /2;  // Set height as 10% of the screen height
                 WhiteHbox.setMinHeight(hboxHeight);
                 WhiteHbox.setPrefHeight(hboxHeight);
@@ -152,116 +164,60 @@ import java.util.concurrent.TimeUnit;
                 WhiteHbox.setFillHeight(true);
                 blackHbox.setFillHeight(true);
     
-                
-            } catch (URISyntaxException e) {
-                e.printStackTrace(); // Handle URI syntax exception
-            } catch (Exception e) {
-                e.printStackTrace(); // Handle any other exceptions
+          
+        }
+        @FXML
+        private void startServer() throws URISyntaxException, InterruptedException {
+              // Get the local IP address
+              String localIPAddress = getLocalIPAddress();
+            if (!isServerRunning) {
+                Task<Void> serverTask = new Task<Void>() {
+                    @Override
+                    protected Void call() throws Exception {
+                      
+                        // Use the local IP address for the server
+                        webSocketServer = new ChessWebSocketServer(new InetSocketAddress(localIPAddress, 8887));
+                        webSocketServer.start();
+                        isServerRunning = true;
+                        return null;
+                    }
+                };
+    
+                new Thread(serverTask).start();
+            }
+            URI serverUri = new URI("ws://" + localIPAddress + ":8887");
+            socketClient = new ChessWebSocketClient(serverUri);
+            socketClient.connectBlocking();
+            socketClient.setController(this);
+        }
+    
+        private String getLocalIPAddress() {
+            try {
+                InetAddress inetAddress = InetAddress.getLocalHost();
+                return inetAddress.getHostAddress();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                return "localhost"; // Fallback to localhost if IP address cannot be determined
             }
         }
-         // Call this method when a player makes a move
-    private void switchPlayer() {
-      if(playerColor.equals("black"))
-      {
-        if (game.isWhiteTurn() ) {
-            countdownClock2.pause();
-            countdownClock.start();
-            timer1.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #ffffff;"+
-               "-fx-background-radius: 5; "+
-               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
-            );
-            timer1.setOpacity(1);
-            timer2.setOpacity(0.5);
-            timer2.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #6f6f6f;"+
-               "-fx-background-radius: 5; "
-            );
-           
-        } else {
-            countdownClock.pause();
-            countdownClock2.start();
-            
-            timer2.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #ffffff;"+
-               "-fx-background-radius: 5; "+
-               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
-            );
-            timer2.setOpacity(1);
-            timer1.setOpacity(0.5);
-            timer1.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #6f6f6f;"+
-               "-fx-background-radius: 5; "
-            );
+    @FXML
+    private void connectToServer() {
+        String serverIp = serverIpField.getText();
+        if (serverIp != null && !serverIp.isEmpty()) {
+            try {
+                URI serverUri = new URI("ws://" + serverIp + ":8887");
+                socketClient = new ChessWebSocketClient(serverUri);
+                socketClient.connect();
+                socketClient.setController(this);
+            } catch (URISyntaxException e) {
+                e.printStackTrace(); 
+            } catch (Exception e) {
+                e.printStackTrace(); 
+            }
         }
-      
-      }
-      else
-      {
-         if (game.isWhiteTurn() ) {
-            countdownClock.pause();
-            countdownClock2.start();
-            
-            timer2.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #ffffff;"+
-               "-fx-background-radius: 5; "+
-               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
-            );
-            timer2.setOpacity(1);
-            timer1.setOpacity(0.5);
-            timer1.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #6f6f6f;"+
-               "-fx-background-radius: 5; "
-            );
-        } else {
-            countdownClock2.pause();
-            countdownClock.start();
-            timer1.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #ffffff;"+
-               "-fx-background-radius: 5; "+
-               "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
-            );
-            timer1.setOpacity(1);
-            timer2.setOpacity(0.5);
-            timer2.setStyle(
-                "-fx-font-size: 16px;"+
-                "-fx-text-fill: #000000;"+
-               " -fx-background-color: #6f6f6f;"+
-               "-fx-background-radius: 5; "
-            );
-        }
-      }
-       
     }
-    public void onTimeOut() {
-        if (game.isWhiteTurn()) {
-            statusLabel.setText("Black Wins by Timeout!");
-            displayConfetti(chessBoard);
-            countdownClock.stop();
-            countdownClock2.stop();
-        } else {
-            statusLabel.setText("White Wins by Timeout!");
-            countdownClock.stop();
-            countdownClock2.stop();
-            displayConfetti(chessBoard);
-        }
-        statusLabel.setVisible(true);
-        SoundManager.playWinSound();
-    }
+
+  
         private void checkAndDrawBoard() throws IOException {
             if (playerColor == null) {
                 System.out.println("Player color is not set yet.");
@@ -338,44 +294,52 @@ import java.util.concurrent.TimeUnit;
             drawBoard();
         }
     
-        private void drawBoard() {
+         private void drawBoard() {
             if (playerColor == null) {
                 System.out.println("Player color is not set yet.");
                 return; // Exit if player color is not available
             }
             chessBoard.getChildren().clear();
             double squareSize = chessBoard.getPrefWidth() / 8;
-           
             for (int i = 0; i < 8; i++) {
                 for (int j = 0; j < 8; j++) {
                     Rectangle square = new Rectangle(squareSize, squareSize);
-                    square.setFill((i + j) % 2 == 0 ? lightColor : darkColor);
-                    chessBoard.add(square, j, i);
+                  // square.setFill(Color.TRANSPARENT);
+                  square.setFill((i + j) % 2 == 0 ? lightColor : darkColor);
+                   chessBoard.add(square, j, i);
                     Piece piece = game.getPiece(i, j);
                     if (piece != null) {
                         Image pieceImage = getPieceImage(piece);
-                       
                         ImageView pieceView = new ImageView(pieceImage);
                         if(!piece.isWhite())
                         {
-                            Rotate rotate = new Rotate(180, squareSize/2,squareSize/2);
-                            pieceView.getTransforms().add(rotate);
+                            ColorAdjust colorAdjust = new ColorAdjust();
+                            colorAdjust.setContrast(0.3); 
+                             // Adjust this value between -1.0 and 1.
+                        pieceView.setEffect(colorAdjust);
                         }
+                        else
+                        {
+                            ColorAdjust colorAdjust = new ColorAdjust();
+                            colorAdjust.setContrast(0.3);  // Increase contrast (adjust as needed)
+                            colorAdjust.setBrightness(-0.2);  // Slightly decrease brightness (adjust as needed)
+                            colorAdjust.setSaturation(0);  // Optional: set to 0 for grayscale effect
+                            
+                        pieceView.setEffect(colorAdjust);
+                        }
+                    
                         pieceView.setFitHeight(squareSize);
                         pieceView.setFitWidth(squareSize);
-        
-                        // Set mouse transparency based on the player color
-                        //Remember to change to is shite when inverting this
-                        boolean isPlayerPiece = (playerColor.equals("white") && piece.isWhite()) ||
-                                         (playerColor.equals("black") && !piece.isWhite());
-                        pieceView.setMouseTransparent(!isPlayerPiece);
                         chessBoard.add(pieceView, j, i);
+                        pieceView.setMouseTransparent(!game.isWhiteTurn() == piece.isWhite());
                         pieceView.setOnMousePressed(event -> handlePieceDragStart(event, pieceView, piece));
                         pieceView.setOnMouseDragged(this::handlePieceDrag);
-                        pieceView.setOnMouseReleased(this::handlePieceDrop);
+                        pieceView.setOnMouseReleased(event -> {
+                            handlePieceDrop(event);
+                        });
                     }
                 }
-            }
+            }     
         }
     
         private Image getPieceImage(Piece piece) {
@@ -477,10 +441,11 @@ import java.util.concurrent.TimeUnit;
             {
                 return;
             }
+            double squareSize = chessBoard.getPrefWidth() / 8;
             String fen = game.toFen();
             if (draggedPiece != null) {
-                int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / 100);
-                int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / 100);
+                int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
+                int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
                 if (row >= 0 && row < 8 && col >= 0 && col < 8) 
                 {
                 capturedPiece = game.getPiece(row, col);
@@ -566,12 +531,23 @@ import java.util.concurrent.TimeUnit;
                 }
             }
                 drawBoard();
-                if(game.checkMate(game))
-                {
-                     displayConfetti(chessBoard);
-                     SoundManager.playWinSound();
-                     statusLabel.setText("Victory");
-                     statusLabel.setVisible(true);
+                if (game.checkMate(game)) {
+                        SoundManager.playWinSound();
+                        // Handle game end in a separate thread
+                        ExecutorServiceManager.getExecutorService().submit(() -> {
+                        
+                                stockfish.handleGameEnd(fen);
+                        });
+                
+                        // Display confetti and update UI on the JavaFX thread
+                        Platform.runLater(() -> {
+                        
+                                displayConfetti(chessBoard);
+                                statusLabel.setText("Checkmate!");
+                                statusLabel.setVisible(true);
+                                countdownClock.stop();
+                                countdownClock2.stop();
+                        });
                 }
                 if(game.checkDraw(game))
                 {
@@ -769,6 +745,7 @@ import java.util.concurrent.TimeUnit;
 
         public void updateGameState(String pieceName, int fromRow, int fromCol, int movedRow,int movedCol, int capturedPieceRow, int capturedPieceCol,
              boolean isWhiteTurn, String capturedPiece, boolean isCastle) {
+                
             int row = fromRow;
             int col = fromCol;
             int mRow = movedRow;
@@ -821,21 +798,33 @@ import java.util.concurrent.TimeUnit;
                 else{
                     SoundManager.playMoveSound();
                 }
+                String fen = game.toFen();
 
              Platform.runLater(() -> drawBoard());
-             if(game.checkMate(game))
-                {
-                     displayConfetti(chessBoard);
-                     SoundManager.playWinSound();
-                     statusLabel.setText("Victory");
-                     statusLabel.setVisible(true);
-                }
-                if(game.checkDraw(game))
-                {
-                    statusLabel.setText("Draw");
-                    statusLabel.setVisible(true);
-                    SoundManager.playDrawSound();
-                }
+             if (game.checkMate(game)) {
+                SoundManager.playWinSound();
+                // Handle game end in a separate thread
+                ExecutorServiceManager.getExecutorService().submit(() -> {
+                
+                        stockfish.handleGameEnd(fen);
+                });
+        
+                // Display confetti and update UI on the JavaFX thread
+                Platform.runLater(() -> {
+                
+                        displayConfetti(chessBoard);
+                        statusLabel.setText("Checkmate!");
+                        statusLabel.setVisible(true);
+                        countdownClock.stop();
+                        countdownClock2.stop();
+                });
+        }
+        if(game.checkDraw(game))
+        {
+            statusLabel.setText("Draw");
+            statusLabel.setVisible(true);
+            SoundManager.playDrawSound();
+        }
         }
         //This basically only moves black pieces since they are set in the top row in the game, But the board is
         //drawn  so that both players have their pieces at the bottom. 
@@ -860,5 +849,108 @@ import java.util.concurrent.TimeUnit;
         {
             return Math.abs(row-7);
         }
+               // Call this method when a player makes a move
+    private void switchPlayer() {
+        if(playerColor.equals("black"))
+        {
+          if (game.isWhiteTurn() ) {
+              countdownClock2.pause();
+              countdownClock.start();
+              timer1.setStyle(
+                  "-fx-font-size: 16px;"+
+                  "-fx-text-fill: #000000;"+
+                 " -fx-background-color: #ffffff;"+
+                 "-fx-background-radius: 5; "+
+                 "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+              );
+              timer1.setOpacity(1);
+              timer2.setOpacity(0.5);
+              timer2.setStyle(
+                  "-fx-font-size: 16px;"+
+                  "-fx-text-fill: #000000;"+
+                 " -fx-background-color: #6f6f6f;"+
+                 "-fx-background-radius: 5; "
+              );
+             
+          } else {
+              countdownClock.pause();
+              countdownClock2.start();
+              
+              timer2.setStyle(
+                  "-fx-font-size: 16px;"+
+                  "-fx-text-fill: #000000;"+
+                 " -fx-background-color: #ffffff;"+
+                 "-fx-background-radius: 5; "+
+                 "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+              );
+              timer2.setOpacity(1);
+              timer1.setOpacity(0.5);
+              timer1.setStyle(
+                  "-fx-font-size: 16px;"+
+                  "-fx-text-fill: #000000;"+
+                 " -fx-background-color: #6f6f6f;"+
+                 "-fx-background-radius: 5; "
+              );
+          }
+        
+        }
+        else
+        {
+           if (game.isWhiteTurn() ) {
+              countdownClock.pause();
+              countdownClock2.start();
+              
+              timer2.setStyle(
+                  "-fx-font-size: 16px;"+
+                  "-fx-text-fill: #000000;"+
+                 " -fx-background-color: #ffffff;"+
+                 "-fx-background-radius: 5; "+
+                 "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+              );
+              timer2.setOpacity(1);
+              timer1.setOpacity(0.5);
+              timer1.setStyle(
+                  "-fx-font-size: 16px;"+
+                  "-fx-text-fill: #000000;"+
+                 " -fx-background-color: #6f6f6f;"+
+                 "-fx-background-radius: 5; "
+              );
+          } else {
+              countdownClock2.pause();
+              countdownClock.start();
+              timer1.setStyle(
+                  "-fx-font-size: 16px;"+
+                  "-fx-text-fill: #000000;"+
+                 " -fx-background-color: #ffffff;"+
+                 "-fx-background-radius: 5; "+
+                 "-fx-border-color: #7B61FF; -fx-border-width: 2px; -fx-border-radius: 5px;"
+              );
+              timer1.setOpacity(1);
+              timer2.setOpacity(0.5);
+              timer2.setStyle(
+                  "-fx-font-size: 16px;"+
+                  "-fx-text-fill: #000000;"+
+                 " -fx-background-color: #6f6f6f;"+
+                 "-fx-background-radius: 5; "
+              );
+          }
+        }
+         
+      }
+      public void onTimeOut() {
+          if (game.isWhiteTurn()) {
+              statusLabel.setText("Black Wins by Timeout!");
+              displayConfetti(chessBoard);
+              countdownClock.stop();
+              countdownClock2.stop();
+          } else {
+              statusLabel.setText("White Wins by Timeout!");
+              countdownClock.stop();
+              countdownClock2.stop();
+              displayConfetti(chessBoard);
+          }
+          statusLabel.setVisible(true);
+          SoundManager.playWinSound();
+      }
     }
     
