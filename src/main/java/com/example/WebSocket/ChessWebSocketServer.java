@@ -82,6 +82,17 @@ public class ChessWebSocketServer extends WebSocketServer {
         clients.remove(conn);
         System.out.println("Client disconnected: " + conn.getRemoteSocketAddress());
     }
+    public void stopServer() {
+        try {
+            // Stop the WebSocket server
+            this.stop();
+            System.out.println("WebSocket server stopped successfully.");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.err.println("Error while stopping WebSocket server.");
+        }
+    }
+    
 
     @Override
     public void onError(WebSocket conn, Exception ex) {

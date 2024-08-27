@@ -1,6 +1,9 @@
 package com.example;
 
 import java.io.IOException;
+
+import com.example.WebSocket.ChessWebSocketServer;
+
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

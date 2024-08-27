@@ -533,6 +533,7 @@ import java.net.UnknownHostException;
                 drawBoard();
                 if (game.checkMate(game)) {
                         SoundManager.playWinSound();
+                        webSocketServer.stopServer();
                         // Handle game end in a separate thread
                         ExecutorServiceManager.getExecutorService().submit(() -> {
                         
@@ -801,8 +802,10 @@ import java.net.UnknownHostException;
                 String fen = game.toFen();
 
              Platform.runLater(() -> drawBoard());
+
              if (game.checkMate(game)) {
-                SoundManager.playWinSound();
+                SoundManager.playDrawSound();
+                webSocketServer.stopServer();
                 // Handle game end in a separate thread
                 ExecutorServiceManager.getExecutorService().submit(() -> {
                 
@@ -811,9 +814,8 @@ import java.net.UnknownHostException;
         
                 // Display confetti and update UI on the JavaFX thread
                 Platform.runLater(() -> {
-                
-                        displayConfetti(chessBoard);
-                        statusLabel.setText("Checkmate!");
+                        statusLabel.setText("You Lost!");
+                        statusLabel.setStyle("-fx-text-fill: red;");
                         statusLabel.setVisible(true);
                         countdownClock.stop();
                         countdownClock2.stop();
