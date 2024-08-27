@@ -85,6 +85,7 @@ import java.net.UnknownHostException;
         @FXML private Button startServerButton;
         @FXML private Button connectButton;
         @FXML private TextField serverIpField;
+        @FXML private Button playAgain;
       
        private ChessWebSocketServer webSocketServer;
        private boolean isServerRunning = false;
@@ -112,6 +113,7 @@ import java.net.UnknownHostException;
         
                 // Initialize the drawPossibleMoves flag
                 drawPossibleMoves = false;
+                playAgain.setVisible(false);
         
                 // Initialize statusLabel
                 statusLabel = new Label();
@@ -268,7 +270,7 @@ import java.net.UnknownHostException;
         }
     
         @FXML
-    private void handleReset() {
+    public void handleReset() {
 
         if (game != null) {
             chessBoard.getChildren().forEach(node -> {
@@ -277,6 +279,7 @@ import java.net.UnknownHostException;
                     pieceView.setOnMousePressed(null);
                     pieceView.setOnMouseDragged(null);
                     pieceView.setOnMouseReleased(null);
+                    playAgain.setVisible(false);
                 }
             });
         }
@@ -349,7 +352,9 @@ import java.net.UnknownHostException;
     JSONObject playAgainRequest = new JSONObject();
     playAgainRequest.put("type", "playAgain");
     socketClient.send(playAgainRequest.toString());
+    handleReset();
      }
+     
     
         private Image getPieceImage(Piece piece) {
             String color = piece.isWhite() ? "white-" : "black-";
@@ -557,6 +562,7 @@ import java.net.UnknownHostException;
                                 statusLabel.setVisible(true);
                                 countdownClock.stop();
                                 countdownClock2.stop();
+                                playAgain.setVisible(true);
                         });
                 }
                 if(game.checkDraw(game))
@@ -827,6 +833,7 @@ import java.net.UnknownHostException;
                         statusLabel.setVisible(true);
                         countdownClock.stop();
                         countdownClock2.stop();
+                        playAgain.setVisible(true);
                 });
         }
         if(game.checkDraw(game))

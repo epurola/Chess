@@ -75,14 +75,9 @@ public class ChessWebSocketClient extends WebSocketClient {
                         // Handle play again messages
                         if (controller != null) {
                            
-                         /*Platform.runLater(() -> {
-                          try {
-                            controller.initialize();
-                        } catch (IOException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
-                          }); */ 
+                         Platform.runLater(() -> {
+                          controller.handleReset();
+                          });  
 
                         }
                         break;
