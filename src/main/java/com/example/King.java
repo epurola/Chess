@@ -21,10 +21,11 @@ public class King extends Piece {
             {1, 1}, {1, -1}, // diagonal down
             {-1, 1}, {-1, -1} // diagonal up
         };
-
+       
         for (int[] direction : directions) {
             int newRow = getRow() + direction[0];
             int newCol = getCol() + direction[1];
+           
 
             if (isValidPosition(newRow, newCol)) {
                 Piece piece = game.getPiece(newRow, newCol);
@@ -43,6 +44,7 @@ public class King extends Piece {
             int col = isWhite() ? 6 : 6; // King-side column for white and black
             if (isValidPosition(row, col) && game.getPiece(row, col) == null) {
                 allMoves.add(new int[]{row, col}); // Move to the king-side castling position (e.g., g1 or g8)
+              
             }
         }
 
@@ -54,9 +56,8 @@ public class King extends Piece {
             if (isValidPosition(row, col) && game.getPiece(row, col) == null) {
                 allMoves.add(new int[]{row, col}); // Move to the queen-side castling position (e.g., c1 or c8)
             }
-        }
-    
 
+        }
         return allMoves;
     }
 

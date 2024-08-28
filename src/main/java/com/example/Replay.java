@@ -81,6 +81,7 @@ public class Replay {
     private List<Color> moveColors;
     private Color colour;
     Stockfish stockfish;
+    private Piece pawnToPromote;
   
     
    
@@ -95,7 +96,14 @@ public class Replay {
         int totalGames = database.getTotalGames();
         moveHistory = database.getMoveAnalysis(totalGames);
         Image cursorImage = new Image(getClass().getResource("/com/example/pointer.png").toExternalForm());
-        stockfish = new Stockfish();
+        new Thread(() -> {
+            try {
+                stockfish = new Stockfish();
+            } catch (IOException e) {
+               
+                e.printStackTrace();
+            }
+        }).start();
         
 
     
@@ -539,6 +547,10 @@ private void findNextGreatMove() {
                 {
                     board.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), null);
                 }
+                if (selectedPiece instanceof Pawn && (row == 0 || row == 7)) {
+                    pawnToPromote = (Pawn) selectedPiece;
+                    promotePawn(row, col);
+                }
                 
                  SoundManager.playMoveSound();
                  startGameAnalysis(row, col, row, col,  board.toFEN(!selectedPiece.isWhite()));
@@ -636,6 +648,78 @@ private void findNextGreatMove() {
                 fadeIn.setToValue(1.0);
                 fadeIn.play();
             }
+        }
+        private void promotePawn(int row, int col) {
+        
+            List<String> promotionImagePaths = List.of(
+                "/images/white-rook.png",
+                "/images/white-bishop.png",
+                "/images/white-knight.png",
+                "/images/white-queen.png"
+            );
+        
+        
+            if (selectedPiece.isWhite()) {
+                promotionImagePaths = List.of(
+                    "/images/white-rook.png",
+                    "/images/white-bishop.png",
+                    "/images/white-knight.png",
+                    "/images/white-queen.png"
+                );
+            } else {
+                promotionImagePaths = List.of(
+                    "/images/black-rook.png",
+                    "/images/black-bishop.png",
+                    "/images/black-knight.png",
+                    "/images/black-queen.png"
+                );
+            }
+            // Instantiate the ChoiseMenu with the promotion options and a callback
+            ChoiseMenu promotionMenu = new ChoiseMenu("Choose Promotion", promotionImagePaths, choice -> {
+                // Handle the user's choice
+                Piece newPiece;
+        
+                switch (choice) {
+                    case "/images/white-rook.png":
+                        newPiece = new Rook(row, col, pawnToPromote.isWhite());
+                        break;
+                    case "/images/white-bishop.png":
+                        newPiece = new Bishop(row, col, pawnToPromote.isWhite());
+                        break;
+                    case "/images/white-knight.png":
+                        newPiece = new Knight(row, col, pawnToPromote.isWhite());
+                        break;
+                    case "/images/white-queen.png":
+                      newPiece = new Queen(row, col, pawnToPromote.isWhite());
+                        break;
+                    case "/images/black-rook.png":
+                        newPiece = new Rook(row, col, pawnToPromote.isWhite());
+                        break;
+                    case "/images/black-bishop.png":
+                        newPiece = new Bishop(row, col, pawnToPromote.isWhite());
+                        break;
+                    case "/images/black-knight.png":
+                        newPiece = new Knight(row, col, pawnToPromote.isWhite());
+                        break;
+                    case "/images/black-queen.png":
+                        newPiece = new Queen(row, col, pawnToPromote.isWhite());
+                        break;
+                    default:
+                        newPiece = new Queen(row, col, pawnToPromote.isWhite());
+                }
+                SoundManager.playButtonSound();
+                board.setPiece(row, col, newPiece);
+                System.out.println("Pawn promoted to " + choice + ".");
+                pawnToPromote = null; // Reset pawnToPromote after promotion
+                drawBoard();  // Redraw the board to update the piece's position
+               
+                
+            });
+            promotionMenu.setLayoutX(row);
+            promotionMenu.setLayoutY(col);
+            rootPane.getChildren().add(promotionMenu);
+          
+           
         }
     
 

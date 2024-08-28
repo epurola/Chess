@@ -23,7 +23,7 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         primaryStage = stage;
-        primaryStage.setTitle("Chess");
+        primaryStage.setTitle("Minimal Chess");
         Image icon = new Image(getClass().getResourceAsStream("/com/example/crown.png"));
         primaryStage.getIcons().add(icon);
         Image cursorImage = new Image(getClass().getResource("/com/example/pointer.png").toExternalForm());

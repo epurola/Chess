@@ -254,7 +254,9 @@ import java.util.concurrent.ExecutorService;
                   square.setFill((i + j) % 2 == 0 ? lightColor : darkColor);
                    chessBoard.add(square, j, i);
                     Piece piece = game.getPiece(i, j);
+                    
                     if (piece != null) {
+                      
                         Image pieceImage = getPieceImage(piece);
                         ImageView pieceView = new ImageView(pieceImage);
                         if(!piece.isWhite())

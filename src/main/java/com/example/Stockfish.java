@@ -62,11 +62,15 @@ public class Stockfish {
         String bestMove = "";
         String bestMoveCurrent = "";
 
+        // Extract Stockfish executable
+        String stockfishPath = extractStockfishExecutable();
+
         // Initialize Stockfish process, input/output streams
-        ProcessBuilder pb = new ProcessBuilder("stockfish.exe");
+        ProcessBuilder pb = new ProcessBuilder(stockfishPath);
         stockfishProcess = pb.start();
         input = new BufferedReader(new InputStreamReader(stockfishProcess.getInputStream()));
         output = new PrintWriter(stockfishProcess.getOutputStream());
+        System.out.println("Stockfish ready");
     }
 
     public void sendUciCommand(String command) {

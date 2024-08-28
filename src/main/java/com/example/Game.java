@@ -3,6 +3,9 @@ package com.example;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.HashSet;
+
+import java.util.Set;
 
 public class Game {
     private Board board;
@@ -17,6 +20,9 @@ public class Game {
    private boolean isOnline;
   private boolean isInCheck;
   List<int[]> possibleMoves;
+  private boolean whiteHasCastled;
+  private boolean blackHasCastled;
+
 
     public Game() {
         board = new Board();
@@ -189,6 +195,8 @@ public class Game {
         this.whiteTurn = whiteTurn;
     }
    
+   
+        
     public boolean canCastle(boolean isWhite, boolean kingSide) {
         if(!isInCheck)
         {
@@ -201,6 +209,8 @@ public class Game {
         }
             
     }
+        
+    
     public void updateCastlingRightsAfterMove(Piece piece) {
         if (piece instanceof King) {
             if (piece.isWhite()) {
@@ -278,8 +288,18 @@ public class Game {
                if (pieceToMove instanceof King && Math.abs(fromCol - toCol) == 2) {
                  // King-side or Queen-side castling
                  int[] capturedPiecePosition = new int[2];
-                 capturedPiecePosition =performCastling((King) pieceToMove, toRow, toCol);
+                 capturedPiecePosition = performCastling((King) pieceToMove, toRow, toCol);
+
                  capturedPiece = new Rook(capturedPiecePosition[0], capturedPiecePosition[1], isWhiteTurn());
+                 if(pieceToMove.isWhite())
+                 {
+                    whiteHasCastled = true;
+                 }
+                 if(!pieceToMove.isWhite()) 
+                 {
+                     blackHasCastled = true;
+                 }
+              
                }
                
 
@@ -287,10 +307,9 @@ public class Game {
                 setPiece(originalRow, originalCol, null);
                 pieceToMove.setPosition(row, col);
 
-                if(pieceToMove instanceof King)
-                {
+              
                     updateKingPositions();
-                }
+                
                
                
                   if (!validMove) {
@@ -540,6 +559,18 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
     }
     public boolean isInCheck(boolean isWhite) {
         isInCheck = false;
+        if(!whiteHasCastled)
+        {
+            whiteCanCastleKingSide = true;
+            whiteCanCastleQueenSide = true;
+        }
+        if(!blackHasCastled)
+        {
+            blackCanCastleKingSide = true;
+            blackCanCastleQueenSide = true;
+        }
+       
+      
     
         int[] kingPosition = isWhite ? getWhiteKingPosition() : getBlackKingPosition();
         if (kingPosition == null) {
@@ -587,9 +618,9 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
 
         return isInCheck;
     }
-    
 
-  
+    
+    
 
     public List<Piece> getAllPieces(boolean isWhite) {
         List<Piece> pieces = new ArrayList<>();
