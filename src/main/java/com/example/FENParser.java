@@ -10,7 +10,6 @@ import java.util.ArrayList;
  * also giving it the best move will help. For cost related reason this might not be developed further...
  * Local models like llama 3 are ass and will give inaccurate information
  */
-
 public class FENParser {
     private static final Map<Character, String> pieceNames = new HashMap<>();
   
@@ -40,63 +39,43 @@ public class FENParser {
         int rankNumber = 1; 
 
         for (String rank : ranks) {
-           
-            int fileNumber = 1; // Start from file 'a' to 'h'
+            int fileNumber = 1; 
             for (char symbol : rank.toCharArray()) {
                 if (Character.isDigit(symbol)) {
-                    // Skip the number of empty squares
                     fileNumber += Character.getNumericValue(symbol);
                 } else {
                     String piece = pieceNames.get(symbol);
-              
                     String position = getPosition(fileNumber - 1, rankNumber - 1); 
-                    // Get the current piece from the board at this position
                     Piece currentPiece = game.getBoard().getPiece(rankNumber-1 , fileNumber-1);
                     List<int[]>  possibleMoves = currentPiece.getLegalMovesWithoutCheck(game);
-
                     List<String> movesForPiece = getMovesForPiece(rankNumber-1, fileNumber-1,possibleMoves);
-
                     description.append(piece).append(" on ").append(position);
                     boolean isWhiteTurn = turn.equals("w");
                     boolean isPieceWhite = currentPiece.isWhite();
-
                     if (!movesForPiece.isEmpty() && isWhiteTurn == isPieceWhite) {
                         description.append(" with possible moves ").append(String.join(", ", movesForPiece));
                     }
-                    
-                    description.append(". ");
-                       
-                     fileNumber++;
-                }
-                
+                    description.append(". ");  
+                    fileNumber++;
+                } 
             }
             rankNumber++;
         }
-        
-
         return description.toString().trim();
     }
 
     private static String getPosition(int fileNumber, int rankNumber) {
-        // Convert zero-based fileNumber (0-7) to chess file letters (a-h)
-        char file = (char) ('a' + fileNumber); // 0 -> 'a', 7 -> 'h'
-
-        // Convert zero-based rankNumber (0-7) to chess ranks (8-1)
+        char file = (char) ('a' + fileNumber); 
         int rank = rankNumber + 1; 
-
-        // Return chess notation
         return String.valueOf(file) + rank;
     }
 
     private static List<String> getMovesForPiece(int fileNumber, int rankNumber,List<int[]> possibleMoves) {
         List<String> moves = new ArrayList<>();
-
         for (int[] move : possibleMoves) {
             int targetRow = move[0];
             int targetCol = move[1];
-
-            // Convert row/column to chess notation
-            String movePosition = getPosition(targetCol, targetRow); // Translate to chess notation
+            String movePosition = getPosition(targetCol, targetRow); 
             moves.add(movePosition);
         }
         return moves;

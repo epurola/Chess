@@ -65,13 +65,11 @@ public class SoundManager {
     private static final MediaPlayer HOVER_PLAYER = createMediaPlayer(BUTTON_SOUND_PATH);
 
     public static void playHoverSound() {
-        HOVER_PLAYER.seek(Duration.ZERO); // Rewind to start
+        HOVER_PLAYER.seek(Duration.ZERO); 
         HOVER_PLAYER.play();
     }
-
-    // Utility method to play a sound with a MediaPlayer
     private static void playSound(MediaPlayer player) {
-        player.seek(Duration.ZERO); // Rewind to start
+        player.seek(Duration.ZERO); 
         player.play();
     }
 }

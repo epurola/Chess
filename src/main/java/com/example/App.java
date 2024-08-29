@@ -1,9 +1,6 @@
 package com.example;
 
 import java.io.IOException;
-
-import com.example.WebSocket.ChessWebSocketServer;
-
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -18,7 +15,6 @@ public class App extends Application {
 
     private static Stage primaryStage;
     private static Scene scene;
-    private static SinglePlayerController controller;
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -28,11 +24,7 @@ public class App extends Application {
         primaryStage.getIcons().add(icon);
         Image cursorImage = new Image(getClass().getResource("/com/example/pointer.png").toExternalForm());
 
-        
-       
         ImageCursor customCursor = new ImageCursor(cursorImage);
-        
-
         // Load the initial scene
         scene = new Scene(loadFXML("secondary")); // Load the initial FXML
         scene.getStylesheets().add(App.class.getResource("/com/example/styles.css").toExternalForm());

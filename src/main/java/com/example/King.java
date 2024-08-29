@@ -35,26 +35,26 @@ public class King extends Piece {
                 }
             }
         }
-            // Castling logic
+           
   
         // Check for king-side castling
-        if (game.canCastle(isWhite(), true)) { // King-side castling
+        if (game.canCastle(isWhite(), true)) { 
             int[] kingPosition = isWhite() ? game.getWhiteKingPosition() : game.getBlackKingPosition();
             int row = kingPosition[0];
-            int col = isWhite() ? 6 : 6; // King-side column for white and black
+            int col = isWhite() ? 6 : 6; 
             if (isValidPosition(row, col) && game.getPiece(row, col) == null) {
-                allMoves.add(new int[]{row, col}); // Move to the king-side castling position (e.g., g1 or g8)
+                allMoves.add(new int[]{row, col}); 
               
             }
         }
 
         // Check for queen-side castling
-        if (game.canCastle(isWhite(), false)) { // Queen-side castling
+        if (game.canCastle(isWhite(), false)) { 
             int[] kingPosition = isWhite() ? game.getWhiteKingPosition() : game.getBlackKingPosition();
             int row = kingPosition[0];
-            int col = isWhite() ? 2 : 2; // Queen-side column for white and black
+            int col = isWhite() ? 2 : 2; 
             if (isValidPosition(row, col) && game.getPiece(row, col) == null) {
-                allMoves.add(new int[]{row, col}); // Move to the queen-side castling position (e.g., c1 or c8)
+                allMoves.add(new int[]{row, col}); 
             }
 
         }
@@ -73,7 +73,7 @@ public class King extends Piece {
 
     @Override
     protected int getValue() {
-        // TODO Auto-generated method stub
+        // Infinite value
         throw new UnsupportedOperationException("Unimplemented method 'getValue'");
     }
 

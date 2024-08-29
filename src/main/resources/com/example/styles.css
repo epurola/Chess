@@ -75,6 +75,38 @@
   -fx-border-radius: 5px; /* Rounded corners for the border */
   -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 1, 1); /* Drop shadow for added depth */
 }
+/* TextFlow styling */
+.textFlow {
+  -fx-background-color: #ecf0f1;  /* Light background color */
+  -fx-padding: 10px;  /* Padding around the text */
+  -fx-border-color: #bdc3c7;  /* Border color */
+  -fx-border-width: 2px;  /* Border width */
+  -fx-border-radius: 5px;  /* Rounded corners */
+  -fx-background-radius: 5px;  /* Matching background radius for rounded corners */
+}
+
+.textFlow .text {
+  -fx-fill: #2c3e50;  /* Text color */
+  -fx-font-size: 14px;  /* Font size */
+  -fx-font-family: "Arial", sans-serif;  /* Font family */
+}
+
+.textFlow .boldText {
+  -fx-font-weight: bold;  /* Bold text */
+}
+
+.textFlow .italicText {
+  -fx-font-style: italic;  /* Italic text */
+}
+
+.textFlow .highlightedText {
+  -fx-background-color: #f39c12;  /* Highlight background color */
+  -fx-fill: white;  /* Highlight text color */
+  -fx-padding: 2px;  /* Padding for the highlighted text */
+  -fx-border-radius: 3px;
+  -fx-background-radius: 3px;
+}
+
 
 
 

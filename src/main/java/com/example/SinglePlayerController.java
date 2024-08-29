@@ -32,7 +32,6 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
@@ -506,9 +505,7 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
             }
             
             
-        
-    //Fix this mess wtf is this
-            private void addTograve(Piece capturedPiece) {
+         private void addTograve(Piece capturedPiece) {
                 boolean isWhite = capturedPiece.isWhite();
                 Image pieceImage = getPieceImage(capturedPiece);
                 ImageView piece = new ImageView(pieceImage);

@@ -29,6 +29,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -60,6 +62,7 @@ public class Replay {
     @FXML private Button GreatMoves;
     @FXML private Button backButton;
     @FXML private Button delete;
+    @FXML private TextFlow textFlow;
     
     
     Color lightColor = Color.web("#E8EDF9"); 
@@ -83,6 +86,7 @@ public class Replay {
    private Stockfish stockfish;
     private Piece pawnToPromote;
     private Game game;
+  
     
   
     
@@ -121,14 +125,22 @@ public class Replay {
              screenHeight = bounds.getHeight();
 
             double chessBoardSize = screenHeight * 0.75 ;
+            double hboxHeight = (screenHeight -chessBoardSize-60) /2; 
             chessBoard.setPrefSize(chessBoardSize, chessBoardSize);
             rootPane.setMinSize(chessBoardSize+30, chessBoardSize+30);
+            rootPane.setMaxSize(chessBoardSize+30, chessBoardSize+30);
+            borderPane.setMaxSize(screenWidth, screenHeight);
             double boxWidth = (screenWidth - chessBoardSize) / 2;
-            vbox.setPrefWidth(boxWidth);
-            vbox2.setPrefWidth(boxWidth);
-            vbox2.setMaxHeight(screenHeight);
+            vbox.setMaxWidth(boxWidth);
+            vbox.setMinWidth(boxWidth);
+            vbox.setMaxHeight(screenHeight);
+            textFlow.setMinWidth(boxWidth*0.8);
+            textFlow.setMaxWidth(boxWidth *0.8);
+            textFlow.setMaxHeight(chessBoardSize);
+            vbox2.setMaxWidth(boxWidth);
+            vbox2.setMaxHeight(screenHeight -(hboxHeight*2));
             vbox2.setSpacing(screenHeight/2);
-            double hboxHeight = (screenHeight -chessBoardSize-60) /2;  // Set height as 10% of the screen height
+             // Set height as 10% of the screen height
             WhiteHbox.setMinHeight(hboxHeight);
             WhiteHbox.setPrefHeight(hboxHeight);
             WhiteHbox.setMaxHeight(hboxHeight);
@@ -137,9 +149,7 @@ public class Replay {
             blackHbox.setPrefHeight(hboxHeight);
             blackHbox.setMaxHeight(hboxHeight);
           
-            // Enable fill height for HBoxes to stretch vertically if needed
-            WhiteHbox.setFillHeight(true);
-            blackHbox.setFillHeight(true);
+           
       
         board = new Board();
         board.clearBoard();
@@ -312,10 +322,10 @@ private void findNextGreatMove() {
 
     private void analyzeboard(String fen, Game game)
     {
-       
+        textFlow.getChildren().clear();
         String description = FENParser.fenToNaturalLanguage(fen, game);
-        System.out.println(description);
-        System.out.println();
+       Text responseText = new Text(description);
+       textFlow.getChildren().add(responseText);
     }
    
 
@@ -402,7 +412,11 @@ private void findNextGreatMove() {
                 }
             }
         }
-        analyzeboard(moveHistory.get(currentMoveIndex).getFEN(),game);
+        if(currentMoveIndex < moveHistory.size()-1)
+        {
+            analyzeboard(moveHistory.get(currentMoveIndex).getFEN(),game);
+        }
+      
        
        
     }
