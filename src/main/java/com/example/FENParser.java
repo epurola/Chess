@@ -29,46 +29,77 @@ public class FENParser {
         pieceNames.put('p', "Black Pawn");
     }
 
-    public static String fenToNaturalLanguage(String fen, Game game ) {
+    public static String fenToNaturalLanguage(String fen, Game game) {
+        // Split FEN string into its components
         String[] parts = fen.split(" ");
         String board = parts[0];
         String turn = parts[1];
+        
+        // Initialize the description builder
         StringBuilder description = new StringBuilder();
-
+    
+        // Split the board into ranks (rows)
         String[] ranks = board.split("/");
         int rankNumber = 1; 
-
+    
+        // Iterate over each rank
         for (String rank : ranks) {
             int fileNumber = 1; 
+    
+            // Process each character in the rank
             for (char symbol : rank.toCharArray()) {
                 if (Character.isDigit(symbol)) {
                     fileNumber += Character.getNumericValue(symbol);
                 } else {
+                    // Determine piece and position
                     String piece = pieceNames.get(symbol);
-                    String position = getPosition(fileNumber - 1, rankNumber - 1); 
-                    Piece currentPiece = game.getBoard().getPiece(rankNumber-1 , fileNumber-1);
-                    List<int[]>  possibleMoves = currentPiece.getLegalMovesWithoutCheck(game);
-                    List<String> movesForPiece = getMovesForPiece(rankNumber-1, fileNumber-1,possibleMoves);
-                    description.append(piece).append(" on ").append(position);
+                    String position = getPosition(fileNumber - 1, rankNumber - 1);
+                    Piece currentPiece = game.getBoard().getPiece(rankNumber - 1, fileNumber - 1);
+                    
+                    // Get possible moves for the current piece
+                    List<int[]> possibleMoves = currentPiece.getLegalMovesWithoutCheck(game);
+                    List<String> movesForPiece = getMovesForPiece(rankNumber - 1, fileNumber - 1, possibleMoves);
+    
+                    // Build description for the current piece
+                    description.append(piece)
+                               .append(" is at ")
+                               .append(position);
+    
                     boolean isWhiteTurn = turn.equals("w");
                     boolean isPieceWhite = currentPiece.isWhite();
+    
                     if (!movesForPiece.isEmpty() && isWhiteTurn == isPieceWhite) {
-                        description.append(" with possible moves ").append(String.join(", ", movesForPiece));
+                        description.append(" with possible moves: ")
+                                   .append(String.join(", ", movesForPiece));
                     }
-                    description.append(". ");  
+    
+                    description.append(". ");
                     fileNumber++;
-                } 
+                }
             }
             rankNumber++;
+            description.append("\n"); // Add a newline to separate ranks
         }
+    
+        // Finalize the description
+        description.append("It is ")
+                   .append(turn.equals("w") ? "White's" : "Black's")
+                   .append(" turn to move.");
+    
         return description.toString().trim();
     }
+    
+    
 
     private static String getPosition(int fileNumber, int rankNumber) {
         char file = (char) ('a' + fileNumber); 
-        int rank = rankNumber + 1; 
+    
+        // Calculate the flipped rank number if needed
+        int rank =  8 - rankNumber ;
+    
         return String.valueOf(file) + rank;
     }
+    
 
     private static List<String> getMovesForPiece(int fileNumber, int rankNumber,List<int[]> possibleMoves) {
         List<String> moves = new ArrayList<>();
