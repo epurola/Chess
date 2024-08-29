@@ -86,6 +86,7 @@ public class Replay {
    private Stockfish stockfish;
     private Piece pawnToPromote;
     private Game game;
+    private  PythonScriptRunner python ;
   
     
   
@@ -95,11 +96,13 @@ public class Replay {
     // Constructor that initializes the board with move history
     @FXML
     
-    public void  initialize() throws IOException {
+    public void  initialize() throws IOException, InterruptedException {
         moveColors = new ArrayList<>();
         moveHistory = new ArrayList<>();
         game = new Game();
-        
+       
+    
+        python = new PythonScriptRunner("C:\\Users\\eelip\\Gemini API.py");
 
         database = new Database();
         int totalGames = database.getTotalGames();
@@ -155,7 +158,7 @@ public class Replay {
         board.clearBoard();
         if (!moveHistory.isEmpty()) {
            
-            game.getBoard().setFEN(moveHistory.get(0).getFEN());  // Set the board to the initial position
+            game.getBoard().setFEN(moveHistory.get(15).getFEN());  // Set the board to the initial position
 
             initializeGameComboBox();
             loadGame(totalGames);
@@ -296,7 +299,7 @@ private void findNextGreatMove() {
 
     
 
-    private void loadGame(int gameId) {
+    private void loadGame(int gameId) throws IOException, InterruptedException {
         // Retrieve move history for the selected game
         moveHistory = database.getMoveAnalysis(gameId);
 
@@ -320,16 +323,17 @@ private void findNextGreatMove() {
         gameSelector.getSelectionModel().selectFirst(); // Select the first game by default
     }
 
-    private void analyzeboard(String fen, Game game)
+    private void analyzeboard(String fen, Game game) throws IOException, InterruptedException
     {
         textFlow.getChildren().clear();
         String description = FENParser.fenToNaturalLanguage(fen, game);
-       Text responseText = new Text(description);
+        String answer = python.runScript(description);
+       Text responseText = new Text(answer);
        textFlow.getChildren().add(responseText);
     }
    
 
-    private void drawBoard() {
+    private void drawBoard() throws IOException, InterruptedException {
         chessBoard.getChildren().clear();
         double squareSize = chessBoard.getPrefWidth() / 8;
        
@@ -563,34 +567,38 @@ private void findNextGreatMove() {
     }
 
     private void handlePieceDrop(MouseEvent event) {
-        double squareSize = chessBoard.getPrefWidth() / 8;
-       
-        if (draggedPiece != null) {
-            int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
-            int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
-            if (row >= 0 && row < 8 && col >= 0 && col < 8) {
-                
-                game.setPiece(row, col, selectedPiece);
-                if(row != selectedPiece.getRow() || col != selectedPiece.getCol())
+        try {
+            double squareSize = chessBoard.getPrefWidth() / 8;
+            
+            if (draggedPiece != null) {
+                int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
+                int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
+                if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+                    
+                    game.setPiece(row, col, selectedPiece);
+                    if(row != selectedPiece.getRow() || col != selectedPiece.getCol())
+                    {
+                        game.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), null);
+                    }
+                    if (selectedPiece instanceof Pawn && (row == 0 || row == 7)) {
+                        pawnToPromote = (Pawn) selectedPiece;
+                        promotePawn(row, col);
+                    }
+                    
+                    SoundManager.playMoveSound();
+                    startGameAnalysis(row, col, row, col,  board.toFEN(!selectedPiece.isWhite()));
+                }
+                else
                 {
-                    game.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), null);
+                    game.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), selectedPiece);
+                    SoundManager.playNotifySound();
                 }
-                if (selectedPiece instanceof Pawn && (row == 0 || row == 7)) {
-                    pawnToPromote = (Pawn) selectedPiece;
-                    promotePawn(row, col);
-                }
-                
-                 SoundManager.playMoveSound();
-                 startGameAnalysis(row, col, row, col,  board.toFEN(!selectedPiece.isWhite()));
             }
-            else
-            {
-                game.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), selectedPiece);
-                SoundManager.playNotifySound();
-            }
+            
+            drawBoard();
+        } catch (IOException ex) {
+        } catch (InterruptedException ex) {
         }
-        
-        drawBoard();
     }
     private void drawPossibleMoves(Piece selectedPiece) {
         List<int[]> possibleMoves = new ArrayList<>();
@@ -652,12 +660,16 @@ private void findNextGreatMove() {
 
     private void replayMoves() {
         if (currentMoveIndex >= 0 && currentMoveIndex < moveHistory.size()) {
-            MoveAnalysis moveAnalysis = moveHistory.get(currentMoveIndex);
-            game.getBoard().clearBoard();
-            game.getBoard().setFEN(moveAnalysis.getFEN());
-          
-          
-            drawBoard();
+            try {
+                MoveAnalysis moveAnalysis = moveHistory.get(currentMoveIndex);
+                game.getBoard().clearBoard();
+                game.getBoard().setFEN(moveAnalysis.getFEN());
+                
+                
+                drawBoard();
+            } catch (IOException ex) {
+            } catch (InterruptedException ex) {
+            }
         }
     }
 
@@ -668,7 +680,11 @@ private void findNextGreatMove() {
             MoveAnalysis moveAnalysis = moveHistory.get(currentMoveIndex);
             board.clearBoard();
             board.setFEN(moveAnalysis.getFEN());
-            drawBoard();
+            try {
+                drawBoard();
+            } catch (IOException ex) {
+            } catch (InterruptedException ex) {
+            }
         }
     }
     @FXML
@@ -682,7 +698,11 @@ private void findNextGreatMove() {
             // Handle the case where selectedGame is null
             System.out.println("No game is selected.");
         }
-        loadGame(id);
+        try {
+            loadGame(id);
+        } catch (IOException ex) {
+        } catch (InterruptedException ex) {
+        }
     }
     @FXML
     private void handleBackButton() {
@@ -780,7 +800,11 @@ private void findNextGreatMove() {
                 board.setPiece(row, col, newPiece);
                 System.out.println("Pawn promoted to " + choice + ".");
                 pawnToPromote = null; // Reset pawnToPromote after promotion
-                drawBoard();  // Redraw the board to update the piece's position
+                try {
+                    drawBoard();  // Redraw the board to update the piece's position
+                } catch (IOException ex) {
+                } catch (InterruptedException ex) {
+                }
                
                 
             });

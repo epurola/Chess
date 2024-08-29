@@ -1,9 +1,9 @@
 package com.example;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 /*This class is designed to build a prompt for a llm that could give advice on the move and categorize
  * it. ChatGPT is able to give pretty accurate analysis if prompted with this string and the move made. 
@@ -84,7 +84,8 @@ public class FENParser {
         // Finalize the description
         description.append("It is ")
                    .append(turn.equals("w") ? "White's" : "Black's")
-                   .append(" turn to move.");
+                   .append(" turn to move.")
+                   .append("Make a short evaluation on the position and give a best move recomendation");
     
         return description.toString().trim();
     }
