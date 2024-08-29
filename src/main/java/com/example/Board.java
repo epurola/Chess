@@ -219,69 +219,62 @@ public class Board {
         int index = row * 8 + col;
         long bitMask = 1L << index;
     
+        Piece piece = null;
+    
         // Check white pawns
         if ((whitePawns & bitMask) != 0) {
-            return new Pawn(row, col, true);
+            piece = new Pawn(row, col, true);
         }
-    
         // Check black pawns
-        if ((blackPawns & bitMask) != 0) {
-            return new Pawn(row, col, false);
+        else if ((blackPawns & bitMask) != 0) {
+            piece = new Pawn(row, col, false);
         }
-    
         // Check white rooks
-        if ((whiteRooks & bitMask) != 0) {
-            return new Rook(row, col, true);
+        else if ((whiteRooks & bitMask) != 0) {
+            piece = new Rook(row, col, true);
         }
-    
         // Check black rooks
-        if ((blackRooks & bitMask) != 0) {
-            return new Rook(row, col, false);
+        else if ((blackRooks & bitMask) != 0) {
+            piece = new Rook(row, col, false);
         }
-    
         // Check white knights
-        if ((whiteKnights & bitMask) != 0) {
-            return new Knight(row, col, true);
+        else if ((whiteKnights & bitMask) != 0) {
+            piece = new Knight(row, col, true);
         }
-    
         // Check black knights
-        if ((blackKnights & bitMask) != 0) {
-            return new Knight(row, col, false);
+        else if ((blackKnights & bitMask) != 0) {
+            piece = new Knight(row, col, false);
         }
-    
         // Check white bishops
-        if ((whiteBishops & bitMask) != 0) {
-            return new Bishop(row, col, true);
+        else if ((whiteBishops & bitMask) != 0) {
+            piece = new Bishop(row, col, true);
         }
-    
         // Check black bishops
-        if ((blackBishops & bitMask) != 0) {
-            return new Bishop(row, col, false);
+        else if ((blackBishops & bitMask) != 0) {
+            piece = new Bishop(row, col, false);
         }
-    
         // Check white queens
-        if ((whiteQueens & bitMask) != 0) {
-            return new Queen(row, col, true);
+        else if ((whiteQueens & bitMask) != 0) {
+            piece = new Queen(row, col, true);
         }
-    
         // Check black queens
-        if ((blackQueens & bitMask) != 0) {
-            return new Queen(row, col, false);
+        else if ((blackQueens & bitMask) != 0) {
+            piece = new Queen(row, col, false);
         }
-    
         // Check white kings
-        if ((whiteKings & bitMask) != 0) {
-            return new King(row, col, true);
+        else if ((whiteKings & bitMask) != 0) {
+            piece = new King(row, col, true);
         }
-    
         // Check black kings
-        if ((blackKings & bitMask) != 0) {
-            return new King(row, col, false);
+        else if ((blackKings & bitMask) != 0) {
+            piece = new King(row, col, false);
         }
     
-        // If no piece is found at the given position
-        return null;
+       
+    
+        return piece;
     }
+    
 
       // Method to convert the board state to FEN notation
       public String toFEN(boolean whiteToMove) {
@@ -322,7 +315,7 @@ public class Board {
         // implement later
         //fen.append(" ").append(enPassant.isEmpty() ? "-" : enPassant);
 
-
+System.out.println(fen.toString());
         return fen.toString();
     }
 
@@ -356,7 +349,7 @@ public class Board {
             default: return null; // Empty square or invalid character
         }
     }
-    //This return 2 bishops ??? even when one should be empty
+
     public void setFEN(String fen) {
         // Clear the board first
         clearBoard();
@@ -385,7 +378,7 @@ public class Board {
                 
             }
         }
-      
+     
     }
     
     

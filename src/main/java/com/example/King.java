@@ -77,6 +77,8 @@ public class King extends Piece {
         throw new UnsupportedOperationException("Unimplemented method 'getValue'");
     }
 
+  
+
 
 }
 

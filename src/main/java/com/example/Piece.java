@@ -74,12 +74,14 @@ public List<int[]> getLegalMovesWithoutCheck(Game game) {
         // Check if the move results in a check on the player's own king
         if (!copyGame.isInCheck(isWhite)) {
             legalMoves.add(move);
+           
         }
 
         // Restore the board state
         boardCopy.setPiece(getRow(), getCol(), pieceToMove);
         boardCopy.setPiece(targetRow, targetCol, originalPieceAtTarget);
     }
+  
     
     return legalMoves;
 }

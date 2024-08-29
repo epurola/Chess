@@ -80,8 +80,10 @@ public class Replay {
 
     private List<Color> moveColors;
     private Color colour;
-    Stockfish stockfish;
+   private Stockfish stockfish;
     private Piece pawnToPromote;
+    private Game game;
+    
   
     
    
@@ -92,6 +94,9 @@ public class Replay {
     public void  initialize() throws IOException {
         moveColors = new ArrayList<>();
         moveHistory = new ArrayList<>();
+        game = new Game();
+        
+
         database = new Database();
         int totalGames = database.getTotalGames();
         moveHistory = database.getMoveAnalysis(totalGames);
@@ -140,11 +145,9 @@ public class Replay {
         board.clearBoard();
         if (!moveHistory.isEmpty()) {
            
-            board.setFEN(moveHistory.get(0).getFEN());  // Set the board to the initial position
+            game.getBoard().setFEN(moveHistory.get(0).getFEN());  // Set the board to the initial position
 
             initializeGameComboBox();
-
-           
             loadGame(totalGames);
         }
     }
@@ -291,7 +294,7 @@ private void findNextGreatMove() {
             currentMoveIndex = moveHistory.size()-1;
             board.clearBoard();
             updateScoreAndColor();
-            board.setFEN(moveHistory.get(currentMoveIndex).getFEN());  // Set the board to the initial position
+            game.getBoard().setFEN(moveHistory.get(currentMoveIndex).getFEN());  // Set the board to the initial position
             drawBoard();
         }
     }
@@ -306,6 +309,14 @@ private void findNextGreatMove() {
         gameSelector.setItems(gameItems);
         gameSelector.getSelectionModel().selectFirst(); // Select the first game by default
     }
+
+    private void analyzeboard(String fen, Game game)
+    {
+       
+        String description = FENParser.fenToNaturalLanguage(fen, game);
+        System.out.println(description);
+        System.out.println();
+    }
    
 
     private void drawBoard() {
@@ -314,9 +325,10 @@ private void findNextGreatMove() {
        
        
         int[] playerMove = {0, 0, 0, 0};
-        // Coordinates of the best move and the opponent's move
-        int[] bestMove = parseMove(moveHistory.get(currentMoveIndex).getBestMove());
+        int[] bestMove ={0,0,0,0};
+    
         if (currentMoveIndex > 0) {
+             bestMove = parseMove(moveHistory.get(currentMoveIndex).getBestMove());
             playerMove = parseMove(moveHistory.get(currentMoveIndex ).getPlayerMove());
         }
     
@@ -360,7 +372,7 @@ private void findNextGreatMove() {
     
                 chessBoard.add(square, j, i);
     
-                Piece piece = board.getPiece(i, j);
+                Piece piece = game.getBoard().getPiece(i, j);
                 if (piece != null) {
                     Image pieceImage = getPieceImage(piece);
                     ImageView pieceView = new ImageView(pieceImage);
@@ -390,6 +402,7 @@ private void findNextGreatMove() {
                 }
             }
         }
+        analyzeboard(moveHistory.get(currentMoveIndex).getFEN(),game);
        
        
     }
@@ -524,6 +537,7 @@ private void findNextGreatMove() {
     private void handlePieceDragStart(MouseEvent event, ImageView pieceView, Piece piece) {
         selectedPiece = piece;
         draggedPiece = pieceView;
+        drawPossibleMoves(selectedPiece);
         pieceView.toFront();
     }
 
@@ -542,10 +556,10 @@ private void findNextGreatMove() {
             int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
             if (row >= 0 && row < 8 && col >= 0 && col < 8) {
                 
-                board.setPiece(row, col, selectedPiece);
+                game.setPiece(row, col, selectedPiece);
                 if(row != selectedPiece.getRow() || col != selectedPiece.getCol())
                 {
-                    board.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), null);
+                    game.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), null);
                 }
                 if (selectedPiece instanceof Pawn && (row == 0 || row == 7)) {
                     pawnToPromote = (Pawn) selectedPiece;
@@ -557,12 +571,53 @@ private void findNextGreatMove() {
             }
             else
             {
-                board.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), selectedPiece);
+                game.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), selectedPiece);
                 SoundManager.playNotifySound();
             }
         }
         
         drawBoard();
+    }
+    private void drawPossibleMoves(Piece selectedPiece) {
+        List<int[]> possibleMoves = new ArrayList<>();
+
+        // Clear existing move indicators
+        chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
+    
+        double squareSize = chessBoard.getPrefWidth() / 8;
+        double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
+    
+        possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
+    
+        for (int[] move : possibleMoves) {
+            int row = move[0];
+            int col = move[1];
+    
+            // Check if the square is occupied
+            boolean isOccupied = game.getPiece(row, col) != null; 
+    
+                           
+            StackPane moveIndicatorContainer = new StackPane();
+           
+            if (isOccupied) {
+                Rectangle moveIndicatorR = new Rectangle(squareSize-4 , squareSize-4); 
+                moveIndicatorR.setFill(null); 
+                moveIndicatorR.setStroke(moveHelpColor); 
+                moveIndicatorR.setStrokeWidth(4); 
+                moveIndicatorContainer.getChildren().add(moveIndicatorR);
+                
+            } else {
+                Circle moveIndicator = new Circle(indicatorSize / 2);
+                moveIndicator.setFill(moveHelpColor.deriveColor(0, 1, 1, 0.7)); 
+                moveIndicatorContainer.getChildren().add(moveIndicator);
+            }
+
+            moveIndicatorContainer.setPickOnBounds(false);
+            moveIndicatorContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
+            moveIndicatorContainer.setMouseTransparent(true);
+            chessBoard.add(moveIndicatorContainer, col, row); // Add the container to the grid
+        }
+
     }
 
     @FXML
@@ -584,8 +639,8 @@ private void findNextGreatMove() {
     private void replayMoves() {
         if (currentMoveIndex >= 0 && currentMoveIndex < moveHistory.size()) {
             MoveAnalysis moveAnalysis = moveHistory.get(currentMoveIndex);
-            board.clearBoard();
-            board.setFEN(moveAnalysis.getFEN());
+            game.getBoard().clearBoard();
+            game.getBoard().setFEN(moveAnalysis.getFEN());
           
           
             drawBoard();

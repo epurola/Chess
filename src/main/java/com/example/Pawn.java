@@ -125,6 +125,8 @@ public class Pawn extends Piece {
     protected int getValue() {
         return 1;
     }
+
+  
 }
 
 

@@ -48,4 +48,6 @@ public class Knight extends Piece {
         return 3;
     }
 
+   
+
 }

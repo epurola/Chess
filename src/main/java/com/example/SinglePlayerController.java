@@ -499,6 +499,8 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
                     countdownClock.stop();
                     countdownClock2.stop();
                 }
+
+                //Maybe not neccesary Might caise a crash when using undo
                 selectedPiece = null;
                 draggedPiece = null;
             }
@@ -704,21 +706,21 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
                 int col = move[1];
         
                 // Check if the square is occupied
-                boolean isOccupied = game.getPiece(row, col) != null; // Use your board's method to check for occupation
+                boolean isOccupied = game.getPiece(row, col) != null; 
         
                                
                 StackPane moveIndicatorContainer = new StackPane();
                
                 if (isOccupied) {
                     Rectangle moveIndicatorR = new Rectangle(squareSize-4 , squareSize-4); 
-                    moveIndicatorR.setFill(null); // No fill for occupied squares
-                    moveIndicatorR.setStroke(moveHelpColor); // Set stroke color with transparency (50% opacity)
-                    moveIndicatorR.setStrokeWidth(4); // Adjust the stroke width if needed
+                    moveIndicatorR.setFill(null); 
+                    moveIndicatorR.setStroke(moveHelpColor); 
+                    moveIndicatorR.setStrokeWidth(4); 
                     moveIndicatorContainer.getChildren().add(moveIndicatorR);
                     
                 } else {
                     Circle moveIndicator = new Circle(indicatorSize / 2);
-                    moveIndicator.setFill(moveHelpColor.deriveColor(0, 1, 1, 0.7)); // Set fill color with transparency (50% opacity)
+                    moveIndicator.setFill(moveHelpColor.deriveColor(0, 1, 1, 0.7)); 
                     moveIndicatorContainer.getChildren().add(moveIndicator);
                 }
     

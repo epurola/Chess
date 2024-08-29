@@ -3,9 +3,7 @@ package com.example;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-import java.util.HashSet;
 
-import java.util.Set;
 
 public class Game {
     private Board board;
@@ -258,7 +256,7 @@ public class Game {
             if (selectedPiece instanceof Pawn && isEnPassant(originalRow, originalCol) )
             {
                 capturedPiece = getPiece(originalRow, toCol);
-                if(capturedPiece.isWhite() == isWhiteTurn())
+                if(capturedPiece != null && capturedPiece.isWhite() == isWhiteTurn())
                 {
                     capturedPiece = null;
                 }
@@ -687,7 +685,6 @@ public void promotePawn(int toRow, int toCol, String pieceName) {
     }
     public String toFen() {
         String fen =getBoard().toFEN(isWhiteTurn());
-        System.out.println("Game tofen" +fen);
         return fen;
     }
    
