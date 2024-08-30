@@ -73,8 +73,7 @@ public class King extends Piece {
 
     @Override
     protected int getValue() {
-        // Infinite value
-        throw new UnsupportedOperationException("Unimplemented method 'getValue'");
+       return 100;
     }
 
   

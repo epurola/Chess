@@ -87,6 +87,7 @@ public class Replay {
     private Piece pawnToPromote;
     private Game game;
     private  PythonScriptRunner python ;
+ 
   
     
   
@@ -323,15 +324,15 @@ private void findNextGreatMove() {
         gameSelector.getSelectionModel().selectFirst(); // Select the first game by default
     }
 
-    private void analyzeboard(String fen, Game game, String bestMove, String playerMove)  throws IOException, InterruptedException
+
+    private void analyzeboard(Game game, String bestMove, String playerMove)  throws IOException, InterruptedException
     {
-        textFlow.getChildren().clear();
-        String description = FENParser.fenToNaturalLanguage(fen, game, bestMove, playerMove);
-        String answer = python.runScript(description);
-       Text responseText = new Text(answer);
+       textFlow.getChildren().clear();
+       MoveAdvisor coach = new MoveAdvisor(game,bestMove,playerMove);
+       Text responseText = new Text("The best move was " + bestMove.toUpperCase() + "\n" + coach.analyzeMove());  //To be implemented later...
        textFlow.getChildren().add(responseText);
     }
-   
+
 
     private void drawBoard() throws IOException, InterruptedException {
         chessBoard.getChildren().clear();
@@ -422,7 +423,7 @@ private void findNextGreatMove() {
         }
         if(currentMoveIndex < moveHistory.size()-1)
         {
-            analyzeboard(moveHistory.get(currentMoveIndex).getFEN(),game,best, move);
+            analyzeboard(game, best, move);
         }
       
        
