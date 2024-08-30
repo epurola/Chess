@@ -323,10 +323,10 @@ private void findNextGreatMove() {
         gameSelector.getSelectionModel().selectFirst(); // Select the first game by default
     }
 
-    private void analyzeboard(String fen, Game game) throws IOException, InterruptedException
+    private void analyzeboard(String fen, Game game, String bestMove, String playerMove)  throws IOException, InterruptedException
     {
         textFlow.getChildren().clear();
-        String description = FENParser.fenToNaturalLanguage(fen, game);
+        String description = FENParser.fenToNaturalLanguage(fen, game, bestMove, playerMove);
         String answer = python.runScript(description);
        Text responseText = new Text(answer);
        textFlow.getChildren().add(responseText);
@@ -336,14 +336,18 @@ private void findNextGreatMove() {
     private void drawBoard() throws IOException, InterruptedException {
         chessBoard.getChildren().clear();
         double squareSize = chessBoard.getPrefWidth() / 8;
+        String best ="" ;
+        String move= "";
        
        
         int[] playerMove = {0, 0, 0, 0};
         int[] bestMove ={0,0,0,0};
     
         if (currentMoveIndex > 0) {
-             bestMove = parseMove(moveHistory.get(currentMoveIndex).getBestMove());
-            playerMove = parseMove(moveHistory.get(currentMoveIndex ).getPlayerMove());
+            best = moveHistory.get(currentMoveIndex).getBestMove();
+            move =moveHistory.get(currentMoveIndex ).getPlayerMove();
+            bestMove = parseMove(best);
+            playerMove = parseMove(move);
         }
     
         int bestFromRow = bestMove[0];
@@ -418,7 +422,7 @@ private void findNextGreatMove() {
         }
         if(currentMoveIndex < moveHistory.size()-1)
         {
-            analyzeboard(moveHistory.get(currentMoveIndex).getFEN(),game);
+            analyzeboard(moveHistory.get(currentMoveIndex).getFEN(),game,best, move);
         }
       
        

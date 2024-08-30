@@ -8,7 +8,8 @@ import java.util.Map;
 /*This class is designed to build a prompt for a llm that could give advice on the move and categorize
  * it. ChatGPT is able to give pretty accurate analysis if prompted with this string and the move made. 
  * also giving it the best move will help. For cost related reason this might not be developed further...
- * Local models like llama 3 are ass and will give inaccurate information
+ * Local models like llama 3 are ass and will give inaccurate information.
+ * The api test are done with gemini which was ok at times but made mistakes.
  */
 public class FENParser {
     private static final Map<Character, String> pieceNames = new HashMap<>();
@@ -29,7 +30,7 @@ public class FENParser {
         pieceNames.put('p', "Black Pawn");
     }
 
-    public static String fenToNaturalLanguage(String fen, Game game) {
+    public static String fenToNaturalLanguage(String fen, Game game, String bestMove, String playerMove) {
         // Split FEN string into its components
         String[] parts = fen.split(" ");
         String board = parts[0];
@@ -37,6 +38,9 @@ public class FENParser {
         
         // Initialize the description builder
         StringBuilder description = new StringBuilder();
+        description.append("Write two sentece analysis Why thiswas the best move and why potetially the players move was good or bad");
+        description.append("The Best move was: ").append(bestMove);
+        description.append("The player move move was: ").append(playerMove);
     
         // Split the board into ranks (rows)
         String[] ranks = board.split("/");
@@ -84,8 +88,8 @@ public class FENParser {
         // Finalize the description
         description.append("It is ")
                    .append(turn.equals("w") ? "White's" : "Black's")
-                   .append(" turn to move.")
-                   .append("Make a short evaluation on the position and give a best move recomendation");
+                   .append(" turn to move.");
+                   
     
         return description.toString().trim();
     }
@@ -113,13 +117,15 @@ public class FENParser {
         return moves;
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         String fen = "r3k2r/p4ppp/n1pQ4/q3p3/4n3/P3BN2/2P2PPP/1R3RK1 w";
        Game game = new Game();
         game.getBoard().setFEN(fen);
         String description = fenToNaturalLanguage(fen, game);
         System.out.println(description);
-    }
+    }*/
+
+    
 }
 
 
