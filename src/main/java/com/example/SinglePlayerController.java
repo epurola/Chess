@@ -27,6 +27,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.transform.Rotate;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -260,6 +261,11 @@ import java.util.concurrent.ExecutorService;
                         ImageView pieceView = new ImageView(pieceImage);
                         if(!piece.isWhite())
                         {
+                            
+                          //  Rotate rotate = new Rotate(180, squareSize/2, squareSize/ 2);
+        
+                           // pieceView.getTransforms().add(rotate);
+                
                             ColorAdjust colorAdjust = new ColorAdjust();
                             colorAdjust.setContrast(0.3); 
                              // Adjust this value between -1.0 and 1.
