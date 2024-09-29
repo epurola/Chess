@@ -12,13 +12,23 @@ public class MoveAdvisor {
     private int toCol;
     private int fromRow;
     private int fromCol;
+    private int btoRow;
+    private int btoCol;
+    private int bfromRow;
+    private int bfromCol;
     private String fen;
     private String[] parts;
     private String board ;
     private Piece piece;
     private String playerMove;
     private Board oldState;
+    private Stockfish stockfish;
+    private String bestMove; 
+    private Piece bestPiece;
+    private double scoreChange;
+    private String moveCategory;
     private static final Map<Character, String> pieceNames = new HashMap<>();
+    private String scoreString;
   
 
     static {
@@ -35,74 +45,223 @@ public class MoveAdvisor {
         pieceNames.put('n', "Black Knight");
         pieceNames.put('p', "Black Pawn");
     }
-public MoveAdvisor(Game game, String bestMove, String playerMove) {
+public MoveAdvisor(Game game, String bestmove,String playerMove, Stockfish stockfish, String moveGategory, String scoreString) {
         this.game = game;
         this.playerMove =playerMove;
+        this.stockfish = stockfish;
+        this.moveCategory = moveGategory;
+        this.scoreString = scoreString;
         
-        int[] bMove = parseMove(playerMove);
-        this.fromRow = bMove[0];
-        this.fromCol = bMove[1];
-        this.toRow = bMove[2];
-        this.toCol = bMove[3];
+        int[] pMove = parseMove(playerMove);
+        this.fromRow = pMove[0];
+        this.fromCol = pMove[1];
+        this.toRow = pMove[2];
+        this.toCol = pMove[3];
+        this.bestMove = bestmove;
+      
+        int[] bMove = parseMove(bestmove);
+        this.bfromRow = bMove[0];
+        this.bfromCol = bMove[1];
+        this.btoRow = bMove[2];
+        this.btoCol = bMove[3];
         oldState = game.getBoard();
-        game.makeMove(fromRow, fromCol, toRow, toCol);
+        
         piece = game.getBoard().getPiece(toRow, toCol);
+        game.makeMove(bfromRow, bfromCol, btoRow, btoCol);
+        bestPiece = game.getPiece(toRow, toCol);
+        
         fen = game.toFen();
+        
         parts = fen.split(" ");
         board=parts[0];
     }
 
   
-public String analyzeMove() {
-        if (isForkingMove()) {
-            return "The move "+ playerMove+ " is good because it forks the opponent.";
-        } else if (isBlunder()) {
-            return "The move "+ playerMove+ " is a blunder because it leaves a valuable piece hanging.";
-        } 
-        else if(canCaptureMoreValuablePiece())
-        {
-          return "The move "+ playerMove + " is a good because it captures a more valuable piece.";
+    public String analyzeMove() {
+        if (scoreString.contains("mate")) {
+            return "The move " + playerMove + " This will move lead in to checkmate";
+        } else if (isForkingMove() && isCheck() && isGood()) {
+            return "The move " + playerMove + "is great! You put the opponent in check while also forking material" ;
+        } else if ( isGood() && isCheck()) {
+            return "The move " + playerMove + " puts the king in check. "  ;
+        } else if (isForkingMove() && isGood()) {
+            return "The move " + playerMove + " is good because it forks the opponent.";
+        } else if (isPin() && isGood()) {
+            return "The move " + playerMove + " is strong because it pins a piece." ;
+        } else if (isSkewer() && isGood()) {
+            return "The move " + playerMove + " is powerful as it skews the opponent’s piece." ;
+        } else if (moveCategory.equals("Blunder")) {
+            return "The move " + playerMove + " is a blunder." ;
+        } else if (canCaptureMoreValuablePiece() && isGood()) {
+            return "The move " + playerMove + " is good because it captures a more valuable piece.";
+        } else if (!bestMove.equals(playerMove)) {
+            return analyzeMissedBestMove();
+        } else {
+            return "The move " + playerMove + " is solid, but nothing extraordinary." ;
         }
-        else {
-            return "The move is solid "+ playerMove+ ", but nothing extraordinary.";
+    }
+    
+    private String analyzeMissedBestMove() {
+        StringBuilder analysis = new StringBuilder();
+        if (moveCategory.equals("Good") || 
+        moveCategory.equals("Brilliant") || 
+        moveCategory.equals("Slight Improvement") || 
+        moveCategory.equals("Best")) {
+        
+        analysis.append("The move " + playerMove + " is a " + moveCategory + " move.");
+    } else {
+        analysis.append("The move " + playerMove + " is a " + moveCategory + ". ");
+        analysis.append("The best move would have been " + bestMove + ". ");
+        analysis.append("This would lead to a better position for you.");
+    }
+
+        if (isForkingMove()  ) {
+            analysis.append(" The best move also creates a fork, attacking two of your opponent's pieces at once.");
+        } else if (isPin() ) {
+            analysis.append(" The best move pins one of your opponent's pieces, limiting their options.");
+        } else if (isSkewer()) {
+            analysis.append(" The best move skews an opponent's piece, forcing a more favorable exchange.");
+        }
+        
+        return analysis.toString();
+    }
+    private boolean isGood() {
+        return bestMove.equals(playerMove);
+        }
+
+private boolean isSkewer() {
+    return false;
+    }
+
+
+  
+
+
+private boolean isPin() {
+    List<int[]> opponentPositions = getOpponentPiecePositions(fen, bestPiece.isWhite());
+    List<int[]> ownPositions = getOpponentPiecePositions(fen, !bestPiece.isWhite());
+    int[] kingPosition = piece.isWhite() ? game.getBlackKingPosition() : game.getWhiteKingPosition();
+    if (!(bestPiece instanceof Rook || bestPiece instanceof Bishop || bestPiece instanceof Queen)) {
+        return false; 
+    }
+    if(!isAlignedWithKing(kingPosition))
+    {
+        return false; 
+    }
+    // Check for opponent pieces between the piece and the king
+    int piecesBetween = countOpponentPiecesBetween(opponentPositions ,ownPositions, kingPosition);
+    
+    return piecesBetween == 1; 
+
+}
+
+private int countOpponentPiecesBetween(List<int[]> opponentPositions, List<int[]> ownPositions, int[] kingPosition) {
+    int count = 0;
+    int rowDirection = Integer.compare(kingPosition[0], bestPiece.getRow()); // Direction towards the king
+    int colDirection = Integer.compare(kingPosition[1], bestPiece.getCol());
+
+    // Start checking from the piece's position, one step towards the king
+    int row = bestPiece.getRow() + rowDirection;
+    int col = bestPiece.getCol() + colDirection;
+
+    // Traverse the path towards the king until we reach the king's position
+    while (row != kingPosition[0] || col != kingPosition[1]) {
+        // Check if there is an opponent piece at the current position
+        boolean foundOpponent = false;
+        boolean foundOwnPiece = false;
+
+        for (int[] opponentPos : opponentPositions) {
+            if (opponentPos[0] == row && opponentPos[1] == col) {
+                foundOpponent = true; // Found an opponent piece
+                break; // No need to continue checking other positions
+            }
+        }
+
+        for (int[] ownPos : ownPositions) {
+            if (ownPos[0] == row && ownPos[1] == col) {
+                foundOwnPiece = true; // Found an own piece
+                break; // No need to continue checking other positions
+            }
+        }
+
+        if (foundOwnPiece) {
+            return 0; // If there’s an own piece, cannot be a pin
+        }
+
+        if (foundOpponent) {
+            count++; // Increment the count for opponent pieces found
+        }
+
+        // Move one step closer to the king
+        row += rowDirection;
+        col += colDirection;
+    }
+
+    return count; // Return the total count of opponent pieces between
+}
+
+private boolean isAlignedWithKing( int[] kingPosition) {
+    if(bestPiece instanceof Queen || bestPiece instanceof Rook)
+    {
+    // Check for alignment on the same row (horizontal)
+    if (bestPiece .getRow()== kingPosition[0]) {
+        return true; // Same row
+    }
+    // Check for alignment on the same column (vertical)
+    if (bestPiece .getCol()== kingPosition[1]) {
+        return true; // Same column
+    }
+}
+
+    if(bestPiece  instanceof Queen || bestPiece  instanceof Bishop)
+    {
+      // Check for alignment on the same diagonal
+       int rowDiff = Math.abs(bestPiece .getRow() - kingPosition[0]);
+       int colDiff = Math.abs(bestPiece .getCol()- kingPosition[1]);
+        if (rowDiff == colDiff) {
+            return true; // Same diagonal
         }
     }
    
+    return false; // Not aligned
+}
+
+
+private boolean isCheck() {
+       return game.isInCheck(!piece.isWhite());
+    }
+
+
+private boolean isCheckmate() {
+        return false;
+    }
+
+
 private boolean isForkingMove() {
-        List<int[]> opponentPositions = getOpponentPiecePositions(fen, piece.isWhite());
-        System.out.println("Opponent Piece Positions:");
-        for (int[] pos : opponentPositions) {
-            System.out.println("Row: " + pos[0] + ", Col: " + pos[1]);
-        }
+        List<int[]> opponentPositions = getOpponentPiecePositions(fen, bestPiece.isWhite());
+      
         List<int[]> allMoves = piece.getPossibleMoves(game);
-        System.out.println("Possible Moves for the Piece:" + piece.getClass().toString()+piece.isWhite());
-        for (int[] move : allMoves) {
-            System.out.println("Move to Row: " + move[0] + ", Col: " + move[1]);
-        }
-        System.out.print("Piece Position"+ piece.getRow() +piece.getCol());
+       
         int attackCount = 0;
         for (int[] move : allMoves) {
-            System.out.println("Checking move to Row: " + move[0] + ", Col: " + move[1]);
+        
             boolean isAttackingOpponent = false;
             for (int[] opponentPosition : opponentPositions) {
-                if (move[0] == opponentPosition[0] && move[1] == opponentPosition[1]) {
+                if (move[0] == opponentPosition[0] && move[1] == opponentPosition[1] ) {
                     isAttackingOpponent = true;
-                    System.out.println("Move targets an opponent's piece at Row: " + opponentPosition[0] + ", Col: " + opponentPosition[1]);
                     break; 
                 }
             }
             if (isAttackingOpponent) {
                 attackCount++;
-                System.out.println("Total attack count so far: " + attackCount);
             }
             if (attackCount > 1) {
-                System.out.println("Forking move detected! Attack count: " + attackCount);
                 return true;
             }
         }
-        System.out.println("No forking move detected. Final attack count: " + attackCount);
         return false;
     }
+    
     
     
 public List<int[]> getOpponentPiecePositions(String fen, boolean isWhite) {
@@ -134,12 +293,11 @@ public List<int[]> getOpponentPiecePositions(String fen, boolean isWhite) {
     
 
 private boolean isBlunder() {
+    if (bestMove.equals(playerMove)) {
+        return false; 
+    }
         boolean isWhiteTurn = piece.isWhite(); 
         List<int[]> opponentPositions = getOpponentPiecePositions(fen, isWhiteTurn);
-        System.out.println("Opponent Piece Positions:");
-        for (int[] pos : opponentPositions) {
-            System.out.println("Row: " + pos[0] + ", Col: " + pos[1]);
-        }
         List<int[]> opponentMoves = new ArrayList<>();
         for (int[] opponentPosition : opponentPositions) {
             Piece opponentPiece = game.getBoard().getPiece(opponentPosition[0], opponentPosition[1]);
@@ -157,6 +315,7 @@ private boolean isBlunder() {
         }
         return false;
     }
+   
 
 private boolean canCaptureMoreValuablePiece() {
        int[]pmove = parseMove(playerMove);
@@ -189,23 +348,4 @@ public static int[] parseMove(String bestMove) {
         return new int[] {fromRow, fromCol, toRow, toCol};
     }
     
-private int getPieceValue(Piece piece) {
-      
-        switch (piece.getClass().getSimpleName()) {
-            case "Pawn":
-                return 1;
-            case "Knight":
-                return 3;
-            case "Bishop":
-                return 3;
-            case "Rook":
-                return 5;
-            case "Queen":
-                return 9;
-            case "King":
-                return 0; 
-            default:
-                return 0;
-        }
-    }
 }

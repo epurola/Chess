@@ -3,10 +3,7 @@ package com.example;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-
 import javafx.animation.FadeTransition;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -19,7 +16,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -27,7 +23,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -79,7 +74,9 @@ public class Replay {
     double screenHeight;
     private Piece piece;
     private int currentScore;
-    private int previousScore;
+    private double previousScore;
+    private double scoreChange;
+    private  int scoreValue;
 
     private List<Color> moveColors;
     private Color colour;
@@ -87,6 +84,8 @@ public class Replay {
     private Piece pawnToPromote;
     private Game game;
     private  PythonScriptRunner python ;
+    private String moveCategory;
+    private double evaluation;
  
   
     
@@ -152,6 +151,8 @@ public class Replay {
             blackHbox.setMinHeight(hboxHeight);
             blackHbox.setPrefHeight(hboxHeight);
             blackHbox.setMaxHeight(hboxHeight);
+            currentScore =0;
+            score ="";
           
            
       
@@ -159,54 +160,55 @@ public class Replay {
         board.clearBoard();
         if (!moveHistory.isEmpty()) {
            
-            game.getBoard().setFEN(moveHistory.get(15).getFEN());  // Set the board to the initial position
+            game.getBoard().setFEN(moveHistory.get(0).getFEN());  // Set the board to the initial position
 
             initializeGameComboBox();
             loadGame(totalGames);
         }
     }
-    public static int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove) {
+    private String score;
+    private int mateMoves;
+    public int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove) {
         int currentScore = 0;
-
+    
         // Ensure the index is within bounds
         if (currentMove < 0 || currentMove >= moveHistory.size()) {
-            System.err.println("Index out of bounds!" + currentMove);
+            System.err.println("Index out of bounds: " + currentMove);
             return currentScore;
         }
-        // Loop through moves up to the specified index
-        for (int i = 0; i <= currentMove; i++) {
-            MoveAnalysis move = moveHistory.get(i);
-            String score = move.getScore();
-            try {
-                if (score.contains("centipawns")) {
-                    // Extract numerical value for centipawns
-                    String[] parts = score.split(" ");
-                    int scoreValue = Integer.parseInt(parts[0]);
-                    currentScore += scoreValue;
-                } else if (score.contains("moves to mate")) {
-                    // Extract numerical value for mate moves
-                    String[] parts = score.split(" ");
-                    int mateMoves = Integer.parseInt(parts[0]);
-                    if(mateMoves <= 2)
-                    {
-                        currentScore += mateMoves * 200; 
-                    }
-                    else if (mateMoves >= 2 && mateMoves <= 5){
-                        currentScore += mateMoves * 100; 
-                    }
-                    else
-                    {
-                        currentScore += mateMoves * 50; 
-                    }
-                    
+    
+        // Get the current move analysis
+        MoveAnalysis move = moveHistory.get(currentMove);
+        score = move.getScore();
+        System.out.println("Score: " + score);
+    
+        try {
+            if (score.contains("mate")) {
+                // If it's a mate sequence, get the number of moves to mate
+                String[] parts = score.split(" ");
+                mateMoves = Integer.parseInt(parts[0]); // Number of moves to mate
+    
+                // Set the currentScore based on how many moves to mate
+                if (mateMoves <= 3) {
+                    currentScore = 1000; // Indicating a critical situation
+                } else if (mateMoves <= 5) {
+                    currentScore = 500; // Indicating a mistake scenario
+                } else {
+                    currentScore = 100; // Indicating an inaccuracy scenario
                 }
-            } catch (NumberFormatException e) {
-                System.err.println("Error parsing score: " + e.getMessage());
+            } else if (score.contains("centipawns")) {
+                // If it's a centipawn evaluation, extract the centipawn value
+                String[] parts = score.split(" ");
+                currentScore = Integer.parseInt(parts[0]); // Convert centipawns to integer
             }
+        } catch (NumberFormatException e) {
+            System.err.println("Error parsing score: " + e.getMessage());
         }
-
+    
         return currentScore;
     }
+    
+    
 
 
     
@@ -226,61 +228,6 @@ private void findNextBlunder() {
     System.out.println("No more blunders found.");
 }
 
- private void drawBestMoveIndicators(int fromRow, int fromCol, int toRow, int toCol) {
-    double squareSize = chessBoard.getPrefWidth() / 8;
-    double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
-    // Clear existing move indicators
-    chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
-    // Highlight the best move in gold color
-    Circle bestMoveIndicator = new Circle(indicatorSize / 2);
-    bestMoveIndicator.setStroke(Color.GOLD.deriveColor(0, 1, 1, 0.9)); // Set stroke color to gold
-    bestMoveIndicator.setStrokeWidth(3); // Adjust the stroke width if needed
-    bestMoveIndicator.setFill(!selectedPiece.isWhite()?Color.WHITE.deriveColor(0, 1, 1, 0.8):Color.BLACK.deriveColor(0, 1, 1, 0.7)); // No fill
-    StackPane bestMoveContainer = new StackPane();
-    bestMoveIndicator.toFront();
-    bestMoveContainer.setPickOnBounds(false);
-    bestMoveContainer.getChildren().add(bestMoveIndicator);
-    bestMoveContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
-    bestMoveContainer.setMouseTransparent(true);
-        if (toRow>= 0 && toRow < 8 && toCol >= 0 && toCol < 8) {
-        chessBoard.add(bestMoveContainer, toCol, toRow); // Add the container to the grid at the destination square
-        }
-    // Highlight the piece that can make the best move in gold
-    Rectangle bestPieceIndicator = new Rectangle(squareSize-4 , squareSize-4); // Full square size
-    bestPieceIndicator.setStroke(Color.GOLD.deriveColor(0, 1, 1, 0.9)); // Set stroke color to gold
-    bestPieceIndicator.setStrokeWidth(4); // Adjust the stroke width if needed
-    bestPieceIndicator.setFill(null); // No fill
-    StackPane bestPieceContainer = new StackPane();
-    bestPieceContainer.setPickOnBounds(false);
-    bestPieceContainer.getChildren().add(bestPieceIndicator);
-    bestPieceContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
-    bestPieceContainer.setMouseTransparent(true);
-        if (fromRow>= 0 && fromRow < 8 && fromCol >= 0 && fromCol < 8) {
-        chessBoard.add(bestPieceContainer, fromCol, fromRow); // Add the container to the grid at the origin square
-        }
-}
-public String rowColToAlgebraic(int row, int col) {
-    // Convert column index to column character ('a' to 'h')
-    char columnChar = (char) ('a' + col);
-    // Convert row index to row character ('1' to '8')
-    char rowChar = (char) ('1' + (7 - row)); // Adjust for 0-based indexing
-    // Combine column and row characters to form the algebraic notation
-    return "" + columnChar + rowChar;
-}
-
-
-private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
-    ExecutorService executor = ExecutorServiceManager.getExecutorService();
-        executor.submit(() -> {
-       
-         
-            int[] bestMove = parseMove(stockfish.getBestMove(fen));
-            Platform.runLater(() -> {
-                drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);  
-            });    
-       
-    });
-}
 
 private void findNextGreatMove() {
     // Start searching from the next index
@@ -307,7 +254,6 @@ private void findNextGreatMove() {
         if (!moveHistory.isEmpty()) {
             currentMoveIndex = moveHistory.size()-1;
             board.clearBoard();
-            updateScoreAndColor();
             game.getBoard().setFEN(moveHistory.get(currentMoveIndex).getFEN());  // Set the board to the initial position
             drawBoard();
         }
@@ -328,194 +274,141 @@ private void findNextGreatMove() {
     private void analyzeboard(Game game, String bestMove, String playerMove)  throws IOException, InterruptedException
     {
        textFlow.getChildren().clear();
-       MoveAdvisor coach = new MoveAdvisor(game,bestMove,playerMove);
-       Text responseText = new Text("The best move was " + bestMove.toUpperCase() + "\n" + coach.analyzeMove());  //To be implemented later...
+       
+
+       String scoreString = String.valueOf(evaluation);
+       if(Math.abs(currentScore )== 1000)
+       {
+        scoreString = score;
+       }
+       System.out.println("THIS IS IT"+moveCategory);
+       MoveAdvisor coach = new MoveAdvisor(game,bestMove,playerMove, stockfish, moveCategory, scoreString);
+       Text responseText = new Text(  coach.analyzeMove() + "\n"+ scoreString+ "\n"+ moveCategory);  
        textFlow.getChildren().add(responseText);
-    }
-
-
-    private void drawBoard() throws IOException, InterruptedException {
-        chessBoard.getChildren().clear();
-        double squareSize = chessBoard.getPrefWidth() / 8;
-        String best ="" ;
-        String move= "";
-       
-       
-        int[] playerMove = {0, 0, 0, 0};
-        int[] bestMove ={0,0,0,0};
-    
-        if (currentMoveIndex > 0) {
-            best = moveHistory.get(currentMoveIndex).getBestMove();
-            move =moveHistory.get(currentMoveIndex ).getPlayerMove();
-            bestMove = parseMove(best);
-            playerMove = parseMove(move);
-        }
-    
-        int bestFromRow = bestMove[0];
-        int bestFromCol = bestMove[1];
-        int bestToRow = bestMove[2];
-        int bestToCol = bestMove[3];
-    
-        int playerFromRow = playerMove[0];
-        int playerFromCol = playerMove[1];
-        int playerToRow = playerMove[2];
-        int playerToCol = playerMove[3];
-        colour = updateScoreAndColor();
-        
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                Rectangle square = new Rectangle(squareSize, squareSize);
-                
-                // Different shades for the best move
-                if (i == bestFromRow && j == bestFromCol) {
-                    square.setFill(Color.GOLD.darker()); // From square for best move
-                } else if (i == bestToRow && j == bestToCol) {
-                    square.setFill(Color.GOLD); // To square for best move
-                }
-                // Different shades for the player's move
-                else if (i == playerFromRow && j == playerFromCol && currentMoveIndex > 0) {
-                  
-                        square.setFill(colour.darker()); 
-                  
-                   // Color based on score
-                } else if (i == playerToRow && j == playerToCol && currentMoveIndex > 0) {
-                  
-                  
-                        square.setFill(colour); 
-                 
-                }
-                // Regular board colors
-                else {
-                    square.setFill((i + j) % 2 == 0 ? lightColor : darkColor);
-                }
-    
-                chessBoard.add(square, j, i);
-    
-                Piece piece = game.getBoard().getPiece(i, j);
-                if (piece != null) {
-                    Image pieceImage = getPieceImage(piece);
-                    ImageView pieceView = new ImageView(pieceImage);
-                    pieceView.setFitHeight(squareSize);
-                    pieceView.setFitWidth(squareSize);
-                      if(!piece.isWhite())
-                        {
-                            ColorAdjust colorAdjust = new ColorAdjust();
-                            colorAdjust.setContrast(0.3); 
-                             // Adjust this value between -1.0 and 1.
-                        pieceView.setEffect(colorAdjust);
-                        }
-                        else
-                        {
-                            ColorAdjust colorAdjust = new ColorAdjust();
-                            colorAdjust.setContrast(0.3);  // Increase contrast (adjust as needed)
-                            colorAdjust.setBrightness(-0.2);  // Slightly decrease brightness (adjust as needed)
-                            colorAdjust.setSaturation(0);  // Optional: set to 0 for grayscale effect
-                            
-                        pieceView.setEffect(colorAdjust);
-                        }
-                    chessBoard.add(pieceView, j, i);
-    
-                    pieceView.setOnMousePressed(event -> handlePieceDragStart(event, pieceView, piece));
-                    pieceView.setOnMouseDragged(this::handlePieceDrag);
-                    pieceView.setOnMouseReleased(this::handlePieceDrop);
-                }
-            }
-        }
-        if(currentMoveIndex < moveHistory.size()-1)
-        {
-            analyzeboard(game, best, move);
-        }
-      
-       
-       
-    }
- 
-    
-    private Color getColorForScore(int score) {
-        // Define thresholds
-        double lowThreshold = 0.4;  // Below this threshold
-        double highThreshold = 0.7; // Above this threshold
-        double neutralThresholdLow = 0.5;  // Lower bound of neutral range
-        double neutralThresholdHigh = 0.6; // Upper bound of neutral range
-        
-        // Normalize the score
-        double normalizedScore = normalizeScore(score);
-        
-        // Assign colors based on thresholds
-        if (normalizedScore < lowThreshold) {
-            return Color.RED; // Color for low scores (bad moves)
-        } else if (normalizedScore >= lowThreshold && normalizedScore < neutralThresholdLow) {
-            return Color.color(1.0, 0.6, 0.6);// Color for scores between low and neutral
-        } else if (normalizedScore >= neutralThresholdLow && normalizedScore <= neutralThresholdHigh) {
-            return Color.GRAY; // Color for neutral scores
-        } else if (normalizedScore > neutralThresholdHigh && normalizedScore < highThreshold) {
-            return Color.GREEN; // Color for scores between neutral and high
-        } else {
-            return Color.GREEN; // Color for high scores (good moves)
-        }
     }
    
   
     private Color updateScoreAndColor() {
-     
+        // Calculate current score based on move history and current move index
         currentScore = calculateCurrentScore(moveHistory, currentMoveIndex);
-      
-        // Get color based on score change
-        Color color = getColorForScoreChange(currentScore, previousScore);
-        // Update previous score
-       // previousScore = currentScore;
-      
-        // Use the color for visualization as needed
-         moveColors.add(color);
-         return color;
-       
+    
+        // Determine the evaluation for the current player
+        int n = game.isWhiteTurn() ? -1 : 1; // Positive for White, negative for Black
+        double eval = (double) currentScore / 100 * n;  // Normalize evaluation for the current move
+        evaluation = eval;
+    
+        // Calculate the difference between the current and previous evaluations
+        double scoreChange = eval - previousScore;  // This captures the change in position
+    
+        // Log for debugging
+        System.out.println("Current Eval: " + eval);
+        System.out.println("Previous Eval: " + previousScore);
+        System.out.println("Score Change: " + scoreChange);
+
+        // Categorize the move based on the actual change in score
+        if(eval > 5 )
+        {
+            scoreChange = scoreChange * 0.7;
+        }
+        if( eval < -5)
+        {
+            scoreChange = scoreChange * 0.7;
+        }
+         moveCategory = categorizeMove(scoreChange);  // Categorize based on the actual change
+    
+        // Get the color based on the score change
+        Color color = getColorForScoreChange(scoreChange);  // Use scoreChange for color determination
+    
+        // Store the color for future reference
+        moveColors.add(color);
+    
+        // Update previous score for the next calculation
+        previousScore = eval;  // Update after processing
+    
+        return color;
     }
-    private Color getColorForScoreChange(int currentScore, int previousScore) {
-        // Calculate the change in score
-        int scoreChange;
-       if(currentMoveIndex + 1 < moveHistory.size())
-       {
-        scoreChange = (calculateCurrentScore(moveHistory, currentMoveIndex + 1 )- currentScore) * -1  ;
-       }
-       else
-       {
-        scoreChange = 0;
-       }
+    
+    
+   
+
+    private Color getColorForScoreChange(double scoreChange) {
+        // Define thresholds for color mapping based on move category
+        moveCategory = categorizeMove(scoreChange); 
+        System.out.println("Move Category: " + moveCategory);
         
+
     
-        // Define thresholds for color mapping
-        int highChangeThreshold = 200;
-        int mediumChangeThreshold = 100;
-        int lowChangeThreshold = 50;
-    
-        // Determine color based on the direction and magnitude of the score change
-        if (scoreChange >= highChangeThreshold) {
-            return Color.GREEN; // Significant improvement
-        } else if (scoreChange >= mediumChangeThreshold) {
-            return Color.LIGHTGREEN; // Moderate improvement
-        } else if (scoreChange >= lowChangeThreshold) {
-            return Color.GRAY; // Minor improvement
-        } else if (scoreChange <= -highChangeThreshold) {
-            return Color.RED; // Significant worsening
-        } else if (scoreChange <= -mediumChangeThreshold) {
-            return Color.PINK; // Moderate worsening
-        } else if (scoreChange <= -lowChangeThreshold) {
-            return Color.GRAY; // Minor worsening
-        } else {
-            return Color.GRAY; // Little to no change
+        // Color mapping based on move category
+        switch (moveCategory) {
+            case "Brilliant":
+                return Color.GREEN; // Large positive change, excellent move
+            case "Good":
+                return Color.LIGHTGREEN; // Moderate positive change, good move
+            case "Slight Improvement":
+                return Color.GRAY; // Small positive change, slight improvement
+            case "Inaccuracy":
+                return Color.ORANGE; // Small negative change, inaccuracy
+            case "Mistake":
+                return Color.PINK; // Moderate negative change, mistake
+            case "Blunder":
+                return Color.RED; // Large negative change, blunder
+            case "Best":
+                return Color.GOLD; // Exceptional move
+            default:
+                return Color.GRAY; // Even or no significant change
         }
     }
     
-    
-    
-    // Normalize the score to a range [0, 1] based on the expected score range
-    private double normalizeScore(int score) {
-        int minScore = -600; // Example minimum bad score
-        int maxScore = 600;  // Example maximum good score
-        return Math.min(1, Math.max(0, (double)(score - minScore) / (maxScore - minScore)));
+
+public String categorizeMove(double scoreChange) {
+    // Determine if the piece is White or Black and categorize move accordingly
+    if (currentMoveIndex < moveHistory.size()-1 ) {
+    String best = moveHistory.get(currentMoveIndex+1).getBestMove();
+     String   move =moveHistory.get(currentMoveIndex+1).getPlayerMove();
+     if (move.equals(best))
+     {
+        return "Best";
+     }
     }
     
-  
+    if (game.isWhiteTurn()) {
+        if (scoreChange <= -3) {
+            return "Blunder";  // Large negative score change (bad for White)
+        } else if (scoreChange <= -1) {
+            return "Mistake";  // Moderate negative score change
+        } else if (scoreChange < -0.3) {
+            return "Inaccuracy";  // Small negative score change
+        } else if (scoreChange >= 3) {
+            return "Brilliant";  // Large positive score change (great for White)
+        } else if (scoreChange >= 1) {
+            return "Good";  // Moderate positive score change
+        } else if (scoreChange > 0.3) {
+            return "Slight Improvement";  // Small positive score change
+        } else {
+            return "Even";  // No significant change
+        }
+    } else {  // For Black pieces, reverse the logic for positive/negative changes
+        if (scoreChange >= 3) {
+            return "Blunder";  // Large positive score change (bad for Black)
+        } else if (scoreChange >= 1) {
+            return "Mistake";  // Moderate positive score change
+        } else if (scoreChange > 0.3) {
+            return "Inaccuracy";  // Small positive score change
+        } else if (scoreChange <= -3) {
+            return "Brilliant";  // Large negative score change (good for Black)
+        } else if (scoreChange <= -1) {
+            return "Good";  // Moderate negative score change
+        } else if (scoreChange < -0.3) {
+            return "Slight Improvement";  // Small negative score change (good for Black)
+        } else {
+            return "Even";  // No significant change
+        }
+    }
+}
+
+
+
+
     
     
     public static int[] parseMove(String bestMove) {
@@ -557,96 +450,6 @@ private void findNextGreatMove() {
         }
     }
 
-    private void handlePieceDragStart(MouseEvent event, ImageView pieceView, Piece piece) {
-        selectedPiece = piece;
-        draggedPiece = pieceView;
-        drawPossibleMoves(selectedPiece);
-        pieceView.toFront();
-    }
-
-    private void handlePieceDrag(MouseEvent event) {
-        if (draggedPiece != null) {
-            draggedPiece.setTranslateX(event.getSceneX() - 50 - draggedPiece.getLayoutX() - chessBoard.localToScene(0, 0).getX());
-            draggedPiece.setTranslateY(event.getSceneY() - 50 - draggedPiece.getLayoutY() - chessBoard.localToScene(0, 0).getY());
-        }
-    }
-
-    private void handlePieceDrop(MouseEvent event) {
-        try {
-            double squareSize = chessBoard.getPrefWidth() / 8;
-            
-            if (draggedPiece != null) {
-                int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
-                int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
-                if (row >= 0 && row < 8 && col >= 0 && col < 8) {
-                    
-                    game.setPiece(row, col, selectedPiece);
-                    if(row != selectedPiece.getRow() || col != selectedPiece.getCol())
-                    {
-                        game.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), null);
-                    }
-                    if (selectedPiece instanceof Pawn && (row == 0 || row == 7)) {
-                        pawnToPromote = (Pawn) selectedPiece;
-                        promotePawn(row, col);
-                    }
-                    
-                    SoundManager.playMoveSound();
-                    startGameAnalysis(row, col, row, col,  board.toFEN(!selectedPiece.isWhite()));
-                }
-                else
-                {
-                    game.setPiece(selectedPiece.getRow(), selectedPiece.getCol(), selectedPiece);
-                    SoundManager.playNotifySound();
-                }
-            }
-            
-            drawBoard();
-        } catch (IOException ex) {
-        } catch (InterruptedException ex) {
-        }
-    }
-    private void drawPossibleMoves(Piece selectedPiece) {
-        List<int[]> possibleMoves = new ArrayList<>();
-
-        // Clear existing move indicators
-        chessBoard.getChildren().removeIf(node -> node instanceof StackPane);
-    
-        double squareSize = chessBoard.getPrefWidth() / 8;
-        double indicatorSize = squareSize * 0.3; // Diameter of the indicator, e.g., 30% of square size
-    
-        possibleMoves = selectedPiece.getLegalMovesWithoutCheck(game);
-    
-        for (int[] move : possibleMoves) {
-            int row = move[0];
-            int col = move[1];
-    
-            // Check if the square is occupied
-            boolean isOccupied = game.getPiece(row, col) != null; 
-    
-                           
-            StackPane moveIndicatorContainer = new StackPane();
-           
-            if (isOccupied) {
-                Rectangle moveIndicatorR = new Rectangle(squareSize-4 , squareSize-4); 
-                moveIndicatorR.setFill(null); 
-                moveIndicatorR.setStroke(moveHelpColor); 
-                moveIndicatorR.setStrokeWidth(4); 
-                moveIndicatorContainer.getChildren().add(moveIndicatorR);
-                
-            } else {
-                Circle moveIndicator = new Circle(indicatorSize / 2);
-                moveIndicator.setFill(moveHelpColor.deriveColor(0, 1, 1, 0.7)); 
-                moveIndicatorContainer.getChildren().add(moveIndicator);
-            }
-
-            moveIndicatorContainer.setPickOnBounds(false);
-            moveIndicatorContainer.setPrefSize(squareSize, squareSize); // Ensure the container matches the square size
-            moveIndicatorContainer.setMouseTransparent(true);
-            chessBoard.add(moveIndicatorContainer, col, row); // Add the container to the grid
-        }
-
-    }
-
     @FXML
     private void handleRewindBack() {
         if (currentMoveIndex >= 0) {
@@ -669,7 +472,7 @@ private void findNextGreatMove() {
                 MoveAnalysis moveAnalysis = moveHistory.get(currentMoveIndex);
                 game.getBoard().clearBoard();
                 game.getBoard().setFEN(moveAnalysis.getFEN());
-                
+               
                 
                 drawBoard();
             } catch (IOException ex) {
@@ -743,82 +546,7 @@ private void findNextGreatMove() {
                 fadeIn.play();
             }
         }
-        private void promotePawn(int row, int col) {
-        
-            List<String> promotionImagePaths = List.of(
-                "/images/white-rook.png",
-                "/images/white-bishop.png",
-                "/images/white-knight.png",
-                "/images/white-queen.png"
-            );
-        
-        
-            if (selectedPiece.isWhite()) {
-                promotionImagePaths = List.of(
-                    "/images/white-rook.png",
-                    "/images/white-bishop.png",
-                    "/images/white-knight.png",
-                    "/images/white-queen.png"
-                );
-            } else {
-                promotionImagePaths = List.of(
-                    "/images/black-rook.png",
-                    "/images/black-bishop.png",
-                    "/images/black-knight.png",
-                    "/images/black-queen.png"
-                );
-            }
-            // Instantiate the ChoiseMenu with the promotion options and a callback
-            ChoiseMenu promotionMenu = new ChoiseMenu("Choose Promotion", promotionImagePaths, choice -> {
-                // Handle the user's choice
-                Piece newPiece;
-        
-                switch (choice) {
-                    case "/images/white-rook.png":
-                        newPiece = new Rook(row, col, pawnToPromote.isWhite());
-                        break;
-                    case "/images/white-bishop.png":
-                        newPiece = new Bishop(row, col, pawnToPromote.isWhite());
-                        break;
-                    case "/images/white-knight.png":
-                        newPiece = new Knight(row, col, pawnToPromote.isWhite());
-                        break;
-                    case "/images/white-queen.png":
-                      newPiece = new Queen(row, col, pawnToPromote.isWhite());
-                        break;
-                    case "/images/black-rook.png":
-                        newPiece = new Rook(row, col, pawnToPromote.isWhite());
-                        break;
-                    case "/images/black-bishop.png":
-                        newPiece = new Bishop(row, col, pawnToPromote.isWhite());
-                        break;
-                    case "/images/black-knight.png":
-                        newPiece = new Knight(row, col, pawnToPromote.isWhite());
-                        break;
-                    case "/images/black-queen.png":
-                        newPiece = new Queen(row, col, pawnToPromote.isWhite());
-                        break;
-                    default:
-                        newPiece = new Queen(row, col, pawnToPromote.isWhite());
-                }
-                SoundManager.playButtonSound();
-                board.setPiece(row, col, newPiece);
-                System.out.println("Pawn promoted to " + choice + ".");
-                pawnToPromote = null; // Reset pawnToPromote after promotion
-                try {
-                    drawBoard();  // Redraw the board to update the piece's position
-                } catch (IOException ex) {
-                } catch (InterruptedException ex) {
-                }
-               
-                
-            });
-            promotionMenu.setLayoutX(row);
-            promotionMenu.setLayoutY(col);
-            rootPane.getChildren().add(promotionMenu);
-          
-           
-        }
+       
     
 
    
@@ -837,6 +565,102 @@ private void deleteGames()
 {
     database.clearDatabase();
     initializeGameComboBox();
+}
+private void drawBoard() throws IOException, InterruptedException {
+    getColorForScoreChange(scoreChange);
+    chessBoard.getChildren().clear();
+    double squareSize = chessBoard.getPrefWidth() / 8;
+    String best ="" ;
+    String move= "";
+   
+   
+    int[] playerMove = {0, 0, 0, 0};
+    int[] bestMove ={0,0,0,0};
+
+    if (currentMoveIndex < moveHistory.size()-1 ) {
+        best = moveHistory.get(currentMoveIndex).getBestMove();
+        move =moveHistory.get(currentMoveIndex+1).getPlayerMove();
+        bestMove = parseMove(best);
+        playerMove = parseMove(move);
+    }
+
+    int bestFromRow = bestMove[0];
+    int bestFromCol = bestMove[1];
+    int bestToRow = bestMove[2];
+    int bestToCol = bestMove[3];
+
+    int playerFromRow = playerMove[0];
+    int playerFromCol = playerMove[1];
+    int playerToRow = playerMove[2];
+    int playerToCol = playerMove[3];
+    colour = updateScoreAndColor();
+    
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Rectangle square = new Rectangle(squareSize, squareSize);
+            
+           
+            if (i == playerFromRow && j == playerFromCol && currentMoveIndex > 0) {
+              
+                    square.setFill(colour.darker()); 
+              
+               // Color based on score
+            } else if (i == playerToRow && j == playerToCol && currentMoveIndex > 0) {
+                    square.setFill(colour); 
+
+            }
+            // Regular board colors
+            else {
+                square.setFill((i + j) % 2 == 0 ? lightColor : darkColor);
+            }
+            
+
+
+            chessBoard.add(square, j, i);
+
+            Piece piece = game.getBoard().getPiece(i, j);
+            if (piece != null) {
+                Image pieceImage = getPieceImage(piece);
+                ImageView pieceView = new ImageView(pieceImage);
+                pieceView.setFitHeight(squareSize);
+                pieceView.setFitWidth(squareSize);
+                  if(!piece.isWhite())
+                    {
+                        ColorAdjust colorAdjust = new ColorAdjust();
+                        colorAdjust.setContrast(0.3); 
+                         // Adjust this value between -1.0 and 1.
+                    pieceView.setEffect(colorAdjust);
+                    }
+                    else
+                    {
+                        ColorAdjust colorAdjust = new ColorAdjust();
+                        colorAdjust.setContrast(0.3);  // Increase contrast (adjust as needed)
+                        colorAdjust.setBrightness(-0.2);  // Slightly decrease brightness (adjust as needed)
+                        colorAdjust.setSaturation(0);  // Optional: set to 0 for grayscale effect
+                        
+                    pieceView.setEffect(colorAdjust);
+                    }
+                chessBoard.add(pieceView, j, i);
+            }
+        }
+    }
+
+    if(currentMoveIndex < moveHistory.size()-1)
+    {
+        analyzeboard(game, best, move);
+    }
+  
+   
+   
+}
+
+public String rowColToAlgebraic(int row, int col) {
+    // Convert column index to column character ('a' to 'h')
+    char columnChar = (char) ('a' + col);
+    // Convert row index to row character ('1' to '8')
+    char rowChar = (char) ('1' + (7 - row)); // Adjust for 0-based indexing
+    // Combine column and row characters to form the algebraic notation
+    return "" + columnChar + rowChar;
 }
 }
 
