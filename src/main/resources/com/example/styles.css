@@ -39,6 +39,11 @@
   -fx-background-color: #ECF0F1; /* Changed to a softer color */
 
 }
+.labelP {
+  -fx-text-fill: white; /* Set text color to white */
+  -fx-font-size: 16px;  /* Set font size to 16 pixels */
+  -fx-font-weight: bold; /* Optional: make text bold */
+}
 
 /* Style for labels */
 .label {

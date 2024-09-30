@@ -67,7 +67,7 @@ public MoveAdvisor(Game game, String bestmove,String playerMove, Stockfish stock
         oldState = game.getBoard();
         
         piece = game.getBoard().getPiece(toRow, toCol);
-        game.makeMove(bfromRow, bfromCol, btoRow, btoCol);
+        game.makeMoveReplay(bfromRow, bfromCol, btoRow, btoCol);
         bestPiece = game.getPiece(toRow, toCol);
         
         fen = game.toFen();
@@ -138,7 +138,11 @@ private boolean isSkewer() {
 
 
 private boolean isPin() {
-    List<int[]> opponentPositions = getOpponentPiecePositions(fen, bestPiece.isWhite());
+    if(piece == null)
+    {
+        return false;
+    }
+    List<int[]> opponentPositions = getOpponentPiecePositions(fen, piece.isWhite());
     List<int[]> ownPositions = getOpponentPiecePositions(fen, !bestPiece.isWhite());
     int[] kingPosition = piece.isWhite() ? game.getBlackKingPosition() : game.getWhiteKingPosition();
     if (!(bestPiece instanceof Rook || bestPiece instanceof Bishop || bestPiece instanceof Queen)) {
@@ -236,9 +240,13 @@ private boolean isCheckmate() {
         return false;
     }
 
-
+//FIX here the is sometimes null
 private boolean isForkingMove() {
-        List<int[]> opponentPositions = getOpponentPiecePositions(fen, bestPiece.isWhite());
+    if(piece == null)
+    {
+        return false;
+    }
+        List<int[]> opponentPositions = getOpponentPiecePositions(fen, piece.isWhite());
       
         List<int[]> allMoves = piece.getPossibleMoves(game);
        

@@ -353,6 +353,109 @@ public class Game {
 
     
 }
+public boolean makeMoveReplay(int fromRow, int fromCol, int toRow, int toCol) {
+      
+    int row = toRow;
+    int col = toCol;
+    Piece selectedPiece = getPiece(fromRow,fromCol);
+    int originalRow = selectedPiece.getRow();
+    int originalCol = selectedPiece.getCol();
+    List<int[]> possibleMoves = new ArrayList<>();
+    Piece capturedPiece = null;
+
+    if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+       
+        possibleMoves = selectedPiece.getLegalMovesWithoutCheck(this);
+        capturedPiece = getPiece(row, col);
+        if (selectedPiece instanceof Pawn && isEnPassant(originalRow, originalCol) )
+        {
+            capturedPiece = getPiece(originalRow, toCol);
+            if(capturedPiece != null && capturedPiece.isWhite() == isWhiteTurn())
+            {
+                capturedPiece = null;
+            }
+        }
+
+        boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
+
+        if (validMove) {
+            // Temporarily make the move
+            Piece pieceToMove = selectedPiece.copy();
+            String fen = toFen();
+            
+           
+            // Handle en passant
+            if (capturedPiece != null) {
+                setPiece(capturedPiece.getRow(), capturedPiece.getCol(), null); // Remove the captured pawn from the board
+            }
+            if( capturedPiece instanceof Rook)
+            {
+                updateCastlingRightsAfterMove(capturedPiece);
+            }
+            if(pieceToMove instanceof King || pieceToMove instanceof Rook)
+            {
+                updateCastlingRightsAfterMove(selectedPiece);
+            }
+             // Castling check
+           if (pieceToMove instanceof King && Math.abs(fromCol - toCol) == 2) {
+             // King-side or Queen-side castling
+             int[] capturedPiecePosition = new int[2];
+             capturedPiecePosition = performCastling((King) pieceToMove, toRow, toCol);
+
+             capturedPiece = new Rook(capturedPiecePosition[0], capturedPiecePosition[1], isWhiteTurn());
+             if(pieceToMove.isWhite())
+             {
+                whiteHasCastled = true;
+             }
+             if(!pieceToMove.isWhite()) 
+             {
+                 blackHasCastled = true;
+             }
+          
+           }
+           
+
+            setPiece(row, col, pieceToMove);
+            setPiece(originalRow, originalCol, null);
+            pieceToMove.setPosition(row, col);
+
+          
+                updateKingPositions();
+            
+           
+           
+              if (!validMove) {
+            return false;
+        }
+
+            // Check if the king is in check
+            
+                if (originalRow != row || originalCol != col) {
+                    setWhiteTurn(!isWhiteTurn());
+                }
+            
+            if (checkMate(this)) {
+                return true;
+            }
+
+            if (checkDraw(this)) {
+                System.out.println("Draw!");
+                return true;
+            }
+            
+            recordMove(originalRow, originalCol, row, col, capturedPiece, pieceToMove,
+            capturedPiece != null ? capturedPiece.getRow() : 1, 
+            capturedPiece != null ? capturedPiece.getCol() : 1,
+            fen);
+            return true;
+        }
+       
+    }
+
+    return false;
+
+
+}
 private int[] performCastling(King king, int kingRow, int kingCol) {
     boolean kingSide = (kingCol == 6);
     int rookCol = kingCol < 4 ? 0 : 7; // Determine if king-side or queen-side

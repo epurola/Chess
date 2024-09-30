@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<VBox alignment="TOP_CENTER" prefHeight="361.0" prefWidth="634.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.PopupController">
+   <children>
+      <HBox alignment="TOP_RIGHT" prefHeight="38.0" prefWidth="634.0">
+         <children>
+            <Button fx:id="closeButton" contentDisplay="RIGHT" onAction="#handleCloseButton" styleClass="HBox" stylesheets="@styles.css">
+               <graphic>
+                  <FontAwesomeIconView fill="#ff3e3e" glyphName="CLOSE" selectionFill="#a41d1d" size="20" text="" wrappingWidth="21.0" />
+               </graphic>
+            </Button>
+         </children>
+      </HBox>
+      <HBox prefHeight="389.0" prefWidth="580.0">
+         <children>
+            <VBox prefHeight="272.0" prefWidth="315.0" spacing="10" style="-fx-padding: 10;">
+                <Text fx:id="whiteMovesText" fill="WHITE" text="White's Total Moves: ">
+                  <font>
+                     <Font size="20.0" />
+                  </font></Text>
+                <Text fx:id="whiteAccuracyText" fill="WHITE" text="Accuracy: 0.00%">
+                  <font>
+                     <Font size="18.0" />
+                  </font></Text>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="174.0" styleClass="label1" stylesheets="@styles.css" text="Brilliant">
+                        <graphic>
+                           <FontAwesomeIconView fill="#7b61ff" glyphName="STAR" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="whiteBrilliantCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="172.0" styleClass="label1" stylesheets="@styles.css" text="Good">
+                        <graphic>
+                           <FontAwesomeIconView fill="#52f506" glyphName="THUMBS_UP" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="whiteGoodCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="172.0" styleClass="label1" stylesheets="@styles.css" text="Best">
+                        <graphic>
+                           <FontAwesomeIconView fill="#ffe100" glyphName="TROPHY" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="whiteBestCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="170.0" styleClass="label1" text="Slight Improvement">
+                        <graphic>
+                           <FontAwesomeIconView fill="WHITE" glyphName="PLUS" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="whiteSlightImprovementCount" prefHeight="17.0" prefWidth="32.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="170.0" styleClass="label1" text="Inaccuracy">
+                        <graphic>
+                           <FontAwesomeIconView fill="#ff7b00" glyphName="EXCLAMATION_TRIANGLE" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="whiteInaccuracyCount" prefHeight="17.0" prefWidth="44.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="170.0" styleClass="label1" text="Mistake">
+                        <graphic>
+                           <FontAwesomeIconView fill="#ff927e" glyphName="THUMBS_DOWN" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="whiteMistakeCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="170.0" styleClass="label1" text="Blunder">
+                        <graphic>
+                           <FontAwesomeIconView fill="RED" glyphName="EXCLAMATION" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="whiteBlunderCount" prefHeight="20.0" prefWidth="59.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+            </VBox>
+            <VBox layoutX="10.0" layoutY="10.0" prefHeight="330.0" prefWidth="304.0" spacing="10" style="-fx-padding: 10;">
+               <Text fx:id="blackMovesText" fill="WHITE" text="Black's Total Moves: ">
+                  <font>
+                     <Font size="20.0" />
+                  </font></Text>
+               <Text fx:id="blackAccuracyText" fill="WHITE" text="Accuracy: 0.00%">
+                  <font>
+                     <Font size="18.0" />
+                  </font></Text>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="184.0" styleClass="label1" text="Brilliant">
+                        <graphic>
+                           <FontAwesomeIconView fill="#7b61ff" glyphName="STAR" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="blackBrilliantCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="184.0" styleClass="label1" text="Good">
+                        <graphic>
+                           <FontAwesomeIconView fill="#52f506" glyphName="THUMBS_UP" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="blackGoodCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="183.0" styleClass="label1" text="Best">
+                        <graphic>
+                           <FontAwesomeIconView fill="#ffe100" glyphName="TROPHY" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="blackBestCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="182.0" styleClass="label1" text="Slight Improvement">
+                        <graphic>
+                           <FontAwesomeIconView fill="WHITE" glyphName="PLUS" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="blackSlightImprovementCount" prefHeight="17.0" prefWidth="43.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="183.0" styleClass="label1" text="Inaccuracy">
+                        <graphic>
+                           <FontAwesomeIconView fill="#ff7b00" glyphName="EXCLAMATION_TRIANGLE" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="blackInaccuracyCount" prefHeight="17.0" prefWidth="52.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="183.0" styleClass="label1" text="Mistake">
+                        <graphic>
+                           <FontAwesomeIconView fill="#ff927e" glyphName="THUMBS_DOWN" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="blackMistakeCount" prefHeight="20.0" prefWidth="58.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox>
+                  <children>
+                     <Label prefHeight="20.0" prefWidth="183.0" styleClass="label1" text="Blunder">
+                        <graphic>
+                           <FontAwesomeIconView fill="RED" glyphName="EXCLAMATION" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="blackBlunderCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+            </VBox>
+         </children>
+         <VBox.margin>
+            <Insets />
+         </VBox.margin>
+         <padding>
+            <Insets left="60.0" />
+         </padding>
+      </HBox>
+   </children>
+</VBox>
