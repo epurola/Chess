@@ -353,6 +353,11 @@ public class Game {
 
     
 }
+public Piece getCapturedPiece()
+{
+     return capturedPiece;
+}
+Piece capturedPiece = null;
 public boolean makeMoveReplay(int fromRow, int fromCol, int toRow, int toCol) {
       
     int row = toRow;
@@ -361,7 +366,7 @@ public boolean makeMoveReplay(int fromRow, int fromCol, int toRow, int toCol) {
     int originalRow = selectedPiece.getRow();
     int originalCol = selectedPiece.getCol();
     List<int[]> possibleMoves = new ArrayList<>();
-    Piece capturedPiece = null;
+    capturedPiece = null;
 
     if (row >= 0 && row < 8 && col >= 0 && col < 8) {
        

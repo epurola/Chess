@@ -6,8 +6,10 @@ import java.util.List;
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
@@ -32,6 +34,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Modality;
@@ -92,8 +95,11 @@ public class Replay {
     private List<String> blackMoveCategories;
     private Map<String, Integer> whiteMoveCount; 
     private Map<String, Integer> blackMoveCount; 
+    private Label loadingBar;
     @FXML
     private TextArea summaryTextArea;
+   private int previousMate;
+   
  
     @FXML
     public void  initialize() throws IOException, InterruptedException {
@@ -112,6 +118,11 @@ public class Replay {
             }
         }).start();
         ImageCursor customCursor = new ImageCursor(cursorImage);
+        loadingBar = new Label();
+        loadingBar.setStyle("-fx-font-family: 'Arial Black', Gadget, sans-serif; -fx-font-size: 25px; -fx-font-weight: bold; -fx-text-fill: black;");
+        loadingBar.setVisible(false);
+        loadingBar.setText("Analyzing...");
+        rootPane.getChildren().add(loadingBar);
         pane.setCursor(customCursor);
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getBounds();
@@ -185,12 +196,13 @@ public int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove
                 // If it's a mate sequence, get the number of moves to mate
                 String[] parts = score.split(" ");
                 mateMoves = Integer.parseInt(parts[0]); // Number of moves to mate
-               
-    
+            
             } else if (score.contains("centipawns")) {
                 // If it's a centipawn evaluation, extract the centipawn value
                 String[] parts = score.split(" ");
                 currentScore = Integer.parseInt(parts[0]); // Convert centipawns to integer
+                mateMoves = 0;
+                
             }
         } catch (NumberFormatException e) {
             System.err.println("Error parsing score: " + e.getMessage());
@@ -256,17 +268,38 @@ public int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove
         System.out.println("N: " + n);
 
          moveCategory = categorizeMove(scoreChange);  // Categorize based on the actual change
-    
-        // Get the color based on the score change
-        Color color = getColorForScoreChange(scoreChange);  // Use scoreChange for color determination
+         if (score.contains("mate")) {
+            if (game.isWhiteTurn() && mateMoves < 0) {
+                scoreChange = -1; // Valkoinen on matissa
+            } else if (!game.isWhiteTurn() && mateMoves > 0) {
+                scoreChange = 1; // Musta on matissa
+            } 
+            if (!game.isWhiteTurn() && mateMoves < 0) {
+                scoreChange = 1; 
+            } else if (game.isWhiteTurn() && mateMoves > 0) {
+                scoreChange = -1; 
+            } 
+           
+        }
         if(eval > 5 )
         {
-            scoreChange = scoreChange * 0.7;
+            scoreChange = scoreChange * 0.5;
         }
         if( eval < -5)
         {
-            scoreChange = scoreChange * 0.7;
+            scoreChange = scoreChange * 0.5;
         }
+        if(eval > 7 )
+        {
+            scoreChange = scoreChange * 0.3;
+        }
+        if( eval < -7)
+        {
+            scoreChange = scoreChange * 0.3;
+        }
+        // Get the color based on the score change
+        Color color = getColorForScoreChange(scoreChange);  // Use scoreChange for color determination
+       
         if (game.isWhiteTurn()) {
             whiteMoveCategories.add(moveCategory);
             whiteMoveCount.put(moveCategory, whiteMoveCount.getOrDefault(moveCategory, 0) + 1); // Count moves by category for White
@@ -275,6 +308,7 @@ public int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove
             blackMoveCount.put(moveCategory, blackMoveCount.getOrDefault(moveCategory, 0) + 1); // Count moves by category for Black
         }
         previousScore = eval;  
+        previousMate = mateMoves;
     
         return color;
     }
@@ -293,6 +327,7 @@ public int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove
         int whiteGoodCount = this.whiteMoveCount.getOrDefault("Good", 0);
         int whiteBestCount = this.whiteMoveCount.getOrDefault("Best", 0);
         int whiteSlightImprovementCount = this.whiteMoveCount.getOrDefault("Slight Improvement", 0);
+        int whiteEven= this.whiteMoveCount.getOrDefault("Even", 0);
         int whiteInaccuracyCount = this.whiteMoveCount.getOrDefault("Inaccuracy", 0);
         int whiteMistakeCount = this.whiteMoveCount.getOrDefault("Mistake", 0);
         int whiteBlunderCount = this.whiteMoveCount.getOrDefault("Blunder", 0);
@@ -305,6 +340,7 @@ public int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove
         int blackInaccuracyCount = this.blackMoveCount.getOrDefault("Inaccuracy", 0);
         int blackMistakeCount = this.blackMoveCount.getOrDefault("Mistake", 0);
         int blackBlunderCount = this.blackMoveCount.getOrDefault("Blunder", 0);
+        int blackEven = this.blackMoveCount.getOrDefault("Even", 0);
     
         // Create and show the popup
         try {
@@ -316,11 +352,11 @@ public int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove
             controller.updateMoveCounts(totalWhiteMoves, whiteAccuracy, 
                                         whiteBrilliantCount, whiteGoodCount, whiteBestCount,
                                         whiteSlightImprovementCount, whiteInaccuracyCount,
-                                        whiteMistakeCount, whiteBlunderCount,
+                                        whiteMistakeCount, whiteBlunderCount,whiteEven,
                                         totalBlackMoves, blackAccuracy,
                                         blackBrilliantCount, blackGoodCount, blackBestCount,
                                         blackSlightImprovementCount, blackInaccuracyCount,
-                                        blackMistakeCount, blackBlunderCount);
+                                        blackMistakeCount, blackBlunderCount,blackEven);
             
             // Create a new Stage for the popup
             Stage popupStage = new Stage();
@@ -363,7 +399,7 @@ public int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove
         int correctMoves = 0;
     
         for (String category : moveCategories) {
-            if (category.equals("Good") || category.equals("Brilliant") || category.equals("Best") || category.equals("Slight Improvement") ) {
+            if (category.equals("Good") || category.equals("Brilliant") || category.equals("Best") || category.equals("Even") || category.equals("Slight Improvement")  ) {
                 correctMoves++;
             }
         }
@@ -416,7 +452,7 @@ public String categorizeMove(double scoreChange) {
             return "Mistake";  // Moderate negative score change
         } else if (scoreChange < -0.3) {
             return "Inaccuracy";  // Small negative score change
-        } else if (scoreChange >= 3) {
+        } else if (scoreChange >= 3 ) {
             return "Brilliant";  // Large positive score change (great for White)
         } else if (scoreChange >= 1) {
             return "Good";  // Moderate positive score change
@@ -500,23 +536,48 @@ public String categorizeMove(double scoreChange) {
             replayMoves();
         }
     }
-    @FXML
+ @FXML
 private void handleReplayMoves() {
-    // Reset the current move index if needed
-    currentMoveIndex = moveHistory.size()-1;
-    whiteMoveCount = new HashMap<>(); // Initialize map for White
-    blackMoveCount = new HashMap<>(); 
-    whiteMoveCategories = new ArrayList<>();  // Track White's move categories
-    blackMoveCategories = new ArrayList<>();
-    game.setWhiteTurn(true);
+ loadingBar.setVisible(true);
+ currentMoveIndex = moveHistory.size()-1;
+whiteMoveCount = new HashMap<>(); // Initialize map for White
+blackMoveCount = new HashMap<>(); 
+whiteMoveCategories = new ArrayList<>(); 
+blackMoveCategories = new ArrayList<>();
 
-    // Loop through the number of moves in the game
-    while (currentMoveIndex >= 0) {
-        // Call the method that handles moving forward
-        handleRewindBack();
-    }
-    printMoveCountsAndAccuracy();
+ game.setWhiteTurn(true);
+    loadingBar.setVisible(true);
+
+    // Käytetään Task-luokkaa ja Platform.runLater() -metodia
+    Task<Void> replayTask = new Task<Void>() {
+        @Override
+        protected Void call() throws Exception {
+            while (currentMoveIndex >= 0) {
+                Platform.runLater(() -> {
+                    try {
+                        handleRewindBack();
+                    } catch (Exception e) {
+                        // Käsittele mahdolliset poikkeukset
+                        e.printStackTrace();
+                    }
+                });
+                Thread.sleep(50); // Lisätään pieni viive
+               
+            }
+            return null;
+        }
+    };
+
+    replayTask.setOnSucceeded(event -> {
+        loadingBar.setVisible(false);
+        printMoveCountsAndAccuracy();
+    });
+
+    Thread thread = new Thread(replayTask);
+    thread.setDaemon(true);
+    thread.start();
 }
+
     private void replayMoves() {
         if (currentMoveIndex >= 0 && currentMoveIndex < moveHistory.size()) {
             try {
@@ -529,9 +590,6 @@ private void handleReplayMoves() {
             }
         }
     }
-    
-
-
     @FXML
     private void handleGameSelection() {
         ComboBoxItem selectedGame = gameSelector.getValue();

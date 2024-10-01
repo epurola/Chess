@@ -38,7 +38,7 @@
                            <FontAwesomeIconView fill="#7b61ff" glyphName="STAR" />
                         </graphic>
                      </Label>
-                     <Label fx:id="whiteBrilliantCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" />
+                     <Label fx:id="whiteBrilliantCount" prefHeight="17.0" prefWidth="76.0" styleClass="label1" text="0" textFill="#7b61ff" />
                   </children>
                </HBox>
                <HBox>
@@ -69,6 +69,16 @@
                         </graphic>
                      </Label>
                      <Label fx:id="whiteSlightImprovementCount" prefHeight="17.0" prefWidth="32.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox layoutX="20.0" layoutY="181.0">
+                  <children>
+                     <Label fx:id="whiteEven" prefHeight="20.0" prefWidth="170.0" styleClass="label1" text="Even">
+                        <graphic>
+                           <FontAwesomeIconView fill="WHITE" glyphName="MINUS" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="whiteEvenCount" prefHeight="17.0" prefWidth="32.0" styleClass="label1" text="0" />
                   </children>
                </HBox>
                <HBox>
@@ -149,6 +159,16 @@
                         </graphic>
                      </Label>
                      <Label fx:id="blackSlightImprovementCount" prefHeight="17.0" prefWidth="43.0" styleClass="label1" text="0" />
+                  </children>
+               </HBox>
+               <HBox layoutX="20.0" layoutY="181.0">
+                  <children>
+                     <Label fx:id="blackEven" prefHeight="20.0" prefWidth="182.0" styleClass="label1" text="Even">
+                        <graphic>
+                           <FontAwesomeIconView fill="WHITE" glyphName="MINUS" />
+                        </graphic>
+                     </Label>
+                     <Label fx:id="blackEvenCount" prefHeight="17.0" prefWidth="43.0" styleClass="label1" text="0" />
                   </children>
                </HBox>
                <HBox>

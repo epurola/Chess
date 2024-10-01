@@ -32,6 +32,8 @@ public class PopupController {
     @FXML
     private Label whiteBlunderCount;
     @FXML
+    private Label whiteEvenCount;
+    @FXML
     private Text blackMovesText;
     @FXML
     private Text blackAccuracyText;
@@ -49,6 +51,8 @@ public class PopupController {
     private Label blackMistakeCount;
     @FXML
     private Label blackBlunderCount;
+    @FXML
+    private Label blackEvenCount;
     
     private Popup popup; // Reference to the Popup
 
@@ -60,10 +64,10 @@ public class PopupController {
     // Method to update the popup content
     public void updateMoveCounts(int whiteTotalMoves, double whiteAccuracy,
                                   int whiteBrilliant, int whiteGood, int whiteBest, int whiteSlightImprovement,
-                                  int whiteInaccuracy, int whiteMistake, int whiteBlunder,
+                                  int whiteInaccuracy, int whiteMistake, int whiteBlunder, int whiteEven,
                                   int blackTotalMoves, double blackAccuracy,
                                   int blackBrilliant, int blackGood, int blackBest, int blackSlightImprovement,
-                                  int blackInaccuracy, int blackMistake, int blackBlunder) {
+                                  int blackInaccuracy, int blackMistake, int blackBlunder, int blackEven) {
 
         // Update White's total moves and accuracy
         whiteMovesText.setText("White's Total Moves: " + whiteTotalMoves);
@@ -72,6 +76,7 @@ public class PopupController {
         whiteGoodCount.setText(String.valueOf(whiteGood));
         whiteBestCount.setText(String.valueOf(whiteBest));
         whiteSlightImprovementCount.setText(String.valueOf(whiteSlightImprovement));
+        whiteEvenCount.setText(String.valueOf(whiteEven));
         whiteInaccuracyCount.setText(String.valueOf(whiteInaccuracy));
         whiteMistakeCount.setText(String.valueOf(whiteMistake));
         whiteBlunderCount.setText(String.valueOf(whiteBlunder));
@@ -86,6 +91,7 @@ public class PopupController {
         blackInaccuracyCount.setText(String.valueOf(blackInaccuracy));
         blackMistakeCount.setText(String.valueOf(blackMistake));
         blackBlunderCount.setText(String.valueOf(blackBlunder));
+        blackEvenCount.setText(String.valueOf(blackEven));
     }
 
     // Handle the close button action
