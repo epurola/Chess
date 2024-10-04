@@ -78,22 +78,21 @@ public MoveAdvisor(Game game, String bestmove,String playerMove, Stockfish stock
 
   
     public String analyzeMove() {
-        if (scoreString.contains("mate")) {
-            return "The move " + playerMove + " This will move lead in to checkmate";
-        } else if (isForkingMove() && isCheck() && isGood()) {
-            return "The move " + playerMove + "is great! You put the opponent in check while also forking material\n" ;
-        } else if ( isGood() && isCheck()) {
-            return "The move " + playerMove + " puts the king in check. "  ;
-        } else if (isForkingMove() && isGood()) {
-            return "The move " + playerMove + " is good because it forks the opponent.";
+        if (scoreString.contains("M") ) {
+            return "The move " + playerMove + "will lead in to checkmate";
+        } else if (moveCategory.equals("Mistake")) {
+            return "The move " + playerMove + "is a mistake" ;
+        } else if ( isGood() && isCheck() && !scoreString.contains("#")) {
+            return "The move " + playerMove + "puts the king in check. ";
+        } else if (moveCategory.equals("Inaccuracy")) {
+            return "The move " + playerMove + " is " + moveCategory;
         } else if (isPin() && isGood()) {
             return "The move " + playerMove + " is strong because it pins a piece." ;
-        } else if (isSkewer() && isGood()) {
-            return "The move " + playerMove + " is powerful as it skews the opponent's piece." ;
+        } else if (scoreString.contains("#")) {
+            return "Nice! You found a checkmate!" ;
         } else if (moveCategory.equals("Blunder")) {
             return "The move " + playerMove + " is a blunder." ;
-        
-        } else if (!bestMove.equals(playerMove)) {
+        } else if (bestMove.equals(playerMove)) {
             return analyzeMissedBestMove();
         } else {
             return "The move " + playerMove + " is solid, but nothing extraordinary.\n" ;
@@ -107,9 +106,9 @@ public MoveAdvisor(Game game, String bestmove,String playerMove, Stockfish stock
         moveCategory.equals("Slight Improvement") || 
         moveCategory.equals("Best")) {
         
-        analysis.append("The move " + playerMove + " is a " + moveCategory + " move.\n");
+        analysis.append("The move " + playerMove + " is a " + moveCategory + " \n");
     } else {
-        analysis.append("The move " + playerMove + " is a " + moveCategory + " move. \n");
+        analysis.append("The move " + playerMove + " is a " + moveCategory + "  \n");
         analysis.append("The best move would have been " + bestMove + ". ");
         analysis.append("This would lead to a better position for you.");
     }

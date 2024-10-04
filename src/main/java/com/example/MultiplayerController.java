@@ -301,12 +301,7 @@ public class MultiplayerController {
         }
     }
 
-    @FXML
-    private void Undo() {
-        game.undoLastMove();
-        SoundManager.playMoveSound();
-        drawBoard();
-    }
+   
 
     private void drawBoard() {
         if (playerColor == null) {
@@ -482,7 +477,7 @@ public class MultiplayerController {
                 if (validMove) {
                     boolean soundPlayed = false;
                     isMyTurn = false;
-                    triggerBestMoveAnalysis();
+                   
                     startGameAnalysis(selectedPiece.getRow(), selectedPiece.getCol(), row, col, fen);
 
                     switchPlayer();
@@ -804,6 +799,7 @@ public class MultiplayerController {
             SoundManager.playMoveSound();
         }
         String fen = game.toFen();
+        startGameAnalysis(row, col, mRow, mCol, fen);
 
         Platform.runLater(() -> drawBoard());
 

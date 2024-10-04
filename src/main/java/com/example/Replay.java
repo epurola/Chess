@@ -333,8 +333,9 @@ public class Replay {
   
     private Color updateScoreAndColor() {
         // Calculate current score based on move history and current move index
-        currentScore = calculateCurrentScore(moveHistory, currentMoveIndex);
         previousScore= calculateCurrentScore(moveHistory,currentMoveIndex+1);
+        currentScore = calculateCurrentScore(moveHistory, currentMoveIndex);
+       
         String previousfen;
         int z ;
 
@@ -814,8 +815,8 @@ public class Replay {
         String move = "";
         int[] playerMove = { -1, -1, -1, -1 };
         if (currentMoveIndex < moveHistory.size() - 1) {
-            best = moveHistory.get(currentMoveIndex).getBestMove();
-            move = moveHistory.get(currentMoveIndex ).getPlayerMove();
+            best = moveHistory.get(currentMoveIndex+1).getBestMove();
+            move = moveHistory.get(currentMoveIndex).getPlayerMove();
             playerMove = parseMove(move);
         }
         int playerFromRow = playerMove[0];
