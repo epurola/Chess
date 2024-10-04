@@ -710,7 +710,7 @@ import javafx.util.Duration;
             getPieceFromString(pieceName, mRow, mCol, isWhite),
             tRow,
             tCol,
-            game.getBoard().toFEN(isWhite));// fix later
+            game.toFen());// fix later
             isMyTurn = true;
             
             game.setWhiteTurn(!game.isWhiteTurn());

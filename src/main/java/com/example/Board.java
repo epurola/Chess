@@ -277,7 +277,8 @@ public class Board {
     
 
       // Method to convert the board state to FEN notation
-      public String toFEN(boolean whiteToMove) {
+      public String toFEN(boolean whiteToMove, boolean whiteCanCastleKingSide, boolean whiteCanCastleQueenSide,
+      boolean blackCanCastleKingSide, boolean blackCanCastleQueenSide, boolean enpassant) {
         StringBuilder fen = new StringBuilder();
 
         for (int row = 0; row < 8; row++) {  // Iterate from row 0 to 7
@@ -306,16 +307,21 @@ public class Board {
 
         // Add active color
         fen.append(" ").append(whiteToMove ? "w" : "b");
+        StringBuilder castling = new StringBuilder();
+if (whiteCanCastleKingSide) castling.append("K");
+if (whiteCanCastleQueenSide) castling.append("Q");
+if (blackCanCastleKingSide) castling.append("k");
+if (blackCanCastleQueenSide) castling.append("q");
 
-        // Add castling rights
-        // implement
-       // fen.append(" ").append(castlingRights.isEmpty() ? "-" : castlingRights);
+// If no castling rights available, use "-"
+fen.append(" ").append(castling.length() > 0 ? castling : "-");
 
-        // Add en passant target square
-        // implement later
-        //fen.append(" ").append(enPassant.isEmpty() ? "-" : enPassant);
+// Add en passant target square
+//fen.append(" ").append(enPassantTarget.isEmpty() ? "-" : enPassantTarget);
+fen.append(" ").append( "-" );
+       
 
-System.out.println(fen.toString());
+    
         return fen.toString();
     }
 
@@ -357,7 +363,7 @@ System.out.println(fen.toString());
         int row = 0;
         int col = 0;
     
-        for (int i = 0; i < fen.length()-2; i++) {
+        for (int i = 0; i < fen.length()-9; i++) {
             char c = fen.charAt(i);
             
             if (c == '/') {

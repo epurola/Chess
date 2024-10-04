@@ -81,7 +81,7 @@ public MoveAdvisor(Game game, String bestmove,String playerMove, Stockfish stock
         if (scoreString.contains("mate")) {
             return "The move " + playerMove + " This will move lead in to checkmate";
         } else if (isForkingMove() && isCheck() && isGood()) {
-            return "The move " + playerMove + "is great! You put the opponent in check while also forking material" ;
+            return "The move " + playerMove + "is great! You put the opponent in check while also forking material\n" ;
         } else if ( isGood() && isCheck()) {
             return "The move " + playerMove + " puts the king in check. "  ;
         } else if (isForkingMove() && isGood()) {
@@ -89,15 +89,14 @@ public MoveAdvisor(Game game, String bestmove,String playerMove, Stockfish stock
         } else if (isPin() && isGood()) {
             return "The move " + playerMove + " is strong because it pins a piece." ;
         } else if (isSkewer() && isGood()) {
-            return "The move " + playerMove + " is powerful as it skews the opponent’s piece." ;
+            return "The move " + playerMove + " is powerful as it skews the opponent's piece." ;
         } else if (moveCategory.equals("Blunder")) {
             return "The move " + playerMove + " is a blunder." ;
-        } else if (canCaptureMoreValuablePiece() && isGood()) {
-            return "The move " + playerMove + " is good because it captures a more valuable piece.";
+        
         } else if (!bestMove.equals(playerMove)) {
             return analyzeMissedBestMove();
         } else {
-            return "The move " + playerMove + " is solid, but nothing extraordinary." ;
+            return "The move " + playerMove + " is solid, but nothing extraordinary.\n" ;
         }
     }
     
@@ -108,19 +107,19 @@ public MoveAdvisor(Game game, String bestmove,String playerMove, Stockfish stock
         moveCategory.equals("Slight Improvement") || 
         moveCategory.equals("Best")) {
         
-        analysis.append("The move " + playerMove + " is a " + moveCategory + " move.");
+        analysis.append("The move " + playerMove + " is a " + moveCategory + " move.\n");
     } else {
-        analysis.append("The move " + playerMove + " is a " + moveCategory + ". ");
+        analysis.append("The move " + playerMove + " is a " + moveCategory + " move. \n");
         analysis.append("The best move would have been " + bestMove + ". ");
         analysis.append("This would lead to a better position for you.");
     }
 
         if (isForkingMove()  ) {
-            analysis.append(" The best move also creates a fork, attacking two of your opponent's pieces at once.");
+            analysis.append(" The best move also creates a fork, attacking two of your opponent's pieces at once.\n");
         } else if (isPin() ) {
-            analysis.append(" The best move pins one of your opponent's pieces, limiting their options.");
+            analysis.append(" The best move pins one of your opponent's pieces, limiting their options.\n");
         } else if (isSkewer()) {
-            analysis.append(" The best move skews an opponent's piece, forcing a more favorable exchange.");
+            analysis.append(" The best move skews an opponent's piece, forcing a more favorable exchange.\n");
         }
         
         return analysis.toString();
@@ -132,18 +131,14 @@ public MoveAdvisor(Game game, String bestmove,String playerMove, Stockfish stock
 private boolean isSkewer() {
     return false;
     }
-
-
-  
-
-
+    
 private boolean isPin() {
     if(piece == null)
     {
         return false;
     }
     List<int[]> opponentPositions = getOpponentPiecePositions(fen, piece.isWhite());
-    List<int[]> ownPositions = getOpponentPiecePositions(fen, !bestPiece.isWhite());
+    List<int[]> ownPositions = getOpponentPiecePositions(fen, !piece.isWhite());
     int[] kingPosition = piece.isWhite() ? game.getBlackKingPosition() : game.getWhiteKingPosition();
     if (!(bestPiece instanceof Rook || bestPiece instanceof Bishop || bestPiece instanceof Queen)) {
         return false; 
@@ -232,7 +227,15 @@ private boolean isAlignedWithKing( int[] kingPosition) {
 
 
 private boolean isCheck() {
-       return game.isInCheck(!piece.isWhite());
+    if(piece!=null)
+    {
+        return game.isInCheck(!piece.isWhite());
+    }
+    else
+    {
+        return false;
+    }
+      
     }
 
 
@@ -325,21 +328,7 @@ private boolean isBlunder() {
     }
    
 
-private boolean canCaptureMoreValuablePiece() {
-       int[]pmove = parseMove(playerMove);
-        int toRow= pmove[2];
-        int toCol = pmove[3];
-        Piece capturedPiece;
-        if(game.getPiece(toRow, toCol) != null)
-        {
-            capturedPiece = oldState.getPiece(toRow, toCol);
-        }
-        else
-        {
-            return false;
-        }
-        return capturedPiece.getValue() > piece.getValue();
-    }
+
     
 private boolean isValuablePiece(Piece piece) {
         if (piece == null) return false;

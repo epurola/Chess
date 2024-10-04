@@ -12,19 +12,36 @@ import java.util.List;
 import java.util.Map;
 
 public class ChessWebSocketServer extends WebSocketServer {
+    private static ChessWebSocketServer instance; // Singleton instance
+    
     private List<WebSocket> clients = new ArrayList<>();
-     private Map<WebSocket, Boolean> playerTurnMap; 
-     private WebSocket whitePlayer;
-     private WebSocket blackPlayer;
+    private Map<WebSocket, Boolean> playerTurnMap;
+    private WebSocket whitePlayer;
+    private WebSocket blackPlayer;
+    private boolean running;
 
-    public ChessWebSocketServer(InetSocketAddress address) {
+    // Private constructor to prevent direct instantiation
+    private ChessWebSocketServer(InetSocketAddress address) {
         super(address);
-         this.playerTurnMap = new HashMap<>();
+        this.playerTurnMap = new HashMap<>();
+        this.running = false; 
+    }
+
+    // Static method to get the single instance of ChessWebSocketServer
+    public static synchronized ChessWebSocketServer getInstance(InetSocketAddress address) {
+        if (instance == null) {
+            instance = new ChessWebSocketServer(address);
+        }
+        return instance;
+    }
+    public boolean isRunning() {
+        return running;
     }
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         System.out.println("New connection from: " + conn.getRemoteSocketAddress());
+        running = true; 
         
         // Add the new client to the list
         clients.add(conn);
@@ -122,16 +139,21 @@ private void handlePlayAgainRequest(WebSocket sender) {
         clients.remove(conn);
         System.out.println("Client disconnected: " + conn.getRemoteSocketAddress());
     }
+
     public void stopServer() {
         try {
-            // Stop the WebSocket server
-            this.stop();
-            System.out.println("WebSocket server stopped successfully.");
+            if (this.isRunning()) {  // Check if the server is actually running
+                this.stop();         // Stop the WebSocket server if it's running
+                System.out.println("WebSocket server stopped successfully.");
+            } else {
+                System.out.println("WebSocket server is not running.");
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
             System.err.println("Error while stopping WebSocket server.");
         }
     }
+    
     
 
     @Override

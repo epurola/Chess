@@ -22,6 +22,7 @@ public class Database {
     }
 
     public Database() {
+        System.out.println("Here");
         createDatabaseDirectory();
         createTables();
     }
@@ -37,33 +38,36 @@ public class Database {
         }
     }
 
-    private void createTables() {
-        String createGamesTable = "CREATE TABLE IF NOT EXISTS games ("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "game_name TEXT NOT NULL "
-                + ");";
-
-        String createMoveAnalysisTable = "CREATE TABLE IF NOT EXISTS move_analysis ("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "game_id INTEGER NOT NULL, "
-                + "move_number INTEGER NOT NULL, "
-                + "fen TEXT NOT NULL, "
-                + "move TEXT NOT NULL, "
-                + "best_move TEXT NOT NULL, "
-                + "score INTEGER NOT NULL, "
-                + "previous_score INTEGER, " 
-                + "FOREIGN KEY (game_id) REFERENCES games(id)"
-                + ");";
-
-        try (Connection conn = DriverManager.getConnection(URL);
-             Statement stmt = conn.createStatement()) {
-            stmt.execute(createGamesTable);
-            stmt.execute(createMoveAnalysisTable);
-            System.out.println("Tables created or verified.");
-        } catch (SQLException e) {
-            System.out.println("Failed to create tables: " + e.getMessage());
+    
+        private void createTables() {
+            String createGamesTable = "CREATE TABLE IF NOT EXISTS games ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + "game_name TEXT NOT NULL "
+                    + ");";
+        
+            String createMoveAnalysisTable = "CREATE TABLE IF NOT EXISTS move_analysis ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + "game_id INTEGER NOT NULL, "
+                    + "move_number INTEGER NOT NULL, "
+                    + "fen TEXT NOT NULL, "
+                    + "move TEXT NOT NULL, "
+                    + "best_move TEXT NOT NULL, "
+                    + "score INTEGER NOT NULL, "
+                    + "previous_score INTEGER, "
+                    + "best_move_line TEXT, " 
+                    + "FOREIGN KEY (game_id) REFERENCES games(id)"
+                    + ");";
+        
+            try (Connection conn = DriverManager.getConnection(URL);
+                 Statement stmt = conn.createStatement()) {
+                stmt.execute(createGamesTable);
+                stmt.execute(createMoveAnalysisTable);
+                System.out.println("Tables created or verified.");
+            } catch (SQLException e) {
+                System.out.println("Failed to create tables: " + e.getMessage());
+            }
         }
-    }
+        
 
     public int getTotalGames() {
         String sql = "SELECT COUNT(*) AS total FROM games";
@@ -97,7 +101,7 @@ public class Database {
     }
 
     public void insertMoveAnalysis(int gameId, int moveNumber, MoveAnalysis moveAnalysis) {
-        String sql = "INSERT INTO move_analysis(game_id, move_number, fen, move, best_move, score, previous_score) VALUES(?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO move_analysis(game_id, move_number, fen, move, best_move, score, previous_score, best_move_line) VALUES(?,?,?,?,?,?,?,?)";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, gameId);
@@ -107,19 +111,21 @@ public class Database {
             pstmt.setString(5, moveAnalysis.getBestMove());
             pstmt.setString(6, moveAnalysis.getScore()); 
             if (moveAnalysis.getPreviousscore() != null) {
-                pstmt.setString(7, moveAnalysis.getPreviousscore()); 
+                pstmt.setString(7, moveAnalysis.getPreviousscore());
             } else {
                 pstmt.setNull(7, Types.INTEGER);
             }
+            pstmt.setString(8, moveAnalysis.getBestLine()); 
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Failed to insert move analysis: " + e.getMessage());
         }
     }
+    
 
     public List<MoveAnalysis> getMoveAnalysis(int gameId) {
         List<MoveAnalysis> moveHistory = new ArrayList<>();
-        String sql = "SELECT move_number, fen, move, best_move, score, previous_score FROM move_analysis WHERE game_id = ? ORDER BY move_number DESC;";
+        String sql = "SELECT move_number, fen, move, best_move, score, previous_score, best_move_line FROM move_analysis WHERE game_id = ? ORDER BY move_number DESC;";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, gameId);
@@ -131,8 +137,9 @@ public class Database {
                     String bestMove = rs.getString("best_move");
                     String score = rs.getString("score");
                     String previousScore = rs.getString("previous_score");
-
-                    MoveAnalysis moveAnalysis = new MoveAnalysis(fen, move, bestMove, score,previousScore);
+                    String bestMoveLine = rs.getString("best_move_line");
+    
+                    MoveAnalysis moveAnalysis = new MoveAnalysis(fen, move, bestMove, score, previousScore, bestMoveLine);
                     moveHistory.add(moveAnalysis);
                 }
             }
@@ -141,6 +148,7 @@ public class Database {
         }
         return moveHistory;
     }
+    
 
     public void clearMoveHistory(int gameId) {
         String sql = "DELETE FROM move_analysis WHERE game_id = ?";
