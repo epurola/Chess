@@ -359,13 +359,19 @@ fen.append(" ").append( "-" );
     public void setFEN(String fen) {
         // Clear the board first
         clearBoard();
+    
+        // Split the FEN string into its components
+        String[] fenParts = fen.split(" ");
+    
+        // The first part represents the board setup
+        String boardSetup = fenParts[0];
         
         int row = 0;
         int col = 0;
     
-        for (int i = 0; i < fen.length()-9; i++) {
-            char c = fen.charAt(i);
-            
+        for (int i = 0; i < boardSetup.length(); i++) {
+            char c = boardSetup.charAt(i);
+    
             if (c == '/') {
                 // Move to the next row and reset column
                 row++;
@@ -381,14 +387,17 @@ fen.append(" ").append( "-" );
                     setPiece(row, col, piece);
                 }
                 col++; // Move to the next column
-                
             }
         }
+    
+        //handle other parts of the FEN...
+    }
+    
      
     }
     
     
     
     
-}
+
 

@@ -350,9 +350,10 @@ public class Replay {
         }
         
       
-    
+    //Castling loses the white king and when black castles the white rook disappers also
         // Determine the evaluation for the current player
         int n = fen.contains("w") ? 1 : -1;
+        System.out.print(fen);
          z = previousfen.contains("w") ? 1 : -1;
         double eval = (double) currentScore / 100 * n;
         // Normalize evaluation for the current move
@@ -374,7 +375,7 @@ public class Replay {
         // Get the color based on the score change
         Color color = getColorForScoreChange(scoreChange); // Use scoreChange for color determination
 
-        if (game.isWhiteTurn()) {
+        if (!fen.contains("w")) {
             whiteMoveCategories.add(moveCategory);
             whiteMoveCount.put(moveCategory, whiteMoveCount.getOrDefault(moveCategory, 0) + 1); // Count moves by
                                                                                                 // category for White

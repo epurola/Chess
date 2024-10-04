@@ -59,11 +59,11 @@ public MoveAdvisor(Game game, String bestmove,String playerMove, Stockfish stock
         this.toCol = pMove[3];
         this.bestMove = bestmove;
       
-        int[] bMove = parseMove(bestmove);
-        this.bfromRow = bMove[0];
-        this.bfromCol = bMove[1];
-        this.btoRow = bMove[2];
-        this.btoCol = bMove[3];
+       // int[] bMove = parseMove(bestmove);
+        //this.bfromRow = bMove[0];
+       // this.bfromCol = bMove[1];
+       // this.btoRow = bMove[2];
+       // this.btoCol = bMove[3];
         oldState = game.getBoard();
         
         piece = game.getBoard().getPiece(toRow, toCol);
