@@ -114,8 +114,9 @@
               </VBox>
           </left>
           <right>
-              <VBox fx:id="vbox2" alignment="TOP_CENTER" fillWidth="false" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="TOP_CENTER">
+              <VBox fx:id="vbox2" alignment="TOP_CENTER" styleClass="VBox" stylesheets="@styles.css" BorderPane.alignment="TOP_LEFT">
                <children>
+                  <Label fx:id="openingLabel" styleClass="label1" text="Label" />
                   <TextFlow fx:id="textFlow" prefHeight="350.0" styleClass="textFlow" stylesheets="@styles.css">
                      <VBox.margin>
                         <Insets left="25.0" />

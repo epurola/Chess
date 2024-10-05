@@ -400,14 +400,23 @@ public class MultiplayerController {
         }
     }
 
-    private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor();
+  
+    private int flip(int num)
+    {
+        return 7-num ;
+    }
 
+   
     private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
-        analysisExecutor.submit(() -> {
+        ExecutorService executor = ExecutorServiceManager.getExecutorService();
+        executor.submit(() -> {
             try {
-                String moveString = rowColToAlgebraic(fromRow, fromCol) + rowColToAlgebraic(toRow, toCol);
-                stockfish.getBestMoveFromFEN(fen);
-                String analysis = stockfish.analyzeMove(fen, moveString);
+               
+                // Convert the move to algebraic notation and add it to the move history
+                String moveString = rowColToAlgebraic(flip(fromRow), fromCol) + rowColToAlgebraic(flip(toRow), toCol);
+               
+                stockfish.analyzeMove(fen, moveString);
+    
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -423,23 +432,7 @@ public class MultiplayerController {
         return "" + columnChar + rowChar;
     }
 
-    private void triggerBestMoveAnalysis() {
-
-        new Thread(() -> {
-            try {
-                // Analyze the best move using Stockfish
-                // int[] bestMove = parseMove(stockfish.getBestMove());
-                /*
-                 * Platform.runLater(() -> {
-                 * drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);
-                 * });
-                 */
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-
-    }
+  
 
     public static int[] parseMove(String bestMove) {
         // Parse the move string like "e2e4"
@@ -457,13 +450,13 @@ public class MultiplayerController {
         // toCol]
         return new int[] { fromRow, fromCol, toRow, toCol };
     }
-
+    String fen;
     private void handlePieceDrop(MouseEvent event) {
         if (!isMyTurn) {
             return;
         }
         double squareSize = chessBoard.getPrefWidth() / 8;
-        String fen = game.toFen();
+        
         if (draggedPiece != null) {
             int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
             int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
@@ -475,6 +468,7 @@ public class MultiplayerController {
                 }
 
                 if (validMove) {
+                    fen = unflipFEN(game.toFen());
                     boolean soundPlayed = false;
                     isMyTurn = false;
                    
@@ -783,8 +777,13 @@ public class MultiplayerController {
                 tCol,
                 game.toFen());// Fix this later... WTF DOES THIS MEAN BRO FIX FUCKING WHAT!!?
         isMyTurn = true;
-
         game.setWhiteTurn(!game.isWhiteTurn());
+        
+        String fen = unflipFEN(game.toFen());
+
+        startGameAnalysis(row, col, mRow, mCol, fen);
+
+        
         switchPlayer();
         if (!capturedPiece.equals("null")) {
             capture = true;
@@ -798,8 +797,8 @@ public class MultiplayerController {
         } else {
             SoundManager.playMoveSound();
         }
-        String fen = game.toFen();
-        startGameAnalysis(row, col, mRow, mCol, fen);
+       
+       
 
         Platform.runLater(() -> drawBoard());
 
@@ -826,6 +825,32 @@ public class MultiplayerController {
             statusLabel.setVisible(true);
             SoundManager.playDrawSound();
         }
+    }
+    public String unflipFEN(String fen) {
+        // Split the FEN string into its components
+        String[] fenParts = fen.split(" ");
+        
+        // Get the piece placement part (first part)
+        String[] rows = fenParts[0].split("/");
+        
+        // Reverse the rows
+        StringBuilder flippedPosition = new StringBuilder();
+        for (int i = rows.length - 1; i >= 0; i--) {
+            flippedPosition.append(rows[i]);
+            if (i != 0) {
+                flippedPosition.append("/");
+            }
+        }
+        
+        // Flip the side to move
+        String sideToMove = fenParts[1];
+        
+        
+        
+        // Construct the new flipped FEN string
+        String flippedFEN = flippedPosition.toString() + " " + sideToMove +  " ";
+        
+        return flippedFEN;
     }
 
     // This basically only moves black pieces since they are set in the top row in

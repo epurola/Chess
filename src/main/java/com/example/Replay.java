@@ -36,6 +36,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Modality;
@@ -95,6 +96,8 @@ public class Replay {
     @FXML
     private Label progressLabel;
     @FXML
+    private Label openingLabel;
+    @FXML
     private Button replayButton;
 
     Color lightColor = Color.web("#E8EDF9");
@@ -127,10 +130,14 @@ public class Replay {
     @FXML
     private TextArea summaryTextArea;
     private int previousMate;
+    private List<String> moves;
+    private ChessOpeningMap openning;
 
     @FXML
     public void initialize() throws IOException, InterruptedException {
         moveHistory = new ArrayList<>();
+        moves = new ArrayList<>();
+        openning = new ChessOpeningMap();
         game = new Game();
         database = new Database();
         int totalGames = database.getTotalGames();
@@ -145,6 +152,9 @@ public class Replay {
             }
         }).start();
         ImageCursor customCursor = new ImageCursor(cursorImage);
+        openingLabel.setText("");
+        
+        openingLabel.setVisible(false);
         loadingBar = new Label();
         loadingBar.setStyle(
                 "-fx-font-family: 'Arial Black', Gadget, sans-serif; -fx-font-size: 25px; -fx-font-weight: bold; -fx-text-fill: black;");
@@ -171,7 +181,7 @@ public class Replay {
         textFlow.setMaxHeight(chessBoardSize);
         vbox2.setMaxWidth(boxWidth);
         vbox2.setMaxHeight(screenHeight - (hboxHeight * 2));
-        vbox2.setSpacing(screenHeight / 2);
+        vbox2.setSpacing(20);
         // Set height as 10% of the screen height
         WhiteHbox.setMinHeight(hboxHeight);
         WhiteHbox.setPrefHeight(hboxHeight);
@@ -260,24 +270,28 @@ public class Replay {
         String scoreString = String.valueOf(evaluation);
         if (score.contains("mate")) {
             scoreString = "M" + mateMoves;
-            if(mateMoves == 0)
-            {
+            if (mateMoves == 0) {
                 scoreString = "#";
             }
-            if(fen.contains("b"))
-            {
+            if (fen.contains("b")) {
                 normalizedValue = 100;
-            }
-            else
-            {
+            } else {
                 normalizedValue = 0;
             }
-           
+
         }
         progressLabel.setText(scoreString);
         // Set the progress
         progressBar.setProgress(normalizedValue);
         MoveAdvisor coach = new MoveAdvisor(game, bestMove, playerMove, stockfish, moveCategory, scoreString);
+        String name = openning.search(formatFen(fen));
+        if (!name.equals("Unknown Opening")) {
+            openingLabel.setText(name);
+            openingLabel.setVisible(true);
+        } else {
+            openingLabel.setVisible(false);
+        }
+
         Text responseText = new Text(coach.analyzeMove() + scoreChange);
         responseText.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill:  black; -fx-font-style: italic; ");
         // Load the image using the correct path
@@ -288,7 +302,42 @@ public class Replay {
         iconView.setFitHeight(25); // Set desired height
         iconView.setPreserveRatio(true); // Preserve aspect ratio
         iconView.setStyle("-fx-padding: 5;");
-        textFlow.getChildren().addAll(iconView,responseText);
+        textFlow.getChildren().addAll(iconView, responseText);
+    }
+
+    public static String formatFen(String fullFen) {
+        // Split the full FEN string by space to get the first two parts
+        String[] parts = fullFen.split(" ");
+
+        // Return only the piece placement (parts[0]) and active color (parts[1])
+        return parts[0] + " " + parts[1];
+    }
+
+    public String unflipFEN(String fen) {
+        // Split the FEN string into its components
+        String[] fenParts = fen.split(" ");
+        
+        // Get the piece placement part (first part)
+        String[] rows = fenParts[0].split("/");
+        
+        // Reverse the rows
+        StringBuilder flippedPosition = new StringBuilder();
+        for (int i = rows.length - 1; i >= 0; i--) {
+            flippedPosition.append(rows[i]);
+            if (i != 0) {
+                flippedPosition.append("/");
+            }
+        }
+        
+        // Flip the side to move
+        String sideToMove = fenParts[1].equals("w") ? "b" : "w";
+        
+        
+        
+        // Construct the new flipped FEN string
+        String flippedFEN = flippedPosition.toString() + " " + sideToMove +  " ";
+        
+        return flippedFEN;
     }
 
     public Image loadImageForMoveCategory(String moveCategory) {
@@ -330,40 +379,40 @@ public class Replay {
         return iconImage;
 
     }
-  
+
     private Color updateScoreAndColor() {
         // Calculate current score based on move history and current move index
-        previousScore= calculateCurrentScore(moveHistory,currentMoveIndex+1);
+        previousScore = calculateCurrentScore(moveHistory, currentMoveIndex + 1);
         currentScore = calculateCurrentScore(moveHistory, currentMoveIndex);
-       
-        String previousfen;
-        int z ;
+
+        String previousfen="";
+        int z;
+        System.out.println(fen);
+        System.out.println(previousfen);
 
         fen = moveHistory.get(currentMoveIndex).getFEN();
-        if(currentMoveIndex < moveHistory.size()-1)
-        {
-           previousfen = moveHistory.get(currentMoveIndex+1).getFEN();
+        if (currentMoveIndex < moveHistory.size() - 1) {
+            previousfen = moveHistory.get(currentMoveIndex + 1).getFEN();
             z = previousfen.contains("w") ? 1 : -1;
-        }
-        else{
+        } else {
             previousfen = "";
             z = 0;
         }
-        
-      
-    //Castling loses the white king and when black castles the white rook disappers also
+
+        // Castling loses the white king and when black castles the white rook disappers
+        // also
         // Determine the evaluation for the current player
         int n = fen.contains("w") ? 1 : -1;
         System.out.print(fen);
-         z = previousfen.contains("w") ? 1 : -1;
+        z = previousfen.contains("w") ? 1 : -1;
         double eval = (double) currentScore / 100 * n;
         // Normalize evaluation for the current move
         previousScore = (double) previousScore / 100 * z;
         evaluation = eval;
-        
+
         scoreChange = (double) Math.abs(eval - previousScore) * z;
         normalizedValue = 1 - (eval + 10) / (2 * 10);
-        //previousScore = eval;
+        // previousScore = eval;
 
         // Log for debugging
         System.out.println("Current Eval: " + eval);
@@ -372,7 +421,7 @@ public class Replay {
         System.out.println("N: " + n);
 
         moveCategory = categorizeMove(scoreChange); // Categorize based on the actual change
-       
+
         // Get the color based on the score change
         Color color = getColorForScoreChange(scoreChange); // Use scoreChange for color determination
 
@@ -385,7 +434,7 @@ public class Replay {
             blackMoveCount.put(moveCategory, blackMoveCount.getOrDefault(moveCategory, 0) + 1); // Count moves by
                                                                                                 // category for Black
         }
-       // previousScore = eval;
+        // previousScore = eval;
         previousMate = mateMoves;
 
         return color;
@@ -513,12 +562,11 @@ public class Replay {
         // Determine if the piece is White or Black and categorize move accordingly
         String best = "";
         if (currentMoveIndex < moveHistory.size() - 1) {
-            if(currentMoveIndex < moveHistory.size()-1)
-            {
-               best = moveHistory.get(currentMoveIndex +1 ).getBestMove();
+            if (currentMoveIndex < moveHistory.size() - 1) {
+                best = moveHistory.get(currentMoveIndex + 1).getBestMove();
             }
-            
-            String move = moveHistory.get(currentMoveIndex ).getPlayerMove();
+
+            String move = moveHistory.get(currentMoveIndex).getPlayerMove();
             if (move.equals(best)) {
                 return "Best";
             }
@@ -622,7 +670,7 @@ public class Replay {
     private void showBestLine() {
         String line = "";
         if (currentMoveIndex < moveHistory.size() - 1 && currentMoveIndex >= 0) {
-            line = moveHistory.get(currentMoveIndex+1).getBestLine();
+            line = moveHistory.get(currentMoveIndex + 1).getBestLine();
         }
         String[] parts = line.split(", ");
         int[] position = { 0, 0, 0, 0 };
@@ -638,55 +686,55 @@ public class Replay {
 
                 TextFlow leftColumn = new TextFlow();
                 TextFlow rightColumn = new TextFlow();
-                
+
                 // HBox to hold both TextFlows side by side
-                HBox hBox = new HBox(20);  // Horizontal gap between columns
+                HBox hBox = new HBox(20); // Horizontal gap between columns
                 hBox.getChildren().addAll(leftColumn, rightColumn);
-                
+
                 // Toggle between left and right columns
                 boolean addToLeft = true;
-                
+
                 // Track whether it's the first move
                 boolean isFirstMove = true;
-                
+
                 // Add move
                 String moveText = String.format("%s %s", name, move.substring(0, 2));
-                
+
                 // If it's the first move, add a newline before the text
-                
-                
+
                 // Load the PNG image (ensure the path to the PNG is correct)
                 Image arrowImage = new Image(getClass().getResource("/images/arrow.png").toExternalForm());
                 // Update with the correct path to your PNG
                 ImageView arrowImageView = new ImageView(arrowImage);
-                
+
                 // Set the size of the arrow image (optional, based on the image resolution)
                 arrowImageView.setFitHeight(10);
                 arrowImageView.setFitWidth(10);
-                
+
                 // Create Text for the move and destination
                 Text siirto = new Text(moveText);
                 Text moveToText = new Text(moveTo);
-                
+
                 // Set styling for the move text and move-to text
                 siirto.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill: black; -fx-font-style: italic;");
-                moveToText.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill: black; -fx-font-style: italic;");
-                
+                moveToText
+                        .setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill: black; -fx-font-style: italic;");
+
                 // Combine the move text, arrow image, and moveTo text into a horizontal layout
-                HBox moveBox = new HBox(5);  // Horizontal gap between text and arrow
-                moveBox.setAlignment(Pos.CENTER); 
+                HBox moveBox = new HBox(5); // Horizontal gap between text and arrow
+                moveBox.setAlignment(Pos.CENTER);
                 moveBox.getChildren().addAll(siirto, arrowImageView, moveToText);
-                
+
                 // Add the combined moveBox to the left or right column
                 if (addToLeft) {
-                    leftColumn.getChildren().add(moveBox);  // Add to left column
+                    leftColumn.getChildren().add(moveBox); // Add to left column
                 } else {
-                    rightColumn.getChildren().add(moveBox);  // Add to right column
+                    rightColumn.getChildren().add(moveBox); // Add to right column
                 }
-                
+
                 // Alternate between columns for the next move
                 addToLeft = !addToLeft;
-                
+
                 // Add the HBox containing the two TextFlows to the parent layout
                 textFlow.getChildren().add(hBox);
             } catch (IndexOutOfBoundsException e) {
@@ -815,7 +863,7 @@ public class Replay {
         String move = "";
         int[] playerMove = { -1, -1, -1, -1 };
         if (currentMoveIndex < moveHistory.size() - 1) {
-            best = moveHistory.get(currentMoveIndex+1).getBestMove();
+            best = moveHistory.get(currentMoveIndex + 1).getBestMove();
             move = moveHistory.get(currentMoveIndex).getPlayerMove();
             playerMove = parseMove(move);
         }
