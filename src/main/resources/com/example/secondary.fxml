@@ -10,7 +10,8 @@
     <children>
         <Label text="" />
         <Button fx:id="button" onAction="#switchToPrimary" prefHeight="60.0" prefWidth="123.0" styleClass="button1" stylesheets="@styles.css" text="PLAY" />
-      <Button fx:id="button21" layoutX="220.0" layoutY="210.0" maxWidth="417.0" onAction="#switchToBot" prefHeight="60.0" prefWidth="417.0" styleClass="button3" stylesheets="@styles.css" text="Game Review" />
+      <Button fx:id="button21" layoutX="220.0" layoutY="210.0" maxWidth="417.0" onAction="#switchToReplay" prefHeight="60.0" prefWidth="417.0" styleClass="button3" stylesheets="@styles.css" text="Game Review" />
+        <Button fx:id="buttonBot" layoutX="220.0" layoutY="210.0" maxWidth="417.0" onAction="#switchToBot" prefHeight="60.0" prefWidth="417.0" styleClass="button3" stylesheets="@styles.css" text="Play A Bot" />
       <Button fx:id="button2" layoutX="220.0" layoutY="136.0" onAction="#switchToOnline" prefHeight="60.0" prefWidth="195.0" styleClass="button3" stylesheets="@styles.css" text="Online" />
         <Button fx:id="button1" mnemonicParsing="false" onAction="#handleExit" styleClass="button3" stylesheets="@styles.css" text="Exit">
             <graphic>

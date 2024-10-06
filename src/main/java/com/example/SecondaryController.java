@@ -55,9 +55,17 @@ public class SecondaryController {
     }
 
     @FXML
-    private void switchToBot() {
+    private void switchToReplay() {
         try {
             App.setRoot("replay");
+        } catch (IOException e) {
+            logger.error("Failed to switch to Replay view", e);
+        }
+    }
+    @FXML
+    private void switchToBot() {
+        try {
+            App.setRoot("bot");
         } catch (IOException e) {
             logger.error("Failed to switch to bot view", e);
         }

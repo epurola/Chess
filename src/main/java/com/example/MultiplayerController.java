@@ -853,10 +853,12 @@ public class MultiplayerController {
         return flippedFEN;
     }
 
-    // This basically only moves black pieces since they are set in the top row in
-    // the game, But the board is
-    // drawn so that both players have their pieces at the bottom.
-    // The rows are inverted when sending the moves
+    /* This basically only moves black pieces since they are set in the top row in
+    the game, But the board is
+     drawn so that both players have their pieces at the bottom.
+    The rows are inverted when sending the moves
+    */ //NICE BRO F::ING BRILLIANT comment
+
     private Piece getPieceFromString(String piece, int row, int col, boolean isWhite) {
         // isWhite = false;
         if (piece.contains("Rook"))
