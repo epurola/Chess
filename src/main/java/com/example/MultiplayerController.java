@@ -520,11 +520,11 @@ public class MultiplayerController {
                     socketClient.sendMove(
                             selectedPiece.getClass().getSimpleName(),
                             inverRow(selectedPiece.getRow()),
-                            selectedPiece.getCol(),
+                            flip(selectedPiece.getCol()),
                             inverRow(row),
-                            col,
+                            flip(col),
                             capturedPiece != null ? inverRow(capturedPiece.getRow()) : inverRow(row),
-                            capturedPiece != null ? capturedPiece.getCol() : col,
+                            capturedPiece != null ? flip(capturedPiece.getCol()) : flip(col),
                             isWhite,
                             capturedPiece != null ? capturedPiece.getClass().getSimpleName() : "null",
                             isCastle);

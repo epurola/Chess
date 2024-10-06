@@ -208,11 +208,14 @@ public class Board {
         whiteBishops = 0x0000000000000024L; // White bishops
         blackBishops = 0x2400000000000000L; // Black bishops
 
-        whiteQueens = 0x0000000000000008L; // White queen
-        blackQueens = 0x0800000000000000L; // Black queen
+        whiteQueens = 0x0000000000000010L;
+        blackQueens = 0x1000000000000000L;
 
-        whiteKings = 0x0000000000000010L; // White king0x1000000000000000L;
-        blackKings = 0x1000000000000000L;// Black king
+
+        whiteKings = 0x0000000000000008L;
+
+        blackKings = 0x0800000000000000L;
+
     }
 
     public Piece getPiece(int row, int col) {
