@@ -13,6 +13,7 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.ImageCursor;
@@ -666,85 +667,92 @@ public class Replay {
         }
     }
 
-    @FXML
-    private void showBestLine() {
-        String line = "";
-        if (currentMoveIndex < moveHistory.size() - 1 && currentMoveIndex >= 0) {
-            line = moveHistory.get(currentMoveIndex + 1).getBestLine();
-        }
-        String[] parts = line.split(", ");
-        int[] position = { 0, 0, 0, 0 };
-        String name = "";
+ @FXML
+private void showBestLine() {
+    Game copyGame = new Game();
+    String line = "";
 
-        for (int i = 0; i < parts.length; i++) { // Lisätty indeksi i debuggausta varten
-            String move = parts[i];
-            try {
-                System.out.println("Parsing move: " + move); // Tulosta käsiteltävä siirto
-                position = parseMove(move);
+    // Ensure there's a next move to display
+    if (currentMoveIndex < moveHistory.size() - 1 && currentMoveIndex >= 0) {
+        line = moveHistory.get(currentMoveIndex + 1).getBestLine();
+        copyGame.getBoard().setFEN(moveHistory.get(currentMoveIndex + 1).getFEN());
+    }
 
-                String moveTo = move.substring(2, 4);
+    // Split the line into individual moves
+    String[] parts = line.split(", ");
 
-                TextFlow leftColumn = new TextFlow();
-                TextFlow rightColumn = new TextFlow();
+    // Clear previous children from TextFlow
+    textFlow.getChildren().clear();
 
-                // HBox to hold both TextFlows side by side
-                HBox hBox = new HBox(20); // Horizontal gap between columns
-                hBox.getChildren().addAll(leftColumn, rightColumn);
+    // Iterate over moves to create TextFlow
+    for (String move : parts) {
+        try {
+            System.out.println("Parsing move: " + move);
+            int[] position = parseMove(move); 
+            String moveRepresentation = copyGame.makeMoveReplay1(position[0], position[1], position[2], position[3]);
+            System.err.println(moveRepresentation);
+            boolean isWhite = moveRepresentation.contains("(White)");
+            String algebMove = moveRepresentation.replaceAll(" \\(White\\)", "").replaceAll(" \\(Black\\)", "");
+            char pieceLetter = moveRepresentation.charAt(0);
+            System.err.println(pieceLetter); // Adjust based on how your algebraic move is structured
+            String pieceName = getPieceName(pieceLetter);
+            String color = isWhite ? "white-" : "black-";
+            String imagePath = "/images/" + color + pieceName + ".png";
+            System.out.print(imagePath);
+            
+            Image pieceImage = new Image(getClass().getResourceAsStream(imagePath)); // Load image
+            ImageView pieceImageView = new ImageView(pieceImage); // Create ImageView
+            pieceImageView.setFitHeight(30); // Set desired height
+            pieceImageView.setFitWidth(30); // Set desired width
+            pieceImageView.setPreserveRatio(true); // Maintain aspect ratio
+            
+            // Create Text for the move
+            Text moveText = new Text(algebMove);
+            moveText.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill: black; -fx-font-style: italic;");
+            moveText.setWrappingWidth(100); // Set wrapping width if necessary
+            
+            // Create HBox to hold both the image and text
+            HBox moveContainer = new HBox(5); // Spacing between elements
+            moveContainer.setAlignment(Pos.CENTER_LEFT); // Align items in HBox
+            moveContainer.setPadding(new Insets(5)); // Add padding around HBox
+            
+            // Add image and text to the HBox
+            moveContainer.getChildren().addAll(pieceImageView, moveText);
+            textFlow.getChildren().add(moveContainer); // Add HBox to the TextFlow
 
-                // Toggle between left and right columns
-                boolean addToLeft = true;
-
-                // Track whether it's the first move
-                boolean isFirstMove = true;
-
-                // Add move
-                String moveText = String.format("%s %s", name, move.substring(0, 2));
-
-                // If it's the first move, add a newline before the text
-
-                // Load the PNG image (ensure the path to the PNG is correct)
-                Image arrowImage = new Image(getClass().getResource("/images/arrow.png").toExternalForm());
-                // Update with the correct path to your PNG
-                ImageView arrowImageView = new ImageView(arrowImage);
-
-                // Set the size of the arrow image (optional, based on the image resolution)
-                arrowImageView.setFitHeight(10);
-                arrowImageView.setFitWidth(10);
-
-                // Create Text for the move and destination
-                Text siirto = new Text(moveText);
-                Text moveToText = new Text(moveTo);
-
-                // Set styling for the move text and move-to text
-                siirto.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill: black; -fx-font-style: italic;");
-                moveToText
-                        .setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill: black; -fx-font-style: italic;");
-
-                // Combine the move text, arrow image, and moveTo text into a horizontal layout
-                HBox moveBox = new HBox(5); // Horizontal gap between text and arrow
-                moveBox.setAlignment(Pos.CENTER);
-                moveBox.getChildren().addAll(siirto, arrowImageView, moveToText);
-
-                // Add the combined moveBox to the left or right column
-                if (addToLeft) {
-                    leftColumn.getChildren().add(moveBox); // Add to left column
-                } else {
-                    rightColumn.getChildren().add(moveBox); // Add to right column
-                }
-
-                // Alternate between columns for the next move
-                addToLeft = !addToLeft;
-
-                // Add the HBox containing the two TextFlows to the parent layout
-                textFlow.getChildren().add(hBox);
-            } catch (IndexOutOfBoundsException e) {
-                System.err.println("Virheellinen siirto: " + move);
-            } catch (NullPointerException e) {
-                e.printStackTrace(); // Tulosta stack trace
-            }
-
+        } catch (IndexOutOfBoundsException e) {
+            System.err.println("Invalid move: " + move);
+        } catch (NullPointerException e) {
+            System.err.println("An error occurred while processing the move: " + move);
+            e.printStackTrace(); // Print stack trace for debugging
         }
     }
+}
+
+
+    private String getPieceName(char pieceLetter) {
+        switch (pieceLetter) {
+            case 'K': return "king";
+            case 'O' : return "king";
+            case 'Q': return "queen";
+            case 'R': return "rook";
+            case 'B': return "bishop";
+            case 'N': return "knight"; // 'N' is used for knight in chess notation
+            case 'P': return "pawn"; // 'P' is used for pawn
+            default: return "pawn"; // or throw an exception for an invalid piece letter
+        }
+    }
+    
+    
+    
+
+    
+private String getChessCoordinate(int row, int col) {
+    char file = (char) ('a' + col); // 'a' to 'h' for columns
+    int rank = 8 - row;             // '8' to '1' for rows
+    return "" + file + rank;
+}
+
 
     @FXML
     private void handleReplayMoves() {

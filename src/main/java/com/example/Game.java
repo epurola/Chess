@@ -520,6 +520,133 @@ public class Game {
         return false;
 
     }
+    public String makeMoveReplay1(int fromRow, int fromCol, int toRow, int toCol) {
+        int row = toRow;
+        int col = toCol;
+        Piece selectedPiece = getPiece(fromRow, fromCol);
+        int originalRow = selectedPiece.getRow();
+        int originalCol = selectedPiece.getCol();
+        List<int[]> possibleMoves = new ArrayList<>();
+        capturedPiece = null;
+    
+        // Prepare data for algebraic notation
+        String moveAlgebraic = ""; // This will store the final algebraic notation
+    
+        if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+    
+            possibleMoves = selectedPiece.getLegalMovesWithoutCheck(this);
+            capturedPiece = getPiece(row, col);
+    
+            // Handle en passant
+            if (selectedPiece instanceof Pawn && isEnPassant(originalRow, originalCol)) {
+                capturedPiece = getPiece(originalRow, toCol);
+                if (capturedPiece != null && capturedPiece.isWhite() == isWhiteTurn()) {
+                    capturedPiece = null;
+                }
+            }
+    
+            boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
+    
+            if (validMove) {
+                Piece pieceToMove = selectedPiece.copy();
+                String fen = toFen(); // Store the board position before making the move
+    
+                // Castling check
+                
+    
+                // Promotion check
+                if (pieceToMove instanceof Pawn && (toRow == 0 || toRow == 7)) {
+                    // Assume promotion to Queen for simplicity; you can expand this
+                    setPiece(row, col, new Queen(row, col, pieceToMove.isWhite()));
+                    moveAlgebraic = getChessCoordinate(fromRow, fromCol) + getChessCoordinate(toRow, toCol) + "=Q";
+                    return moveAlgebraic; // Return promotion notation
+                }
+    
+                // Handle regular move or capture
+                if (capturedPiece != null) {
+                    if (pieceToMove instanceof Pawn) {
+                        // Pawns require file of origin on captures (e.g., exd5)
+                        moveAlgebraic = (char) ('a' + originalCol) + "x" + getChessCoordinate(toRow, toCol);
+                    } else {
+                        // Other pieces just have 'x' between the piece and destination (e.g., Nxf3)
+                        moveAlgebraic = getNotationSymbol(pieceToMove) + "x" + getChessCoordinate(toRow, toCol);
+                    }
+                } else {
+                    if (pieceToMove instanceof Pawn) {
+                        // Pawn move without capture is just the destination (e.g., e4)
+                        moveAlgebraic = getChessCoordinate(toRow, toCol);
+                    } else {
+                        // Piece move without capture (e.g., Nf3)
+                        moveAlgebraic = getNotationSymbol(pieceToMove) + getChessCoordinate(toRow, toCol);
+                    }
+                }
+                if (pieceToMove instanceof King && Math.abs(fromCol - toCol) == 2) {
+                    // King-side or Queen-side castling
+                    performCastling((King) pieceToMove, toRow, toCol);
+    
+                    if (fromCol < toCol) {
+                        moveAlgebraic = "O-O"; // King-side castling
+                    } else {
+                        moveAlgebraic = "O-O-O"; // Queen-side castling
+                    }
+                     // Return castling notation immediately
+                }
+    
+                // Apply the move on the board
+                setPiece(row, col, pieceToMove);
+                setPiece(originalRow, originalCol, null);
+                pieceToMove.setPosition(row, col);
+    
+                updateKingPositions();
+    
+                if (!validMove) {
+                    return null;
+                }
+    
+                // Change the turn
+                setWhiteTurn(!isWhiteTurn());
+    
+            
+    
+                return moveAlgebraic + " " + (pieceToMove.isWhite() ? "(White)" : "(Black)"); // Return the algebraic notation of the move
+            }
+        }
+    
+        return null;
+    }
+    private String getChessCoordinate(int row, int col) {
+        char file = (char) ('a' + col); // 'a' to 'h' for columns
+        int rank = 8 - row;             // '8' to '1' for rows
+        return "" + file + rank;
+    }
+    public String getNotationSymbol(Piece piece) {
+        if (piece == null) {
+            return ""; // No piece means no symbol
+        }
+        
+        // Get the class name of the piece (e.g., "Knight", "Pawn", etc.)
+        String className = piece.getClass().getSimpleName();
+        
+        switch (className) {
+            case "Pawn":
+                return ""; // Pawns don't use a symbol in algebraic notation
+            case "Knight":
+                return "N"; // Knight is represented by 'N'
+            case "Bishop":
+                return "B"; // Bishop is represented by 'B'
+            case "Rook":
+                return "R"; // Rook is represented by 'R'
+            case "Queen":
+                return "Q"; // Queen is represented by 'Q'
+            case "King":
+                return "K"; // King is represented by 'K'
+            default:
+                return ""; // Fallback case if a new piece type is introduced
+        }
+    }
+    
+    
+    
 
     private int[] performCastling(King king, int kingRow, int kingCol) {
         boolean kingSide = (kingCol == 6);

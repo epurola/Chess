@@ -1,6 +1,14 @@
 package com.example;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,25 +115,7 @@ public class Stockfish {
         return bestMoveCurrent;
     }
 
-    public String getBestMoveFromFEN(String fen) {
-        // Send UCI commands to Stockfish
-        System.out.println(fen);
-        sendUciCommand("position fen " + fen );
-        sendUciCommand("go depth 20"); // Adjust depth as needed
-
-        try {
-            String line;
-            while ((line = input.readLine()) != null) {
-                if (line.startsWith("bestmove")) {
-                    bestMoveCurrent = line.split(" ")[1];
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return bestMoveCurrent;
-    }
+   
 
     public String analyzeMove(String fen, String move) {
         // Apply the move and request analysis
@@ -186,7 +176,7 @@ public class Stockfish {
         System.err.println("Move: " + move + ", Best Move: " + bestMove + ", Score: " + score);
         System.out.print(bestMovesSequence);
 
-        return "Move: " + move + ", Best Move: " + bestMove + ", Score: " + score;
+        return "Move: " + move + ", Best Move: " + bestMove + ", Score: " + score  ;
     }
 
     public List<MoveAnalysis> getMoveHistory() {
