@@ -293,7 +293,7 @@ public class Replay {
             openingLabel.setVisible(false);
         }
 
-        Text responseText = new Text(coach.analyzeMove() + scoreChange);
+        Text responseText = new Text(coach.analyzeMove() );
         responseText.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill:  black; -fx-font-style: italic; ");
         // Load the image using the correct path
         Image iconImage = loadImageForMoveCategory(moveCategory);
@@ -667,67 +667,87 @@ public class Replay {
         }
     }
 
- @FXML
-private void showBestLine() {
-    Game copyGame = new Game();
-    String line = "";
-
-    // Ensure there's a next move to display
-    if (currentMoveIndex < moveHistory.size() - 1 && currentMoveIndex >= 0) {
-        line = moveHistory.get(currentMoveIndex + 1).getBestLine();
-        copyGame.getBoard().setFEN(moveHistory.get(currentMoveIndex + 1).getFEN());
-    }
-
-    // Split the line into individual moves
-    String[] parts = line.split(", ");
-
-    // Clear previous children from TextFlow
-    textFlow.getChildren().clear();
-
-    // Iterate over moves to create TextFlow
-    for (String move : parts) {
-        try {
-            System.out.println("Parsing move: " + move);
-            int[] position = parseMove(move); 
-            String moveRepresentation = copyGame.makeMoveReplay1(position[0], position[1], position[2], position[3]);
-            System.err.println(moveRepresentation);
-            boolean isWhite = moveRepresentation.contains("(White)");
-            String algebMove = moveRepresentation.replaceAll(" \\(White\\)", "").replaceAll(" \\(Black\\)", "");
-            char pieceLetter = moveRepresentation.charAt(0);
-            System.err.println(pieceLetter); // Adjust based on how your algebraic move is structured
-            String pieceName = getPieceName(pieceLetter);
-            String color = isWhite ? "white-" : "black-";
-            String imagePath = "/images/" + color + pieceName + ".png";
-            System.out.print(imagePath);
-            
-            Image pieceImage = new Image(getClass().getResourceAsStream(imagePath)); // Load image
-            ImageView pieceImageView = new ImageView(pieceImage); // Create ImageView
-            pieceImageView.setFitHeight(30); // Set desired height
-            pieceImageView.setFitWidth(30); // Set desired width
-            pieceImageView.setPreserveRatio(true); // Maintain aspect ratio
-            
-            // Create Text for the move
-            Text moveText = new Text(algebMove);
-            moveText.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill: black; -fx-font-style: italic;");
-            moveText.setWrappingWidth(100); // Set wrapping width if necessary
-            
-            // Create HBox to hold both the image and text
-            HBox moveContainer = new HBox(5); // Spacing between elements
-            moveContainer.setAlignment(Pos.CENTER_LEFT); // Align items in HBox
-            moveContainer.setPadding(new Insets(5)); // Add padding around HBox
-            
-            // Add image and text to the HBox
-            moveContainer.getChildren().addAll(pieceImageView, moveText);
-            textFlow.getChildren().add(moveContainer); // Add HBox to the TextFlow
-
-        } catch (IndexOutOfBoundsException e) {
-            System.err.println("Invalid move: " + move);
-        } catch (NullPointerException e) {
-            System.err.println("An error occurred while processing the move: " + move);
-            e.printStackTrace(); // Print stack trace for debugging
+    @FXML
+    private void showBestLine() {
+        Game copyGame = new Game();
+        String line = "";
+    
+        // Ensure there's a next move to display
+        if (currentMoveIndex < moveHistory.size() - 1 && currentMoveIndex >= 0) {
+            line = moveHistory.get(currentMoveIndex + 1).getBestLine();
+            copyGame.getBoard().setFEN(moveHistory.get(currentMoveIndex + 1).getFEN());
+        }
+    
+        // Split the line into individual moves
+        String[] parts = line.split(", ");
+    
+        // Clear previous children from TextFlow
+        textFlow.getChildren().clear(); // Assuming you have a TextFlow defined as textFlow
+    
+        // Create a HBox for each pair of moves
+        HBox movesRow = new HBox(10); // Spacing between columns
+        movesRow.setAlignment(Pos.CENTER_LEFT); // Align items in HBox
+    
+        // Iterate over moves to create TextFlow
+        for (int i = 0; i < parts.length; i++) {
+            String move = parts[i];
+    
+            try {
+                // Parse the move and get its representation
+                System.out.println("Parsing move: " + move);
+                int[] position = parseMove(move);
+                String moveRepresentation = copyGame.makeMoveReplay1(position[0], position[1], position[2], position[3]);
+                System.err.println(moveRepresentation);
+    
+                // Determine piece color and type
+                boolean isWhite = moveRepresentation.contains("(White)");
+                String algebMove = moveRepresentation.replaceAll(" \\(White\\)", "").replaceAll(" \\(Black\\)", "");
+                char pieceLetter = moveRepresentation.charAt(0);
+                String pieceName = getPieceName(pieceLetter);
+                String color = isWhite ? "white-" : "black-";
+    
+                // Load image for the piece
+                String imagePath = "/images/" + color + pieceName + ".png";
+                System.out.print(imagePath);
+                Image pieceImage = new Image(getClass().getResourceAsStream(imagePath)); // Load image
+                ImageView pieceImageView = new ImageView(pieceImage); // Create ImageView
+                pieceImageView.setFitHeight(30); // Set desired height
+                pieceImageView.setFitWidth(30); // Set desired width
+                pieceImageView.setPreserveRatio(true); // Maintain aspect ratio
+                
+                // Create Text for the move
+                Text moveText = new Text(algebMove);
+                moveText.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill: black; -fx-font-style: italic;");
+                moveText.setWrappingWidth(100); // Set wrapping width if necessary
+                
+                // Create HBox to hold both the image and text
+                HBox moveContainer = new HBox(5); // Spacing between elements
+                moveContainer.setAlignment(Pos.CENTER_LEFT); // Align items in HBox
+                moveContainer.getChildren().addAll(pieceImageView, moveText);
+                
+                // Add the moveContainer to the current row of moves
+                movesRow.getChildren().add(moveContainer);
+    
+                // Every two moves, add the movesRow to the TextFlow and create a new HBox
+                if ((i + 1) % 2 == 0) {
+                    textFlow.getChildren().add(movesRow);
+                    movesRow = new HBox(10); // Reset HBox for the next row
+                    movesRow.setAlignment(Pos.CENTER_LEFT); // Align items in the new HBox
+                }
+            } catch (IndexOutOfBoundsException e) {
+                System.err.println("Invalid move: " + move);
+            } catch (NullPointerException e) {
+                System.err.println("An error occurred while processing the move: " + move);
+                e.printStackTrace(); // Print stack trace for debugging
+            }
+        }
+    
+        // If there are any remaining moves in the row that didn't fill a complete row
+        if (!movesRow.getChildren().isEmpty()) {
+            textFlow.getChildren().add(movesRow);
         }
     }
-}
+    
 
 
     private String getPieceName(char pieceLetter) {
