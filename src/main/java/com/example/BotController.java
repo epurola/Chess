@@ -382,7 +382,9 @@ public class BotController {
                     event.getSceneY() - 50 - draggedPiece.getLayoutY() - chessBoard.localToScene(0, 0).getY());
         }
     }
-ExecutorService executor = ExecutorServiceManager.getExecutorService();
+
+    ExecutorService executor = ExecutorServiceManager.getExecutorService();
+
     private void handlePieceDrop(MouseEvent event) {
         double squareSize = chessBoard.getPrefWidth() / 8;
         if (draggedPiece != null) {
@@ -448,12 +450,10 @@ ExecutorService executor = ExecutorServiceManager.getExecutorService();
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt(); // Restore interrupted status
                         }
-                    
-                        
+
                     });
 
                 }
-              
 
             } else {
                 SoundManager.playNotifySound();
@@ -473,10 +473,9 @@ ExecutorService executor = ExecutorServiceManager.getExecutorService();
         }
         selectedPiece = null;
         draggedPiece = null;
-     
-        
 
     }
+
     private void stockFishMakeMove() {
         int[] bestMove = parseMove(stockfish.getBestMove(game.toFen()));
         int fromRow = bestMove[0];
@@ -757,8 +756,6 @@ ExecutorService executor = ExecutorServiceManager.getExecutorService();
     private int inverRow(int row) {
         return Math.abs(row - 7);
     }
-
-   
 
     public static int[] parseMove(String bestMove) {
         // Parse the move string like "e2e4"

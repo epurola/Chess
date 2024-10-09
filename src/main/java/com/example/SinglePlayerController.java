@@ -351,38 +351,37 @@ public class SinglePlayerController {
     }
 
     // Assuming you have a class field to store the history of moves
-private List<String> moveHistory = new ArrayList<>();
+    private List<String> moveHistory = new ArrayList<>();
 
-private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
-    ExecutorService executor = ExecutorServiceManager.getExecutorService();
-    executor.submit(() -> {
-        try {
-            // Draw the best move if required
-            if (drawBestMove) {
-                int[] bestMove = parseMove(stockfish.getBestMove(game.toFen()));
-                Platform.runLater(() -> {
-                    drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);
-                });
+    private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
+        ExecutorService executor = ExecutorServiceManager.getExecutorService();
+        executor.submit(() -> {
+            try {
+                // Draw the best move if required
+                if (drawBestMove) {
+                    int[] bestMove = parseMove(stockfish.getBestMove(game.toFen()));
+                    Platform.runLater(() -> {
+                        drawBestMoveIndicators(bestMove[0], bestMove[1], bestMove[2], bestMove[3]);
+                    });
+                }
+
+                // Convert the move to algebraic notation and add it to the move history
+                String moveString = rowColToAlgebraic(fromRow, fromCol) + rowColToAlgebraic(toRow, toCol);
+                // moveString = game.generateSanNotation(selectedPiece, fromRow, fromCol, toRow,
+                // toCol, capturedPiece);
+                // moveHistory.add(moveString); // Store the move
+
+                // Build the move sequence string by joining all moves in the moveHistory list
+                // String allMoves = String.join(" ", moveHistory);
+
+                // Analyze the position with the FEN and the full move history
+                stockfish.analyzeMove(fen, moveString);
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            // Convert the move to algebraic notation and add it to the move history
-            String moveString = rowColToAlgebraic(fromRow, fromCol) + rowColToAlgebraic(toRow, toCol);
-           // moveString = game.generateSanNotation(selectedPiece, fromRow, fromCol, toRow, toCol, capturedPiece);
-           // moveHistory.add(moveString); // Store the move
-            
-
-            // Build the move sequence string by joining all moves in the moveHistory list
-           // String allMoves = String.join(" ", moveHistory);
-           
-            // Analyze the position with the FEN and the full move history
-            stockfish.analyzeMove(fen, moveString);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    });
-}
-
+        });
+    }
 
     private Image getPieceImage(Piece piece) {
         String color = piece.isWhite() ? "white-" : "black-";
@@ -416,9 +415,10 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SinglePlayerController.class);
-    Piece capturedPiece ;
+    Piece capturedPiece;
+
     private void handlePieceDrop(MouseEvent event) throws InterruptedException {
-        
+
         double squareSize = chessBoard.getPrefWidth() / 8;
         if (draggedPiece != null) {
             int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
@@ -522,7 +522,7 @@ private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, S
         }
 
         // Maybe not neccesary Might caise a crash when using undo
-        
+
     }
 
     private void addTograve(Piece capturedPiece) {

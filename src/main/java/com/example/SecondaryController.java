@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 public class SecondaryController {
 
     @FXML
-    private VBox vbox; 
+    private VBox vbox;
 
     @FXML
     private Button button;
@@ -42,16 +42,16 @@ public class SecondaryController {
 
     @FXML
     private void switchToPrimary() throws IOException {
-        
-            App.setRoot("primary");
-       
+
+        App.setRoot("primary");
+
     }
 
     @FXML
     private void switchToOnline() throws IOException {
-        
-            App.setRoot("online");
-      
+
+        App.setRoot("online");
+
     }
 
     @FXML
@@ -62,6 +62,7 @@ public class SecondaryController {
             logger.error("Failed to switch to Replay view", e);
         }
     }
+
     @FXML
     private void switchToBot() {
         try {
@@ -82,5 +83,3 @@ public class SecondaryController {
         }
     }
 }
-
-

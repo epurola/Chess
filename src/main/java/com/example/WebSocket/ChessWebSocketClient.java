@@ -22,8 +22,7 @@ public class ChessWebSocketClient extends WebSocketClient {
         super(serverUri);
     }
 
-    public boolean getIsWhite()
-    {
+    public boolean getIsWhite() {
         return isWhite;
     }
 
@@ -39,7 +38,7 @@ public class ChessWebSocketClient extends WebSocketClient {
     @Override
     public void onMessage(String message) {
         System.out.println("Received message: " + message);
-    
+
         try {
             // Check if the message is a color assignment
             if (message.startsWith("COLOR:")) {
@@ -51,7 +50,7 @@ public class ChessWebSocketClient extends WebSocketClient {
                 // Parse the message as JSON
                 JSONObject jsonObject = new JSONObject(message);
                 String messageType = jsonObject.optString("type");
-    
+
                 switch (messageType) {
                     case "move":
                         // Handle move messages
@@ -65,29 +64,30 @@ public class ChessWebSocketClient extends WebSocketClient {
                         boolean isWhiteTurn = jsonObject.optBoolean("isWhiteTurn");
                         String capturedPiece = jsonObject.optString("capturedPiece");
                         boolean isCastle = jsonObject.optBoolean("isCastle");
-    
+
                         if (controller != null) {
-                            controller.updateGameState(pieceName, fromRow, fromCol, movedRow, movedCol, toRow, toCol, isWhiteTurn, capturedPiece, isCastle);
+                            controller.updateGameState(pieceName, fromRow, fromCol, movedRow, movedCol, toRow, toCol,
+                                    isWhiteTurn, capturedPiece, isCastle);
                         }
                         break;
-    
+
                     case "playAgain":
                         // Handle play again messages
                         if (controller != null) {
-                           
-                         Platform.runLater(() -> {
-                             try {
-                                controller.handleReset();
-                            } catch (IOException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            } 
-                       
-                          });  
+
+                            Platform.runLater(() -> {
+                                try {
+                                    controller.handleReset();
+                                } catch (IOException e) {
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
+                                }
+
+                            });
 
                         }
                         break;
-    
+
                     default:
                         System.out.println("Unknown message type: " + messageType);
                         break;
@@ -102,10 +102,11 @@ public class ChessWebSocketClient extends WebSocketClient {
         }
     }
 
-    public void sendMove(String pieceName, Integer fromRow, Integer fromCol, Integer movedRow, Integer movedCol, Integer toRow, Integer toCol, boolean isWhiteTurn, String capturedPiece, boolean isCastle) {
+    public void sendMove(String pieceName, Integer fromRow, Integer fromCol, Integer movedRow, Integer movedCol,
+            Integer toRow, Integer toCol, boolean isWhiteTurn, String capturedPiece, boolean isCastle) {
         // Create a JSON object to represent the move
         JSONObject moveMessage = new JSONObject();
-        
+
         // Add data to the JSON object
         moveMessage.put("type", "move");
         moveMessage.put("pieceName", pieceName);
@@ -118,14 +119,13 @@ public class ChessWebSocketClient extends WebSocketClient {
         moveMessage.put("isWhiteTurn", isWhiteTurn);
         moveMessage.put("capturedPiece", capturedPiece != null ? capturedPiece : JSONObject.NULL);
         moveMessage.put("isCastle", isCastle);
-        
+
         // Convert the JSON object to a string
         String jsonPayload = moveMessage.toString();
-        
+
         // Send the JSON payload
         send(jsonPayload);
     }
-    
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
@@ -148,8 +148,3 @@ public class ChessWebSocketClient extends WebSocketClient {
         }
     }
 }
-
-
-
-
-

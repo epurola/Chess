@@ -284,7 +284,7 @@ public class Game {
                     }
 
                 }
-                
+
                 setPiece(row, col, pieceToMove);
                 setPiece(originalRow, originalCol, null);
                 pieceToMove.setPosition(row, col);
@@ -329,7 +329,7 @@ public class Game {
                         fen);
                 moveString = generateSanNotation(selectedPiece, fromRow, fromCol, toRow, toCol, capturedPiece);
                 return true;
-                
+
             }
 
         }
@@ -339,73 +339,70 @@ public class Game {
     }
 
     public String generateSanNotation(Piece piece, int fromRow, int fromCol, int toRow, int toCol,
-                                   Piece capturedPiece) {
-    StringBuilder san = new StringBuilder();
+            Piece capturedPiece) {
+        StringBuilder san = new StringBuilder();
 
-    // Determine the piece type for the SAN
-    if (piece instanceof Pawn) {
-        // For pawns, if a capture occurs, append the source column and an "x"
-        if (capturedPiece != null) {
-            san.append(rowColToAlgebraic(fromRow, fromCol).charAt(0)).append("x");
+        // Determine the piece type for the SAN
+        if (piece instanceof Pawn) {
+            // For pawns, if a capture occurs, append the source column and an "x"
+            if (capturedPiece != null) {
+                san.append(rowColToAlgebraic(fromRow, fromCol).charAt(0)).append("x");
+            }
+        } else if (piece instanceof King) {
+            san.append("K");
+            if (capturedPiece != null) {
+                san.append("x");
+            }
+        } else if (piece instanceof Queen) {
+            san.append("Q");
+            if (capturedPiece != null) {
+                san.append("x");
+            }
+        } else if (piece instanceof Rook) {
+            san.append("R");
+            if (capturedPiece != null) {
+                san.append("x");
+            }
+        } else if (piece instanceof Bishop) {
+            san.append("B");
+            if (capturedPiece != null) {
+                san.append("x");
+            }
+        } else if (piece instanceof Knight) {
+            san.append("N");
+            if (capturedPiece != null) {
+                san.append("x");
+            }
         }
-    } else if (piece instanceof King) {
-        san.append("K");
-        if (capturedPiece != null) {
-            san.append("x");
+
+        // Add the destination square
+        san.append(rowColToAlgebraic(toRow, toCol));
+
+        // Temporarily make the move to check if it puts the opponent's king in check
+        // Remove the piece from its original position
+
+        // Check if the opponent's king is in check after the move
+        boolean isInCheckAfterMove = false;
+
+        // Check for the opponent's king based on the color of the piece being moved
+        if (piece.isWhite()) {
+            isInCheckAfterMove = isKingInCheck(getBlackKingPosition()[0], getBlackKingPosition()[1]);
+        } else {
+            isInCheckAfterMove = isKingInCheck(getWhiteKingPosition()[0], getWhiteKingPosition()[1]);
         }
-    } else if (piece instanceof Queen) {
-        san.append("Q");
-        if (capturedPiece != null) {
-            san.append("x");
+
+        // Add check or checkmate notation
+        if (isInCheckAfterMove && !gameOver) {
+            san.append("+"); // Append '+' to indicate check
         }
-    } else if (piece instanceof Rook) {
-        san.append("R");
-        if (capturedPiece != null) {
-            san.append("x");
+
+        // Check for checkmate after the move
+        if (gameOver) {
+            san.append("#"); // Append '#' to indicate checkmate
         }
-    } else if (piece instanceof Bishop) {
-        san.append("B");
-        if (capturedPiece != null) {
-            san.append("x");
-        }
-    } else if (piece instanceof Knight) {
-        san.append("N");
-        if (capturedPiece != null) {
-            san.append("x");
-        }
+
+        return san.toString();
     }
-
-    // Add the destination square
-    san.append(rowColToAlgebraic(toRow, toCol));
-
-    // Temporarily make the move to check if it puts the opponent's king in check
-    // Remove the piece from its original position
-
-    // Check if the opponent's king is in check after the move
-    boolean isInCheckAfterMove = false;
-
-    // Check for the opponent's king based on the color of the piece being moved
-    if (piece.isWhite()) {
-        isInCheckAfterMove = isKingInCheck(getBlackKingPosition()[0], getBlackKingPosition()[1]);
-    } else {
-        isInCheckAfterMove = isKingInCheck(getWhiteKingPosition()[0], getWhiteKingPosition()[1]);
-    }
-
-    // Add check or checkmate notation
-    if (isInCheckAfterMove && !gameOver) {
-        san.append("+"); // Append '+' to indicate check
-    }
-
-    // Check for checkmate after the move
-    if (gameOver) {
-        san.append("#"); // Append '#' to indicate checkmate
-    }
-    
-
-    return san.toString();
-}
-
-    
 
     private String moveString;
 
@@ -520,6 +517,7 @@ public class Game {
         return false;
 
     }
+
     public String makeMoveReplay1(int fromRow, int fromCol, int toRow, int toCol) {
         int row = toRow;
         int col = toCol;
@@ -528,15 +526,15 @@ public class Game {
         int originalCol = selectedPiece.getCol();
         List<int[]> possibleMoves = new ArrayList<>();
         capturedPiece = null;
-    
+
         // Prepare data for algebraic notation
         String moveAlgebraic = ""; // This will store the final algebraic notation
-    
+
         if (row >= 0 && row < 8 && col >= 0 && col < 8) {
-    
+
             possibleMoves = selectedPiece.getLegalMovesWithoutCheck(this);
             capturedPiece = getPiece(row, col);
-    
+
             // Handle en passant
             if (selectedPiece instanceof Pawn && isEnPassant(originalRow, originalCol)) {
                 capturedPiece = getPiece(originalRow, toCol);
@@ -544,16 +542,15 @@ public class Game {
                     capturedPiece = null;
                 }
             }
-    
+
             boolean validMove = possibleMoves.stream().anyMatch(move -> move[0] == row && move[1] == col);
-    
+
             if (validMove) {
                 Piece pieceToMove = selectedPiece.copy();
                 String fen = toFen(); // Store the board position before making the move
-    
+
                 // Castling check
-                
-    
+
                 // Promotion check
                 if (pieceToMove instanceof Pawn && (toRow == 0 || toRow == 7)) {
                     // Assume promotion to Queen for simplicity; you can expand this
@@ -561,7 +558,7 @@ public class Game {
                     moveAlgebraic = getChessCoordinate(fromRow, fromCol) + getChessCoordinate(toRow, toCol) + "=Q";
                     return moveAlgebraic; // Return promotion notation
                 }
-    
+
                 // Handle regular move or capture
                 if (capturedPiece != null) {
                     if (pieceToMove instanceof Pawn) {
@@ -583,50 +580,51 @@ public class Game {
                 if (pieceToMove instanceof King && Math.abs(fromCol - toCol) == 2) {
                     // King-side or Queen-side castling
                     performCastling((King) pieceToMove, toRow, toCol);
-    
+
                     if (fromCol < toCol) {
                         moveAlgebraic = "O-O"; // King-side castling
                     } else {
                         moveAlgebraic = "O-O-O"; // Queen-side castling
                     }
-                     // Return castling notation immediately
+                    // Return castling notation immediately
                 }
-    
+
                 // Apply the move on the board
                 setPiece(row, col, pieceToMove);
                 setPiece(originalRow, originalCol, null);
                 pieceToMove.setPosition(row, col);
-    
+
                 updateKingPositions();
-    
+
                 if (!validMove) {
                     return null;
                 }
-    
+
                 // Change the turn
                 setWhiteTurn(!isWhiteTurn());
-    
-            
-    
-                return moveAlgebraic + " " + (pieceToMove.isWhite() ? "(White)" : "(Black)"); // Return the algebraic notation of the move
+
+                return moveAlgebraic + " " + (pieceToMove.isWhite() ? "(White)" : "(Black)"); // Return the algebraic
+                                                                                              // notation of the move
             }
         }
-    
+
         return null;
     }
+
     private String getChessCoordinate(int row, int col) {
         char file = (char) ('a' + col); // 'a' to 'h' for columns
-        int rank = 8 - row;             // '8' to '1' for rows
+        int rank = 8 - row; // '8' to '1' for rows
         return "" + file + rank;
     }
+
     public String getNotationSymbol(Piece piece) {
         if (piece == null) {
             return ""; // No piece means no symbol
         }
-        
+
         // Get the class name of the piece (e.g., "Knight", "Pawn", etc.)
         String className = piece.getClass().getSimpleName();
-        
+
         switch (className) {
             case "Pawn":
                 return ""; // Pawns don't use a symbol in algebraic notation
@@ -644,9 +642,6 @@ public class Game {
                 return ""; // Fallback case if a new piece type is introduced
         }
     }
-    
-    
-    
 
     private int[] performCastling(King king, int kingRow, int kingCol) {
         boolean kingSide = (kingCol == 6);
@@ -848,30 +843,31 @@ public class Game {
         moveStack.push(new Move(fromRow, fromCol, toRow, toCol, capturedPiece, movedPiece, capturePieceRow,
                 capturePieceCol, fen));
     }
+
     public boolean isInCheck() {
         boolean isInCheck = false; // Local variable for check status
-    
+
         // Get positions of both kings
         int[] whiteKingPosition = getWhiteKingPosition();
         int[] blackKingPosition = getBlackKingPosition();
-    
+
         // Check if white king is in check
         if (whiteKingPosition != null) {
             int kingRow = whiteKingPosition[0];
             int kingCol = whiteKingPosition[1];
             isInCheck = isKingInCheck(kingRow, kingCol);
         }
-    
+
         // Check if black king is in check
         if (blackKingPosition != null) {
             int kingRow = blackKingPosition[0];
             int kingCol = blackKingPosition[1];
             isInCheck |= isKingInCheck(kingRow, kingCol);
         }
-    
+
         return isInCheck;
     }
-    
+
     // Helper method to determine if a specific king is in check
     private boolean isKingInCheck(int kingRow, int kingCol) {
         // Check all opponent's pieces
@@ -960,7 +956,9 @@ public class Game {
         }
         return pieces;
     }
-private boolean gameOver;
+
+    private boolean gameOver;
+
     public boolean checkMate(Game game) {
         // List to hold all legal moves for the current player's pieces
         List<int[]> allLegalMoves = new ArrayList<>();
@@ -977,11 +975,10 @@ private boolean gameOver;
         if (isInCheck(whiteTurn) && allLegalMoves.isEmpty()) {
             gameOver = true;
             return true;
-        } 
+        }
 
         return false;
     }
-    
 
     public boolean checkDraw(Game game) {
         // List to hold all legal moves for the current player's pieces

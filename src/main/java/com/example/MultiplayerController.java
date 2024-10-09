@@ -301,8 +301,6 @@ public class MultiplayerController {
         }
     }
 
-   
-
     private void drawBoard() {
         if (playerColor == null) {
             System.out.println("Player color is not set yet.");
@@ -400,23 +398,20 @@ public class MultiplayerController {
         }
     }
 
-  
-    private int flip(int num)
-    {
-        return 7-num ;
+    private int flip(int num) {
+        return 7 - num;
     }
 
-   
     private void startGameAnalysis(int fromRow, int fromCol, int toRow, int toCol, String fen) {
         ExecutorService executor = ExecutorServiceManager.getExecutorService();
         executor.submit(() -> {
             try {
-               
+
                 // Convert the move to algebraic notation and add it to the move history
                 String moveString = rowColToAlgebraic(flip(fromRow), fromCol) + rowColToAlgebraic(flip(toRow), toCol);
-               
+
                 stockfish.analyzeMove(fen, moveString);
-    
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -431,8 +426,6 @@ public class MultiplayerController {
         // Combine column and row characters to form the algebraic notation
         return "" + columnChar + rowChar;
     }
-
-  
 
     public static int[] parseMove(String bestMove) {
         // Parse the move string like "e2e4"
@@ -450,13 +443,15 @@ public class MultiplayerController {
         // toCol]
         return new int[] { fromRow, fromCol, toRow, toCol };
     }
+
     String fen;
+
     private void handlePieceDrop(MouseEvent event) {
         if (!isMyTurn) {
             return;
         }
         double squareSize = chessBoard.getPrefWidth() / 8;
-        
+
         if (draggedPiece != null) {
             int row = (int) ((event.getSceneY() - chessBoard.localToScene(0, 0).getY()) / squareSize);
             int col = (int) ((event.getSceneX() - chessBoard.localToScene(0, 0).getX()) / squareSize);
@@ -471,7 +466,7 @@ public class MultiplayerController {
                     fen = unflipFEN(game.toFen());
                     boolean soundPlayed = false;
                     isMyTurn = false;
-                   
+
                     startGameAnalysis(selectedPiece.getRow(), selectedPiece.getCol(), row, col, fen);
 
                     switchPlayer();
@@ -778,12 +773,11 @@ public class MultiplayerController {
                 game.toFen());// Fix this later... WTF DOES THIS MEAN BRO FIX FUCKING WHAT!!?
         isMyTurn = true;
         game.setWhiteTurn(!game.isWhiteTurn());
-        
+
         String fen = unflipFEN(game.toFen());
 
         startGameAnalysis(row, col, mRow, mCol, fen);
 
-        
         switchPlayer();
         if (!capturedPiece.equals("null")) {
             capture = true;
@@ -797,8 +791,6 @@ public class MultiplayerController {
         } else {
             SoundManager.playMoveSound();
         }
-       
-       
 
         Platform.runLater(() -> drawBoard());
 
@@ -826,13 +818,14 @@ public class MultiplayerController {
             SoundManager.playDrawSound();
         }
     }
+
     public String unflipFEN(String fen) {
         // Split the FEN string into its components
         String[] fenParts = fen.split(" ");
-        
+
         // Get the piece placement part (first part)
         String[] rows = fenParts[0].split("/");
-        
+
         // Reverse the rows
         StringBuilder flippedPosition = new StringBuilder();
         for (int i = rows.length - 1; i >= 0; i--) {
@@ -841,23 +834,22 @@ public class MultiplayerController {
                 flippedPosition.append("/");
             }
         }
-        
+
         // Flip the side to move
         String sideToMove = fenParts[1];
-        
-        
-        
+
         // Construct the new flipped FEN string
-        String flippedFEN = flippedPosition.toString() + " " + sideToMove +  " ";
-        
+        String flippedFEN = flippedPosition.toString() + " " + sideToMove + " ";
+
         return flippedFEN;
     }
 
-    /* This basically only moves black pieces since they are set in the top row in
-    the game, But the board is
-     drawn so that both players have their pieces at the bottom.
-    The rows are inverted when sending the moves
-    */ //NICE BRO F::ING BRILLIANT comment
+    /*
+     * This basically only moves black pieces since they are set in the top row in
+     * the game, But the board is
+     * drawn so that both players have their pieces at the bottom.
+     * The rows are inverted when sending the moves
+     */ // NICE BRO F::ING BRILLIANT comment
 
     private Piece getPieceFromString(String piece, int row, int col, boolean isWhite) {
         // isWhite = false;

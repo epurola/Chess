@@ -154,7 +154,7 @@ public class Replay {
         }).start();
         ImageCursor customCursor = new ImageCursor(cursorImage);
         openingLabel.setText("");
-        
+
         openingLabel.setVisible(false);
         loadingBar = new Label();
         loadingBar.setStyle(
@@ -225,7 +225,7 @@ public class Replay {
             System.err.println("Index out of bounds: " + currentMove);
             return currentScore;
         }
-        // Get the current move analysis
+        // Get the current move analymsis
         MoveAnalysis move = moveHistory.get(currentMove);
         score = move.getScore();
         System.out.println("Score: " + score);
@@ -284,7 +284,9 @@ public class Replay {
         progressLabel.setText(scoreString);
         // Set the progress
         progressBar.setProgress(normalizedValue);
-        MoveAdvisor coach = new MoveAdvisor(game, bestMove, playerMove, stockfish, moveCategory, scoreString);
+        String line = moveHistory.get(currentMoveIndex).getBestLine();
+        MoveAdvisor coach = new MoveAdvisor(game, bestMove, playerMove, stockfish, moveCategory, scoreString, line,
+                fen);
         String name = openning.search(formatFen(fen));
         if (!name.equals("Unknown Opening")) {
             openingLabel.setText(name);
@@ -293,7 +295,7 @@ public class Replay {
             openingLabel.setVisible(false);
         }
 
-        Text responseText = new Text(coach.analyzeMove() );
+        Text responseText = new Text(coach.analyzeMove());
         responseText.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill:  black; -fx-font-style: italic; ");
         // Load the image using the correct path
         Image iconImage = loadImageForMoveCategory(moveCategory);
@@ -317,10 +319,10 @@ public class Replay {
     public String unflipFEN(String fen) {
         // Split the FEN string into its components
         String[] fenParts = fen.split(" ");
-        
+
         // Get the piece placement part (first part)
         String[] rows = fenParts[0].split("/");
-        
+
         // Reverse the rows
         StringBuilder flippedPosition = new StringBuilder();
         for (int i = rows.length - 1; i >= 0; i--) {
@@ -329,15 +331,13 @@ public class Replay {
                 flippedPosition.append("/");
             }
         }
-        
+
         // Flip the side to move
         String sideToMove = fenParts[1].equals("w") ? "b" : "w";
-        
-        
-        
+
         // Construct the new flipped FEN string
-        String flippedFEN = flippedPosition.toString() + " " + sideToMove +  " ";
-        
+        String flippedFEN = flippedPosition.toString() + " " + sideToMove + " ";
+
         return flippedFEN;
     }
 
@@ -386,7 +386,7 @@ public class Replay {
         previousScore = calculateCurrentScore(moveHistory, currentMoveIndex + 1);
         currentScore = calculateCurrentScore(moveHistory, currentMoveIndex);
 
-        String previousfen="";
+        String previousfen = "";
         int z;
         System.out.println(fen);
         System.out.println(previousfen);
@@ -653,16 +653,20 @@ public class Replay {
     // number and goes down so technically back goes forward
     @FXML
     private void handleRewindBack() {
+        currentMoveIndex--;
         if (currentMoveIndex >= 0) {
-            currentMoveIndex--;
+
+            System.out.print("INDEX" + currentMoveIndex);
             replayMoves();
         }
     }
 
     @FXML
     private void handleRewindForward() {
+        currentMoveIndex++;
         if (currentMoveIndex <= moveHistory.size() - 1) {
-            currentMoveIndex++;
+
+            System.out.print("INDEX" + currentMoveIndex);
             replayMoves();
         }
     }
@@ -671,41 +675,42 @@ public class Replay {
     private void showBestLine() {
         Game copyGame = new Game();
         String line = "";
-    
+
         // Ensure there's a next move to display
         if (currentMoveIndex < moveHistory.size() - 1 && currentMoveIndex >= 0) {
-            line = moveHistory.get(currentMoveIndex + 1).getBestLine();
-            copyGame.getBoard().setFEN(moveHistory.get(currentMoveIndex + 1).getFEN());
+            line = moveHistory.get(currentMoveIndex).getBestLine();
+            copyGame.getBoard().setFEN(moveHistory.get(currentMoveIndex).getFEN());
         }
-    
+
         // Split the line into individual moves
         String[] parts = line.split(", ");
-    
+
         // Clear previous children from TextFlow
         textFlow.getChildren().clear(); // Assuming you have a TextFlow defined as textFlow
-    
+
         // Create a HBox for each pair of moves
         HBox movesRow = new HBox(10); // Spacing between columns
         movesRow.setAlignment(Pos.CENTER_LEFT); // Align items in HBox
-    
+
         // Iterate over moves to create TextFlow
         for (int i = 0; i < parts.length; i++) {
             String move = parts[i];
-    
+
             try {
                 // Parse the move and get its representation
                 System.out.println("Parsing move: " + move);
                 int[] position = parseMove(move);
-                String moveRepresentation = copyGame.makeMoveReplay1(position[0], position[1], position[2], position[3]);
+                String moveRepresentation = copyGame.makeMoveReplay1(position[0], position[1], position[2],
+                        position[3]);
                 System.err.println(moveRepresentation);
-    
+
                 // Determine piece color and type
                 boolean isWhite = moveRepresentation.contains("(White)");
                 String algebMove = moveRepresentation.replaceAll(" \\(White\\)", "").replaceAll(" \\(Black\\)", "");
                 char pieceLetter = moveRepresentation.charAt(0);
                 String pieceName = getPieceName(pieceLetter);
                 String color = isWhite ? "white-" : "black-";
-    
+
                 // Load image for the piece
                 String imagePath = "/images/" + color + pieceName + ".png";
                 System.out.print(imagePath);
@@ -714,20 +719,20 @@ public class Replay {
                 pieceImageView.setFitHeight(30); // Set desired height
                 pieceImageView.setFitWidth(30); // Set desired width
                 pieceImageView.setPreserveRatio(true); // Maintain aspect ratio
-                
+
                 // Create Text for the move
                 Text moveText = new Text(algebMove);
                 moveText.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-fill: black; -fx-font-style: italic;");
                 moveText.setWrappingWidth(100); // Set wrapping width if necessary
-                
+
                 // Create HBox to hold both the image and text
                 HBox moveContainer = new HBox(5); // Spacing between elements
                 moveContainer.setAlignment(Pos.CENTER_LEFT); // Align items in HBox
                 moveContainer.getChildren().addAll(pieceImageView, moveText);
-                
+
                 // Add the moveContainer to the current row of moves
                 movesRow.getChildren().add(moveContainer);
-    
+
                 // Every two moves, add the movesRow to the TextFlow and create a new HBox
                 if ((i + 1) % 2 == 0) {
                     textFlow.getChildren().add(movesRow);
@@ -741,38 +746,39 @@ public class Replay {
                 e.printStackTrace(); // Print stack trace for debugging
             }
         }
-    
+
         // If there are any remaining moves in the row that didn't fill a complete row
         if (!movesRow.getChildren().isEmpty()) {
             textFlow.getChildren().add(movesRow);
         }
     }
-    
-
 
     private String getPieceName(char pieceLetter) {
         switch (pieceLetter) {
-            case 'K': return "king";
-            case 'O' : return "king";
-            case 'Q': return "queen";
-            case 'R': return "rook";
-            case 'B': return "bishop";
-            case 'N': return "knight"; // 'N' is used for knight in chess notation
-            case 'P': return "pawn"; // 'P' is used for pawn
-            default: return "pawn"; // or throw an exception for an invalid piece letter
+            case 'K':
+                return "king";
+            case 'O':
+                return "king";
+            case 'Q':
+                return "queen";
+            case 'R':
+                return "rook";
+            case 'B':
+                return "bishop";
+            case 'N':
+                return "knight"; // 'N' is used for knight in chess notation
+            case 'P':
+                return "pawn"; // 'P' is used for pawn
+            default:
+                return "pawn"; // or throw an exception for an invalid piece letter
         }
     }
-    
-    
-    
 
-    
-private String getChessCoordinate(int row, int col) {
-    char file = (char) ('a' + col); // 'a' to 'h' for columns
-    int rank = 8 - row;             // '8' to '1' for rows
-    return "" + file + rank;
-}
-
+    private String getChessCoordinate(int row, int col) {
+        char file = (char) ('a' + col); // 'a' to 'h' for columns
+        int rank = 8 - row; // '8' to '1' for rows
+        return "" + file + rank;
+    }
 
     @FXML
     private void handleReplayMoves() {

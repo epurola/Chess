@@ -51,7 +51,7 @@ public class App extends Application {
 
         // Ensure the application remains in full screen
         primaryStage.setFullScreen(true);
-        
+
         if (scene != null) {
             Parent oldRoot = scene.getRoot(); // Get the current root
 
@@ -75,7 +75,7 @@ public class App extends Application {
             // If the scene is not yet initialized, set the root directly
             scene.setRoot(newRoot);
             newRoot.setOpacity(0.0); // Set opacity for fade-in transition
-            
+
             // Create and play the fade-in transition for the initial scene
             FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newRoot);
             fadeIn.setFromValue(0.0);
@@ -105,7 +105,9 @@ public class App extends Application {
     @Override
     public void stop() {
         ExecutorServiceManager.shutdown(); // Shut down any executors
-        ChessWebSocketServer.getInstance(new InetSocketAddress(getLocalIPAddress(), 8887)).stopServer(); // Stop the WebSocket server
+        ChessWebSocketServer.getInstance(new InetSocketAddress(getLocalIPAddress(), 8887)).stopServer(); // Stop the
+                                                                                                         // WebSocket
+                                                                                                         // server
     }
 
     // Main method to launch the application
