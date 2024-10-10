@@ -133,6 +133,8 @@ public class Replay {
     private int previousMate;
     private List<String> moves;
     private ChessOpeningMap openning;
+    private int  previousmateMoves;
+    private String mateInfo;
 
     @FXML
     public void initialize() throws IOException, InterruptedException {
@@ -217,7 +219,7 @@ public class Replay {
             loadGame(totalGames);
         }
     }
-
+//NEGATIVE VALUE IN MATE MEANS THERE IS A FORCED MATE AGAINST THE CURRENT PLAYER
     public int calculateCurrentScore(List<MoveAnalysis> moveHistory, int currentMove) {
         int currentScore = 0;
         // Ensure the index is within bounds
@@ -234,6 +236,36 @@ public class Replay {
                 // If it's a mate sequence, get the number of moves to mate
                 String[] parts = score.split(" ");
                 mateMoves = Integer.parseInt(parts[0]); // Number of moves to mate
+
+            } else if (score.contains("centipawns")) {
+                // If it's a centipawn evaluation, extract the centipawn value
+                String[] parts = score.split(" ");
+                currentScore = Integer.parseInt(parts[0]); // Convert centipawns to integer
+                mateMoves = 0;
+
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Error parsing score: " + e.getMessage());
+        }
+
+        return currentScore;
+    }
+    public int calculatePreviousScore(List<MoveAnalysis> moveHistory, int currentMove) {
+        int currentScore = 0;
+        // Ensure the index is within bounds
+        if (currentMove < 0 || currentMove >= moveHistory.size()) {
+            System.err.println("Index out of bounds: " + currentMove);
+            return currentScore;
+        }
+        // Get the current move analymsis
+        MoveAnalysis move = moveHistory.get(currentMove);
+        score = move.getScore();
+        System.out.println("Score: " + score);
+        try {
+            if (score.contains("mate")) {
+                // If it's a mate sequence, get the number of moves to mate
+                String[] parts = score.split(" ");
+                previousmateMoves = Integer.parseInt(parts[0]); // Number of moves to mate
 
             } else if (score.contains("centipawns")) {
                 // If it's a centipawn evaluation, extract the centipawn value
@@ -286,7 +318,7 @@ public class Replay {
         progressBar.setProgress(normalizedValue);
         String line = moveHistory.get(currentMoveIndex).getBestLine();
         MoveAdvisor coach = new MoveAdvisor(game, bestMove, playerMove, stockfish, moveCategory, scoreString, line,
-                fen);
+                fen, mateInfo);
         String name = openning.search(formatFen(fen));
         if (!name.equals("Unknown Opening")) {
             openingLabel.setText(name);
@@ -383,13 +415,11 @@ public class Replay {
 
     private Color updateScoreAndColor() {
         // Calculate current score based on move history and current move index
-        previousScore = calculateCurrentScore(moveHistory, currentMoveIndex + 1);
+        previousScore = calculatePreviousScore(moveHistory, currentMoveIndex + 1);
         currentScore = calculateCurrentScore(moveHistory, currentMoveIndex);
 
         String previousfen = "";
         int z;
-        System.out.println(fen);
-        System.out.println(previousfen);
 
         fen = moveHistory.get(currentMoveIndex).getFEN();
         if (currentMoveIndex < moveHistory.size() - 1) {
@@ -421,7 +451,31 @@ public class Replay {
         System.out.println("Scorchange " + scoreChange);
         System.out.println("N: " + n);
 
-        moveCategory = categorizeMove(scoreChange); // Categorize based on the actual change
+        if (score.contains("mate")) {
+            // If the opponent can checkmate (-mateMoves)
+            if (mateMoves > 0) {
+                moveCategory = "Blunder"; // Allowed opponent to checkmate
+                mateInfo = "Allowed opponent to checkmate";
+            }
+            // If you have a checkmate opportunity (+mateMoves)
+            else if (mateMoves < 0) {
+                moveCategory = "Best"; // Delivered mate or recognized mate-in-X
+                mateInfo = "This allows you to force win";
+            } 
+        } else {
+            // Evaluate missed checkmate opportunities
+            
+            if (previousMate < 0 && !score.contains("mate")) {
+                moveCategory = "Mistake"; // Missed a checkmate opportunity
+                mateInfo = "Missed a checkmate opportunity";
+            } else {
+                // Categorize based on score change for other cases (centipawn-based evaluation)
+                moveCategory = categorizeMove(scoreChange);
+            }
+        }
+        
+
+        
 
         // Get the color based on the score change
         Color color = getColorForScoreChange(scoreChange); // Use scoreChange for color determination
@@ -655,8 +709,6 @@ public class Replay {
     private void handleRewindBack() {
         currentMoveIndex--;
         if (currentMoveIndex >= 0) {
-
-            System.out.print("INDEX" + currentMoveIndex);
             replayMoves();
         }
     }
@@ -665,8 +717,6 @@ public class Replay {
     private void handleRewindForward() {
         currentMoveIndex++;
         if (currentMoveIndex <= moveHistory.size() - 1) {
-
-            System.out.print("INDEX" + currentMoveIndex);
             replayMoves();
         }
     }

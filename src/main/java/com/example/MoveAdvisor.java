@@ -31,6 +31,7 @@ public class MoveAdvisor {
     private String scoreString;
     private String bestLine;
     private String fenM;
+    private String mateInfo;
 
     static {
         pieceNames.put('K', "White King");
@@ -48,7 +49,7 @@ public class MoveAdvisor {
     }
 
     public MoveAdvisor(Game game, String bestmove, String playerMove, Stockfish stockfish, String moveGategory,
-            String scoreString, String bestLine, String fen) {
+            String scoreString, String bestLine, String fen, String mateInfo) {
         this.game = game;
         this.playerMove = playerMove;
         this.stockfish = stockfish;
@@ -56,6 +57,7 @@ public class MoveAdvisor {
         this.scoreString = scoreString;
         this.bestLine = bestLine;
         this.fenM = fen;
+        this.mateInfo = mateInfo;
 
         int[] pMove = parseMove(playerMove);
         this.fromRow = pMove[0];
@@ -82,25 +84,41 @@ public class MoveAdvisor {
     }
 
     public String analyzeMove() {
+
+        // Check for moves involving checkmates
         if (scoreString.contains("M")) {
-            return "The move " + playerMove + "will lead in to checkmate";
-        } else if (moveCategory.equals("Mistake")) {
-            return "The move " + playerMove + "is a mistake";
-        } else if (isGood() && isCheck() && !scoreString.contains("#")) {
-            return "The move " + playerMove + "puts the king in check. ";
+            if (mateInfo.contains("Allowed opponent to checkmate")) {
+                return "The move " + playerMove + " allows your opponent to checkmate you.";
+            } else if (mateInfo.contains("force a win")) {
+                return "The move " + playerMove + " allows you to force a checkmate. Brilliant!";
+            } else if (mateInfo.contains("Missed a checkmate opportunity")) {
+                return "The move " + playerMove + " missed a checkmate opportunity. This is a mistake.";
+            }
+        }
+
+        // Check for specific categories of moves
+        if (moveCategory.equals("Mistake")) {
+            return "The move " + playerMove + " is a mistake.";
         } else if (moveCategory.equals("Inaccuracy")) {
-            return "The move " + playerMove + " is " + moveCategory;
+            return "The move " + playerMove + " is an inaccuracy.";
+        } else if (moveCategory.equals("Blunder")) {
+            return "The move " + playerMove + " is a blunder. " + playBestLine(bestLine);
+        }
+
+        // Specific tactical checks
+        if (isGood() && isCheck() && !scoreString.contains("#")) {
+            return "The move " + playerMove + " puts the king in check.";
         } else if (isPin() && isGood()) {
             return "The move " + playerMove + " is strong because it pins a piece.";
         } else if (scoreString.contains("#")) {
             return "Nice! You found a checkmate!";
-        } else if (moveCategory.equals("Blunder")) {
-            return "The move " + playerMove + " is a blunder." + playBestLine(bestLine);
-        } else if (bestMove.equals(playerMove)) {
-            return analyzeMissedBestMove();
-        } else {
-            return "The move " + playerMove + " is solid, but nothing extraordinary.\n";
         }
+
+        if (bestMove.equals(playerMove)) {
+            return analyzeMissedBestMove();
+        }
+        // Default response for solid but unremarkable moves
+        return "The move " + playerMove + " is solid, but nothing extraordinary.";
     }
 
     private String analyzeMissedBestMove() {
@@ -110,7 +128,7 @@ public class MoveAdvisor {
                 moveCategory.equals("Slight Improvement") ||
                 moveCategory.equals("Best")) {
 
-            analysis.append("The move " + playerMove + " is a " + moveCategory + " \n");
+            analysis.append("The move " + playerMove + " is The " + moveCategory + "\n");
         } else {
             analysis.append("The move " + playerMove + " is a " + moveCategory + "  \n");
             analysis.append("The best move would have been " + bestMove + ". ");
@@ -161,17 +179,24 @@ public class MoveAdvisor {
         gameCopy.getBoard().setFEN(fenM); // Start from the given FEN position
 
         String[] parts = bestLine.split(", ");
+        System.out.println("BestLine"+bestLine);
 
         // Calculate the initial material for both players
         int whiteMaterialBefore = calculateTotalMaterial(gameCopy.getBoard(), true);
         int blackMaterialBefore = calculateTotalMaterial(gameCopy.getBoard(), false);
-
+        if(!bestLine.isBlank())
+        {
         for (String move : parts) {
-            int[] moveParsed = parseMove(move);
+            
+                int[] moveParsed = parseMove(move);
+            
+           
             System.out.println(bestLine);
 
-            // Apply the move to the game
-            gameCopy.makeMove(moveParsed[0], moveParsed[1], moveParsed[2], moveParsed[3]);
+            System.out.println("row"+moveParsed[0]+ "col"+moveParsed[1]+ "row"+moveParsed[2]+ "col"+moveParsed[3]);
+            System.out.print("Move"+move);
+            
+            gameCopy.makeMoveReplay(moveParsed[0], moveParsed[1], moveParsed[2], moveParsed[3]);
 
             // Calculate the material after the move
             int whiteMaterialAfter = calculateTotalMaterial(gameCopy.getBoard(), true);
@@ -180,8 +205,9 @@ public class MoveAdvisor {
             // Update material for the next move
             whiteMaterialBefore = whiteMaterialAfter;
             blackMaterialBefore = blackMaterialAfter;
+            
         }
-
+    }
         // Determine who came out on top
         String finalAnalysis = analyzeFinalMaterial(whiteMaterialBefore, blackMaterialBefore);
 
@@ -314,10 +340,6 @@ public class MoveAdvisor {
 
     }
 
-    private boolean isCheckmate() {
-        return false;
-    }
-
     // FIX here the is sometimes null
     private boolean isForkingMove() {
         if (piece == null) {
@@ -373,50 +395,23 @@ public class MoveAdvisor {
         return opponentPositions;
     }
 
-    private boolean isBlunder() {
-        if (bestMove.equals(playerMove)) {
-            return false;
-        }
-        boolean isWhiteTurn = piece.isWhite();
-        List<int[]> opponentPositions = getOpponentPiecePositions(fen, isWhiteTurn);
-        List<int[]> opponentMoves = new ArrayList<>();
-        for (int[] opponentPosition : opponentPositions) {
-            Piece opponentPiece = game.getBoard().getPiece(opponentPosition[0], opponentPosition[1]);
-            if (opponentPiece != null) {
-                opponentMoves = opponentPiece.getLegalMovesWithoutCheck(game);
-            }
-            for (int[] movePosition : opponentMoves) {
-                Piece targetPiece = game.getBoard().getPiece(movePosition[0], movePosition[1]);
-
-                if (isValuablePiece(targetPiece)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isValuablePiece(Piece piece) {
-        if (piece == null)
-            return false;
-        return piece.getValue() >= 5;
-    }
 
     public static int[] parseMove(String bestMove) {
-        // Parse the move string like "e2e4"
-        String from = bestMove.substring(0, 2); // e2
-        String to = bestMove.substring(2, 4); // e4
+   
+        
 
-        // Convert from algebraic notation to row and column indices
-        int fromCol = from.charAt(0) - 'a'; // 'e' - 'a' = 4
-        int fromRow = '8' - from.charAt(1); // '8' - '2' = 6
+            String from = bestMove.substring(0, 2); // e2
+            String to = bestMove.substring(2, 4); // e4
+            int fromCol = from.charAt(0) - 'a'; // 'e' - 'a' = 4
+            int fromRow = '8' - from.charAt(1); // '8' - '2' = 6
 
-        int toCol = to.charAt(0) - 'a'; // 'e' - 'a' = 4
-        int toRow = '8' - to.charAt(1); // '8' - '4' = 4
+            int toCol = to.charAt(0) - 'a'; // 'e' - 'a' = 4
+            int toRow = '8' - to.charAt(1); // '8' - '4' = 4
+            return new int[] { fromRow, fromCol, toRow, toCol };
+        
+       
+        
 
-        // Return the row and column positions in an array [fromRow, fromCol, toRow,
-        // toCol]
-        return new int[] { fromRow, fromCol, toRow, toCol };
     }
 
 }
